@@ -1,5 +1,5 @@
 ############################################################################
-# boards/arm/rp2040/raspberrypi-pico/scripts/Make.defs
+# boards/arm/j721e/bbai64/scripts/Make.defs
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
@@ -23,7 +23,7 @@ include $(TOPDIR)/tools/Config.mk
 include $(TOPDIR)/tools/j721e/Config.mk
 include $(TOPDIR)/arch/arm/src/armv7-r/Toolchain.defs
 
-ifeq ($(CONFIG_BBA64_FLASH_BOOT),y)
+ifeq ($(CONFIG_BBAI64_FLASH_BOOT),y)
   LDSCRIPT = bba64-sysfw-flash.ld
 else
   LDSCRIPT = bba64-flash.ld

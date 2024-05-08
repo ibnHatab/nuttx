@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __BOARDS_ARM_J721E_BBA64_INCLUDE_BOARD_H
-#define __BOARDS_ARM_J721E_BBA64_INCLUDE_BOARD_H
+#ifndef __BOARDS_ARM_J721E_BBAI64_INCLUDE_BOARD_H
+#define __BOARDS_ARM_J721E_BBAI64_INCLUDE_BOARD_H
 
 /****************************************************************************
  * Included Files
@@ -69,4 +69,4 @@ void bba64_boardinitialize(void);
 }
 #endif
 #endif /* __ASSEMBLY__ */
-#endif /* __BOARDS_ARM_J721E_BBA64_INCLUDE_BOARD_H  */
+#endif /* __BOARDS_ARM_J721E_BBAI64_INCLUDE_BOARD_H  */

@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __BOARDS_ARM_J721E_BBA64_SRC_BOARD_CONFIG_H
-#define __BOARDS_ARM_J721E_BBA64_SRC_BOARD_CONFIG_H
+#ifndef __BOARDS_ARM_J721E_BBAI64_SRC_BOARD_CONFIG_H
+#define __BOARDS_ARM_J721E_BBAI64_SRC_BOARD_CONFIG_H
 
 /****************************************************************************
  * Included Files
@@ -32,4 +32,4 @@ int mpfs_bringup(void);
 // int mpfs_board_i2c_init(void);
 // int mpfs_pwm_setup(void);
 
-#endif /* __BOARDS_ARM_J721E_BBA64_SRC_BOARD_CONFIG_H */
+#endif /* __BOARDS_ARM_J721E_BBAI64_SRC_BOARD_CONFIG_H */
