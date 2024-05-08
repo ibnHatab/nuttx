@@ -1,0 +1,51 @@
+############################################################################
+# arch/arm/src/j721e/Make.defs
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.  The
+# ASF licenses this file to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance with the
+# License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+############################################################################
+
+include armv7-r/Make.defs
+
+CFLAGS += -Wno-array-bounds
+
+CHIP_CSRCS += j721e_idle.c
+CHIP_CSRCS += j721e_irq.c
+CHIP_CSRCS += j721e_uart.c
+CHIP_CSRCS += j721e_serial.c
+CHIP_CSRCS += j721e_start.c
+CHIP_CSRCS += j721e_timerisr.c
+CHIP_CSRCS += j721e_gpio.c
+CHIP_CSRCS += j721e_clock.c
+
+
+ifeq ($(CONFIG_RP2040_PWM),y)
+CHIP_CSRCS += j721e_pwm.c
+endif
+
+ifeq ($(CONFIG_RP2040_I2C),y)
+CHIP_CSRCS += j721e_i2c.c
+endif
+
+ifeq ($(CONFIG_RP2040_I2C_SLAVE),y)
+CHIP_CSRCS += j721e_i2c_slave.c
+endif
+
+ifeq ($(CONFIG_RP2040_I2S),y)
+CHIP_CSRCS += j721e_i2s.c
+CHIP_CSRCS += j721e_i2s_pio.c
+endif
+
