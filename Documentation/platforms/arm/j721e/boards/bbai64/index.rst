@@ -1,5 +1,6 @@
-README
-======
+==================
+BeagleBone® AI-64
+==================
 
 This directory contains the port of NuttX to the BeagleBone® AI-64.
 See https://www.beagleboard.org/boards/beaglebone-ai-64 for information
