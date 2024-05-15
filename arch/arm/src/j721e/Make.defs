@@ -32,20 +32,19 @@ CHIP_CSRCS += j721e_gpio.c
 CHIP_CSRCS += j721e_clock.c
 
 
-ifeq ($(CONFIG_RP2040_PWM),y)
+ifeq ($(CONFIG_J721E_PWM),y)
 CHIP_CSRCS += j721e_pwm.c
 endif
 
-ifeq ($(CONFIG_RP2040_I2C),y)
+ifeq ($(CONFIG_J721E_SPI),y)
+CHIP_CSRCS += j721e_spi.c
+endif
+
+ifeq ($(CONFIG_J721E_PWM),y)
+CHIP_CSRCS += j721e_pwm.c
+endif
+
+
+ifeq ($(CONFIG_J721E_I2C),y)
 CHIP_CSRCS += j721e_i2c.c
 endif
-
-ifeq ($(CONFIG_RP2040_I2C_SLAVE),y)
-CHIP_CSRCS += j721e_i2c_slave.c
-endif
-
-ifeq ($(CONFIG_RP2040_I2S),y)
-CHIP_CSRCS += j721e_i2s.c
-CHIP_CSRCS += j721e_i2s_pio.c
-endif
-

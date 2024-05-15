@@ -3,6 +3,210 @@
 # see the file kconfig-language.txt in the NuttX tools repository.
 #
 
-comment "BBAI64 Configuration Options"
+comment "J721E Configuration Options"
 
 
+#####################################################################
+#  UART Configuration
+#####################################################################
+
+config J721E_UART0
+	bool "UART0"
+	default y
+	select UART0_SERIALDRIVER
+	select ARCH_HAVE_SERIAL_TERMIOS
+	---help---
+		Most UART parameters are configured here.  See also the
+		Board Selection menu to configure the pins used by UART0
+
+if J721E_UART0
+
+config J721E_UART0_BAUD
+	int "J721E UART0 BAUD"
+	default 115200
+	---help---
+		J721E UART0 communication bit rate.  The range of available
+		baud rates depend on the clock supplied to the UART. Given
+		the normally configured 125 MHz clock, the baud
+		rates between 120 and 7 812 500 baud are available.
+
+config J721E_UART0_PARITY
+	int "J721E UART0 parity"
+	default 0
+	range 0 2
+	---help---
+		J721E UART0 parity.  0=None, 1=Odd, 2=Even.  Default: None
+
+config J721E_UART0_BITS
+	int "J721E UART0 number of bits"
+	default 8
+	range 5 8
+	---help---
+		J721E UART0 number of bits.  Default: 8
+
+config J721E_UART0_2STOP
+	int "J721E UART0 two stop bits"
+	default 0
+	---help---
+		0=1 stop bit, 1=Two stop bits.  Default: 1 stop bit
+
+endif # J721E_UART0
+
+#####################################################################
+#  GPIO Configuration
+#####################################################################
+
+config J721E_GPIO
+	bool "GPIO"
+	select GPIO
+	---help---
+		Build in support for GPIO.
+
+#####################################################################
+#  I2C Configuration (Master)
+#####################################################################
+
+config J721E_I2C
+	bool "I2C Master"
+	select I2C
+	---help---
+		Build in support for I2C master mode.
+		Note: Do not configure the same port as both master and slave.
+
+if J721E_I2C
+
+config J721E_I2C0
+	bool "I2C0"
+	default n
+	---help---
+		See the Board Selection menu to configure the pins used by I2C0.
+
+config J721E_I2C1
+	bool "I2C1"
+	default n
+	---help---
+		See the Board Selection menu to configure the pins used by I2C1.
+
+config J721E_I2C_DRIVER
+	bool "I2C character driver"
+	default n
+	select I2C_DRIVER
+	---help---
+		Build in support for a character driver at /dev/i2c[N] that may be
+		used to perform I2C bus transfers from applications.  The intent of
+		this driver is to support I2C testing.  It is not suitable for use
+		in any real driver application.
+
+endif # J721E_I2C
+
+
+#####################################################################
+#  IPC Configuration
+#####################################################################
+
+menuconfig ARCH_BOARD_IPCC
+	bool "Enabled IPCC"
+	select IPCC
+	select J721E_IPCC
+	default n
+	---help---
+		Enables IPCC (inter processor communication controller)
+		to exchange data between MPU and MCU. Channels are
+		indexed from 0. IPCC will be accessible as character
+		device under "/dev/ipccN" path, where N is an ipcc channel.
+
+if ARCH_BOARD_IPCC
+
+comment "IPCC buffering is off, enable IPCC_BUFFERED to configure buffers"
+	depends on !IPCC_BUFFERED
+
+comment "IPCC channel 1 enabled by default"
+
+endif # ARCH_BOARD_IPCC
+
+#####################################################################
+#  McASP Configuration
+#####################################################################
+
+config J721E_MCASP
+	bool "MCASP"
+	select MCASP
+	---help---
+		The multichannel audio serial port (McASP) functions as a
+		general-purpose audio serial port optimized for the needs of
+		multichannel audio applications.
+
+#####################################################################
+#  Power Management (PM) Configuration
+#####################################################################
+
+config J721E_PM
+	bool "PM"
+	select PM
+	---help---
+    	The Power Management (PM) low level driver provide power and
+		thermal management capabilities for RTOS applications.
+
+
+#####################################################################
+#  SPI Configuration
+#####################################################################
+
+config J721E_SPI
+	bool "SPI Master Mode Support"
+	select SPI
+	---help---
+		SPI driver enables communication for general SPI, MCSPI
+		(Multichannel SPI), QSPI (Quad SPI) and OSPI (Octal SPI) based
+		peripherals on board through common API to application
+
+if J721E_SPI
+
+endif # J721E_SPI
+
+
+#####################################################################
+#  PWM Configuration
+#####################################################################
+
+config RP2040_PWM
+	bool "PWM"
+	select PWM
+	---help---
+		After enabling PWM support here, configure the GPIO pins to use
+		under the Board Selection menu.
+
+if J721E_EPWM
+
+config J721E_EPWM0
+	bool "PWM0"
+	---help---
+		See the Board Selection menu to configure the pins used by EPWM0.
+
+
+config J721E_EPWM1
+	bool "PWM1"
+	---help---
+		See the Board Selection menu to configure the pins used by EPWM1.
+
+config J721E_EPWM2
+	bool "PWM2"
+	---help---
+		See the Board Selection menu to configure the pins used by EPWM2.
+
+config J721E_EPWM3
+	bool "PWM3"
+	---help---
+		See the Board Selection menu to configure the pins used by EPWM3.
+
+config J721E_EPWM4
+	bool "PWM4"
+	---help---
+		See the Board Selection menu to configure the pins used by EPWM4.
+
+config J721E_EPWM5
+	bool "PWM5"
+	---help---
+		See the Board Selection menu to configure the pins used by EPWM5.
+
+endif # J721E_EPWM

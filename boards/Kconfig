@@ -314,7 +314,7 @@ config ARCH_BOARD_ESP32_2432S028
 	depends on ARCH_CHIP_ESP32WROVER
 	---help---
 	ESP32-2432S028 is an ESP32 board with LCD Display, LED RGB and SD Cards.
-	
+
 config ARCH_BOARD_LILYGO_TBEAM_LORA_GPS
 	bool "LilyGO TBeam V1.1 LoRa/GPS"
 	depends on ARCH_CHIP_ESP32WROOM32
@@ -1866,6 +1866,15 @@ config ARCH_BOARD_RASPBERRYPI_PICO
 	---help---
 		This is a port to the Raspberry Pi Pico board.
 
+config ARCH_BOARD_BBAI64
+	bool "Raspberry Pi Pico board (not W)"
+	depends on ARCH_CHIP_J721E
+	select ARCH_HAVE_LEDS
+	select ARCH_HAVE_BUTTONS
+	select ARCH_HAVE_IRQBUTTONS
+	---help---
+		This is a port to the Raspberry Pi Pico board.
+
 config ARCH_BOARD_RASPBERRYPI_PICO_W
 	bool "Raspberry Pi Pico W board"
 	depends on ARCH_CHIP_RP2040
@@ -3330,6 +3339,7 @@ config ARCH_BOARD
 	default "qemu-i486"                 if ARCH_BOARD_QEMU_I486
 	default "qemu-intel64"              if ARCH_BOARD_INTEL64_QEMU
 	default "raspberrypi-pico"          if ARCH_BOARD_RASPBERRYPI_PICO
+	default "bbai64          "          if ARCH_BOARD_BBAI64
 	default "raspberrypi-pico-w"        if ARCH_BOARD_RASPBERRYPI_PICO_W
 	default "pimoroni-tiny2040"         if ARCH_BOARD_PIMORONI_TINY2040
 	default "adafruit-feather-rp2040"   if ARCH_BOARD_ADAFRUIT_FEATHER_RP2040
@@ -3764,6 +3774,9 @@ source "boards/arm/nuc1xx/nutiny-nuc120/Kconfig"
 endif
 if ARCH_BOARD_RASPBERRYPI_PICO
 source "boards/arm/rp2040/raspberrypi-pico/Kconfig"
+endif
+if ARCH_BOARD_BBAI64
+source "boards/arm/j721e/bbai64/Kconfig"
 endif
 if ARCH_BOARD_RASPBERRYPI_PICO_W
 source "boards/arm/rp2040/raspberrypi-pico-w/Kconfig"
@@ -4483,6 +4496,9 @@ endif
 if ARCH_CHIP_RP2040
 source "boards/arm/rp2040/common/Kconfig"
 endif
+if ARCH_CHIP_J721E
+source "boards/arm/j721e/common/Kconfig"
+endif
 if ARCH_CHIP_NRF52
 source "boards/arm/nrf52/common/Kconfig"
 endif
@@ -4763,4 +4779,3 @@ config BOARD_MEMORY_RANGE
 		end: end address of memory range
 		flags: Readable 0x1, writable 0x2, executable 0x4
 		example:0x1000,0x2000,0x1,0x2000,0x3000,0x3,0x3000,0x4000,0x7
-
