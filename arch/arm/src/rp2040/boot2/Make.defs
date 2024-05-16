@@ -1,5 +1,5 @@
 ############################################################################
-# arch/arm/src/j721e/boot2/Make.defs
+# arch/arm/src/rp2040/boot2/Make.defs
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
@@ -20,12 +20,12 @@
 
 HEAD_ASRC = $(BOOT_STAGE2).S
 
-BOOT_STAGE2 = j721e_boot_stage2
+BOOT_STAGE2 = rp2040_boot_stage2
 
-CONFIG_J721E_FLASH_CHIP := $(patsubst "%",%,$(strip $(CONFIG_J721E_FLASH_CHIP)))
+CONFIG_RP2040_FLASH_CHIP := $(patsubst "%",%,$(strip $(CONFIG_RP2040_FLASH_CHIP)))
 
 BOOT2DIR = $(PICO_SDK_PATH)/src/rp2_common/boot_stage2
-BOOT2SRC = $(BOOT2DIR)/boot2_$(CONFIG_J721E_FLASH_CHIP).S
+BOOT2SRC = $(BOOT2DIR)/boot2_$(CONFIG_RP2040_FLASH_CHIP).S
 
 BOOT2CFLAGS += -DPICO_BOARD=\"pico\"
 BOOT2CFLAGS += -DPICO_BUILD=1
@@ -33,7 +33,7 @@ BOOT2CFLAGS += -DPICO_NO_HARDWARE=0
 BOOT2CFLAGS += -DPICO_ON_DEVICE=1
 BOOT2CFLAGS += -Ichip/boot2
 BOOT2CFLAGS += -I$(BOOT2DIR)/asminclude
-BOOT2CFLAGS += -I$(PICO_SDK_PATH)/src/j721e/hardware_regs/include
+BOOT2CFLAGS += -I$(PICO_SDK_PATH)/src/rp2040/hardware_regs/include
 BOOT2CFLAGS += -I$(PICO_SDK_PATH)/src/rp2_common/hardware_base/include
 BOOT2CFLAGS += -I$(PICO_SDK_PATH)/src/common/pico_base/include
 BOOT2CFLAGS += -I$(PICO_SDK_PATH)/src/boards/include
