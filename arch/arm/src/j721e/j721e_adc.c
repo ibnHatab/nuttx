@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_adc.c
+ * arch/arm/src/j721e/j721e_adc.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -22,13 +22,13 @@
  * Notes:
  *    The ADC driver upper-half returns signed values of up to 32-bits to
  *    the user and expects the high-order bits in any result to be
- *    significant.  So, while the RP2040 hardware returns an unsigned value
+ *    significant.  So, while the J721E hardware returns an unsigned value
  *    in the low-order 12 bits of the result register, we shift this
  *    value to the high-order bits.
  *
  *    The result is that to convert a 32-bit value returned from the ADC
  *    driver, you should use   V = ADC_AVDD * value / (2^31)  where ADC_AVDD
- *    is the analogue reference voltage supplied to the RP2040 chip.  If
+ *    is the analogue reference voltage supplied to the J721E chip.  If
  *    8 or 16 bit values are returned the divisor would be (2^15) or (2^7)
  *    respectively.
  *
@@ -57,7 +57,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <rp2040_adc.h>
+#include <j721e_adc.h>
 
 #include <stdlib.h>
 #include <fcntl.h>
@@ -67,14 +67,14 @@
 
 #include "arm_internal.h"
 
-#include <rp2040_gpio.h>
+#include <j721e_gpio.h>
 
-#include <hardware/rp2040_adc.h>
+#include <hardware/j721e_adc.h>
 
 #include <nuttx/analog/adc.h>
 #include <nuttx/kmalloc.h>
 
-#ifdef CONFIG_RP2040_ADC
+#ifdef CONFIG_J721E_ADC
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -171,19 +171,19 @@ static int interrupt_handler(int irq, void *context, void *arg)
     {
       /* Last device has been removed -- turn off ADC */
 
-      putreg32(0, RP2040_ADC_CS);
+      putreg32(0, J721E_ADC_CS);
 
-      putreg32(0, RP2040_ADC_INTE);
+      putreg32(0, J721E_ADC_INTE);
 
-      up_disable_irq(RP2040_ADC_IRQ_FIFO);
+      up_disable_irq(J721E_ADC_IRQ_FIFO);
 
-      irq_detach(RP2040_ADC_IRQ_FIFO);
+      irq_detach(J721E_ADC_IRQ_FIFO);
 
       /* Flush the FIFO */
 
-      while (getreg32(RP2040_ADC_FCS) & RP2040_ADC_FCS_LEVEL_MASK)
+      while (getreg32(J721E_ADC_FCS) & J721E_ADC_FCS_LEVEL_MASK)
         {
-          getreg32(RP2040_ADC_FIFO);
+          getreg32(J721E_ADC_FIFO);
         }
 
       return OK;
@@ -191,8 +191,8 @@ static int interrupt_handler(int irq, void *context, void *arg)
 
   /* Fetch the data from the FIFO register */
 
-  value         = getreg32(RP2040_ADC_FIFO);
-  error_bit_set = (value & RP2040_ADC_FIFO_ERR) != 0;
+  value         = getreg32(J721E_ADC_FIFO);
+  error_bit_set = (value & J721E_ADC_FIFO_ERR) != 0;
 
   /* Shift value to top of signed 32-bit word for upper-halfs benefit. */
 
@@ -261,32 +261,32 @@ static void get_next_channel(void)
             {
               g_current_channel = next;
 
-              while (getreg32(RP2040_ADC_FCS)
-                     & RP2040_ADC_FCS_LEVEL_MASK)
+              while (getreg32(J721E_ADC_FCS)
+                     & J721E_ADC_FCS_LEVEL_MASK)
                 {
-                  getreg32(RP2040_ADC_FIFO);
+                  getreg32(J721E_ADC_FIFO);
                 }
 
               /* Enable Interrupt on ADC Completion */
 
-              putreg32(RP2040_ADC_INTE_FIFO, RP2040_ADC_INTE);
+              putreg32(J721E_ADC_INTE_FIFO, J721E_ADC_INTE);
 
               /* Configure CS to read one value from current channel */
 
-              value =   (g_current_channel << RP2040_ADC_CS_AINSEL_SHIFT)
-                      | RP2040_ADC_CS_EN;
+              value =   (g_current_channel << J721E_ADC_CS_AINSEL_SHIFT)
+                      | J721E_ADC_CS_EN;
 
               if (g_current_channel == ADC_TEMP_CHANNEL)
                 {
-                  value |= RP2040_ADC_CS_TS_ENA;
+                  value |= J721E_ADC_CS_TS_ENA;
                 }
 
-              putreg32(value, RP2040_ADC_CS);
+              putreg32(value, J721E_ADC_CS);
 
-              while ((getreg32(RP2040_ADC_CS)
-                      & RP2040_ADC_CS_READY) == 0)
+              while ((getreg32(J721E_ADC_CS)
+                      & J721E_ADC_CS_READY) == 0)
                 {
-                  /* Wait for ready to go high.  The rp2040 docs
+                  /* Wait for ready to go high.  The j721e docs
                    * say this is only a few clock cycles so we'll
                    * just busy wait.
                    */
@@ -294,9 +294,9 @@ static void get_next_channel(void)
 
               /* Start the conversion */
 
-              value += RP2040_ADC_CS_START_ONCE;
+              value += J721E_ADC_CS_START_ONCE;
 
-              putreg32(value, RP2040_ADC_CS);
+              putreg32(value, J721E_ADC_CS);
 
               return;
             }
@@ -344,23 +344,23 @@ static void add_device(struct adc_dev_s *dev)
 
       /* Make sure ADC interrupts are disabled */
 
-      putreg32(0, RP2040_ADC_INTE);
+      putreg32(0, J721E_ADC_INTE);
 
       /* Configure FCS to use FIFO and interrupt on first value */
 
-      value =   (1 << RP2040_ADC_FCS_THRESH_SHIFT)
-              | RP2040_ADC_FCS_OVER
-              | RP2040_ADC_FCS_UNDER
-              | RP2040_ADC_FCS_ERR
-              | RP2040_ADC_FCS_EN;
+      value =   (1 << J721E_ADC_FCS_THRESH_SHIFT)
+              | J721E_ADC_FCS_OVER
+              | J721E_ADC_FCS_UNDER
+              | J721E_ADC_FCS_ERR
+              | J721E_ADC_FCS_EN;
 
-      putreg32(value, RP2040_ADC_FCS);
+      putreg32(value, J721E_ADC_FCS);
 
       /* Set up for interrupts */
 
-      irq_attach(RP2040_ADC_IRQ_FIFO, interrupt_handler, NULL);
+      irq_attach(J721E_ADC_IRQ_FIFO, interrupt_handler, NULL);
 
-      up_enable_irq(RP2040_ADC_IRQ_FIFO);
+      up_enable_irq(J721E_ADC_IRQ_FIFO);
 
       /* Start conversions on first required channel.  */
 
@@ -466,9 +466,9 @@ static void my_reset(struct adc_dev_s *dev)
 
       if (a_gpio >= 0)
         {
-          rp2040_gpio_setdir(a_gpio, false);
-          rp2040_gpio_set_function(a_gpio, RP2040_GPIO_FUNC_NULL);
-          rp2040_gpio_set_pulls(a_gpio, false, false);
+          j721e_gpio_setdir(a_gpio, false);
+          j721e_gpio_set_function(a_gpio, J721E_GPIO_FUNC_NULL);
+          j721e_gpio_set_pulls(a_gpio, false, false);
         }
     }
 }
@@ -592,11 +592,11 @@ static int my_ioctl(struct adc_dev_s *dev,
  *   read_temp - This device reads the chip temperature.
  *
  * Returned Value:
- *   An opaque pointer that can be passed to rp2040_adc_release on
+ *   An opaque pointer that can be passed to j721e_adc_release on
  *   success or NULL (with errno set) on failure
  ****************************************************************************/
 
-int rp2040_adc_setup(const char *path,
+int j721e_adc_setup(const char *path,
                      bool        read_adc0,
                      bool        read_adc1,
                      bool        read_adc2,
@@ -647,4 +647,4 @@ int rp2040_adc_setup(const char *path,
 }
 
 #endif /* if CONFIG_ADC */
-#endif /* if CONFIG_RP2040_ADC */
+#endif /* if CONFIG_J721E_ADC */

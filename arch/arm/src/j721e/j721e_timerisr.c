@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_timerisr.c
+ * arch/arm/src/j721e/j721e_timerisr.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -65,7 +65,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- * Function:  rp2040_timerisr
+ * Function:  j721e_timerisr
  *
  * Description:
  *   The timer ISR will perform a variety of services for various portions
@@ -73,7 +73,7 @@
  *
  ****************************************************************************/
 
-static int rp2040_timerisr(int irq, uint32_t *regs, void *arg)
+static int j721e_timerisr(int irq, uint32_t *regs, void *arg)
 {
   /* Process timer interrupt */
 
@@ -112,7 +112,7 @@ void up_timer_initialize(void)
 
   /* Attach the timer interrupt vector */
 
-  irq_attach(RP2040_IRQ_SYSTICK, (xcpt_t)rp2040_timerisr, NULL);
+  irq_attach(J721E_IRQ_SYSTICK, (xcpt_t)j721e_timerisr, NULL);
 
   /* Enable SysTick interrupts. */
 
@@ -120,5 +120,5 @@ void up_timer_initialize(void)
 
   /* And enable the timer interrupt */
 
-  up_enable_irq(RP2040_IRQ_SYSTICK);
+  up_enable_irq(J721E_IRQ_SYSTICK);
 }

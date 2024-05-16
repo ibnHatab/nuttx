@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_ws2812.h
+ * arch/arm/src/j721e/j721e_ws2812.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_RP2040_WS2812_H
-#define __ARCH_ARM_SRC_RP2040_RP2040_WS2812_H
+#ifndef __ARCH_ARM_SRC_J721E_J721E_WS2812_H
+#define __ARCH_ARM_SRC_J721E_J721E_WS2812_H
 
 /****************************************************************************
  * Included Files
@@ -45,7 +45,7 @@ extern "C"
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_ws2812_setup
+ * Name: j721e_ws2812_setup
  *
  * Description:
  *   Initialize and register the ws2812 driver.
@@ -58,18 +58,18 @@ extern "C"
  *   Whether ws2812s have white LEDs
  *
  * Returned Value:
- *   An opaque pointer that can be passed to rp2040_ws2812_teardown on
+ *   An opaque pointer that can be passed to j721e_ws2812_teardown on
  *   success or NULL (with errno set) on failure
  ****************************************************************************/
 
-void * rp2040_ws2812_setup(const char *path,
+void * j721e_ws2812_setup(const char *path,
                            int         port,
                            int         power_pin,
                            uint16_t    pixel_count,
                            bool        has_white);
 
 /****************************************************************************
- * Name: rp2040_ws2812_release
+ * Name: j721e_ws2812_release
  *
  * Description:
  *   This function releases the internal memory structures created when
@@ -77,14 +77,14 @@ void * rp2040_ws2812_setup(const char *path,
  *   is open when it is called.
  *
  * Input Parameters:
- *   driver      - Opaque pointer returned by rp2040_ws2812_setup.
+ *   driver      - Opaque pointer returned by j721e_ws2812_setup.
  *
  * Returned Value:
  *   OK on success or an ERROR on failure
  *
  ****************************************************************************/
 
-int rp2040_ws2812_release(void * driver);
+int j721e_ws2812_release(void * driver);
 
 #endif
 
@@ -94,4 +94,4 @@ int rp2040_ws2812_release(void * driver);
 #endif
 
 #endif /* __ASSEMBLY__ */
-#endif /* __ARCH_ARM_SRC_RP2040_RP2040_WS2812_H */
+#endif /* __ARCH_ARM_SRC_J721E_J721E_WS2812_H */

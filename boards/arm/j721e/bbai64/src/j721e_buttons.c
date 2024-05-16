@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/rp2040/raspberrypi-pico/src/rp2040_buttons.c
+ * boards/arm/j721e/bbai64/src/j721e_buttons.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -31,8 +31,8 @@
 #include <nuttx/board.h>
 #include <arch/board/board.h>
 
-#include "rp2040_gpio.h"
-#include "rp2040_pico.h"
+#include "j721e_gpio.h"
+#include "j721e_pico.h"
 
 #if defined(CONFIG_ARCH_BUTTONS)
 
@@ -48,7 +48,7 @@
  * Private Functions
  ****************************************************************************/
 
-/* Pin configuration for external raspberrypi-pico buttons. */
+/* Pin configuration for external bbai64 buttons. */
 
 static const uint32_t g_buttons[NUM_BUTTONS] =
 {
@@ -80,11 +80,11 @@ uint32_t board_button_initialize(void)
     {
       /* Initialize input pin */
 
-      rp2040_gpio_init(g_buttons[i]);
+      j721e_gpio_init(g_buttons[i]);
 
       /* pull-up = false : pull-down = false */
 
-      rp2040_gpio_set_pulls(g_buttons[i], false, false);
+      j721e_gpio_set_pulls(g_buttons[i], false, false);
     }
 
   return NUM_BUTTONS;
@@ -105,7 +105,7 @@ uint32_t board_buttons(void)
     {
       /* A LOW value means that the key is pressed. */
 
-      bool released = rp2040_gpio_get(g_buttons[i]);
+      bool released = j721e_gpio_get(g_buttons[i]);
 
       /* Accumulate the set of depressed (not released) keys */
 
@@ -151,12 +151,12 @@ int board_button_irq(int id, xcpt_t irqhandler, void *arg)
     {
       /* Make sure the interrupt is disabled */
 
-      rp2040_gpio_disable_irq(g_buttons[id]);
+      j721e_gpio_disable_irq(g_buttons[id]);
 
       /* Attach the interrupt handler */
 
-      ret = rp2040_gpio_irq_attach(g_buttons[id],
-                                   RP2040_GPIO_INTR_EDGE_LOW,
+      ret = j721e_gpio_irq_attach(g_buttons[id],
+                                   J721E_GPIO_INTR_EDGE_LOW,
                                    irqhandler,
                                    arg);
       if (ret < 0)
@@ -167,7 +167,7 @@ int board_button_irq(int id, xcpt_t irqhandler, void *arg)
 
       /* Enable interruption for this pin */
 
-      rp2040_gpio_enable_irq(g_buttons[id]);
+      j721e_gpio_enable_irq(g_buttons[id]);
     }
 
   return ret;

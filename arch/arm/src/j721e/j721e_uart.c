@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_uart.c
+ * arch/arm/src/j721e/j721e_uart.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -33,8 +33,8 @@
 
 #include "arm_internal.h"
 #include "chip.h"
-#include "rp2040_config.h"
-#include "rp2040_uart.h"
+#include "j721e_config.h"
+#include "j721e_uart.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -43,14 +43,14 @@
 /* Select UART parameters for the selected console */
 
 #if defined(CONFIG_UART0_SERIAL_CONSOLE)
- #define CONSOLE_BASE     RP2040_UART0_BASE
+ #define CONSOLE_BASE     J721E_UART0_BASE
  #define CONSOLE_BASEFREQ BOARD_UART_BASEFREQ
  #define CONSOLE_BAUD     CONFIG_UART0_BAUD
  #define CONSOLE_BITS     CONFIG_UART0_BITS
  #define CONSOLE_PARITY   CONFIG_UART0_PARITY
  #define CONSOLE_2STOP    CONFIG_UART0_2STOP
 #elif defined(CONFIG_UART1_SERIAL_CONSOLE)
- #define CONSOLE_BASE     RP2040_UART1_BASE
+ #define CONSOLE_BASE     J721E_UART1_BASE
  #define CONSOLE_BASEFREQ BOARD_UART_BASEFREQ
  #define CONSOLE_BAUD     CONFIG_UART1_BAUD
  #define CONSOLE_BITS     CONFIG_UART1_BITS
@@ -64,7 +64,7 @@
 
 #if defined(HAVE_CONSOLE)
  #if CONSOLE_BITS >= 5 && CONSOLE_BITS <= 8
-  #define CONSOLE_LCR_WLS RP2040_UART_LCR_H_WLEN(CONSOLE_BITS)
+  #define CONSOLE_LCR_WLS J721E_UART_LCR_H_WLEN(CONSOLE_BITS)
  #else
   #error "Invalid CONFIG_UARTn_BITS setting for console "
  #endif
@@ -76,9 +76,9 @@
  #if CONSOLE_PARITY == 0
   #define CONSOLE_LCR_PAR 0
  #elif CONSOLE_PARITY == 1
-  #define CONSOLE_LCR_PAR (RP2040_UART_UARTLCR_H_PEN)
+  #define CONSOLE_LCR_PAR (J721E_UART_UARTLCR_H_PEN)
  #elif CONSOLE_PARITY == 2
-  #define CONSOLE_LCR_PAR (RP2040_UART_UARTLCR_H_PEN | RP2040_UART_UARTLCR_H_EPS)
+  #define CONSOLE_LCR_PAR (J721E_UART_UARTLCR_H_PEN | J721E_UART_UARTLCR_H_EPS)
  #else
   #error "Invalid CONFIG_UARTn_PARITY setting for CONSOLE"
  #endif
@@ -88,7 +88,7 @@
 
 #if defined(HAVE_CONSOLE)
  #if CONSOLE_2STOP != 0
-  #define CONSOLE_LCR_STOP RP2040_UART_UARTLCR_H_STP2
+  #define CONSOLE_LCR_STOP J721E_UART_UARTLCR_H_STP2
  #else
   #define CONSOLE_LCR_STOP 0
  #endif
@@ -135,18 +135,18 @@ void arm_lowputc(char ch)
 #if defined HAVE_UART && defined HAVE_CONSOLE
   /* Wait for the transmitter to be available */
 
-  while ((getreg32(CONSOLE_BASE + RP2040_UART_UARTFR_OFFSET) &
-          RP2040_UART_UARTFR_TXFF))
+  while ((getreg32(CONSOLE_BASE + J721E_UART_UARTFR_OFFSET) &
+          J721E_UART_UARTFR_TXFF))
     ;
 
   /* Send the character */
 
-  putreg32((uint32_t)ch, CONSOLE_BASE + RP2040_UART_UARTDR_OFFSET);
+  putreg32((uint32_t)ch, CONSOLE_BASE + J721E_UART_UARTDR_OFFSET);
 #endif
 }
 
 /****************************************************************************
- * Name: rp2040_lowsetup
+ * Name: j721e_lowsetup
  *
  * Description:
  *   This performs basic initialization of the UART used for the serial
@@ -155,32 +155,32 @@ void arm_lowputc(char ch)
  *
  ****************************************************************************/
 
-void rp2040_lowsetup(void)
+void j721e_lowsetup(void)
 {
 #if defined(HAVE_CONSOLE) && !defined(CONFIG_SUPPRESS_UART_CONFIG)
   uint32_t cr;
 
-  cr = getreg32(CONSOLE_BASE + RP2040_UART_UARTCR_OFFSET);
-  putreg32(cr & ~RP2040_UART_UARTCR_UARTEN,
-           CONSOLE_BASE + RP2040_UART_UARTCR_OFFSET);
+  cr = getreg32(CONSOLE_BASE + J721E_UART_UARTCR_OFFSET);
+  putreg32(cr & ~J721E_UART_UARTCR_UARTEN,
+           CONSOLE_BASE + J721E_UART_UARTCR_OFFSET);
 
-  putreg32(CONSOLE_LCR_VALUE, CONSOLE_BASE + RP2040_UART_UARTLCR_H_OFFSET);
-  rp2040_setbaud(CONSOLE_BASE, CONSOLE_BASEFREQ, CONSOLE_BAUD);
-  putreg32(0, CONSOLE_BASE + RP2040_UART_UARTIFLS_OFFSET);
-  putreg32(RP2040_UART_INTR_ALL, CONSOLE_BASE + RP2040_UART_UARTICR_OFFSET);
+  putreg32(CONSOLE_LCR_VALUE, CONSOLE_BASE + J721E_UART_UARTLCR_H_OFFSET);
+  j721e_setbaud(CONSOLE_BASE, CONSOLE_BASEFREQ, CONSOLE_BAUD);
+  putreg32(0, CONSOLE_BASE + J721E_UART_UARTIFLS_OFFSET);
+  putreg32(J721E_UART_INTR_ALL, CONSOLE_BASE + J721E_UART_UARTICR_OFFSET);
 
-  cr |= RP2040_UART_UARTCR_RXE | RP2040_UART_UARTCR_TXE |
-        RP2040_UART_UARTCR_UARTEN;
-  putreg32(cr, CONSOLE_BASE + RP2040_UART_UARTCR_OFFSET);
+  cr |= J721E_UART_UARTCR_RXE | J721E_UART_UARTCR_TXE |
+        J721E_UART_UARTCR_UARTEN;
+  putreg32(cr, CONSOLE_BASE + J721E_UART_UARTCR_OFFSET);
 #endif
 }
 
 /****************************************************************************
- * Name: rp2040_setbaud
+ * Name: j721e_setbaud
  *
  ****************************************************************************/
 
-void rp2040_setbaud(uintptr_t uartbase, uint32_t basefreq, uint32_t baud)
+void j721e_setbaud(uintptr_t uartbase, uint32_t basefreq, uint32_t baud)
 {
   uint32_t ibrd;
   uint32_t fbrd;
@@ -203,13 +203,13 @@ void rp2040_setbaud(uintptr_t uartbase, uint32_t basefreq, uint32_t baud)
       goto finish;
     }
 
-  putreg32(ibrd, uartbase + RP2040_UART_UARTIBRD_OFFSET);
-  putreg32(fbrd, uartbase + RP2040_UART_UARTFBRD_OFFSET);
+  putreg32(ibrd, uartbase + J721E_UART_UARTIBRD_OFFSET);
+  putreg32(fbrd, uartbase + J721E_UART_UARTFBRD_OFFSET);
 
   /* Baud rate is updated by writing to LCR_H */
 
-  lcr_h = getreg32(uartbase + RP2040_UART_UARTLCR_H_OFFSET);
-  putreg32(lcr_h, uartbase + RP2040_UART_UARTLCR_H_OFFSET);
+  lcr_h = getreg32(uartbase + J721E_UART_UARTLCR_H_OFFSET);
+  putreg32(lcr_h, uartbase + J721E_UART_UARTLCR_H_OFFSET);
 
 finish:
   spin_unlock_irqrestore(NULL, flags);

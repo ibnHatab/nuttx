@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_pwm.h
+ * arch/arm/src/j721e/j721e_pwm.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,15 +18,15 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_RP2040_PWM_H
-#define __ARCH_ARM_SRC_RP2040_RP2040_PWM_H
+#ifndef __ARCH_ARM_SRC_J721E_J721E_PWM_H
+#define __ARCH_ARM_SRC_J721E_J721E_PWM_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
-#include "hardware/rp2040_pwm.h"
+#include "hardware/j721e_pwm.h"
 #include "nuttx/timers/pwm.h"
 
 #ifndef __ASSEMBLY__
@@ -40,7 +40,7 @@ extern "C"
 
 /* This structure represents the state of one PWM timer */
 
-struct rp2040_pwm_lowerhalf_s
+struct j721e_pwm_lowerhalf_s
 {
   const struct pwm_ops_s   * ops;        /* PWM operations */
 
@@ -65,11 +65,11 @@ struct rp2040_pwm_lowerhalf_s
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_pwm_initialize
+ * Name: j721e_pwm_initialize
  *
  * Description:
  *   Initialize the selected PWM port. And return a unique instance of struct
- *   struct rp2040_pwm_lowerhalf_s.  This function may be called to obtain
+ *   struct j721e_pwm_lowerhalf_s.  This function may be called to obtain
  *   multiple instances of the interface, each of which may be set up with a
  *   different frequency and address.
  *
@@ -84,24 +84,24 @@ struct rp2040_pwm_lowerhalf_s
  ****************************************************************************/
 
 #if defined(CONFIG_PWM_NCHANNELS) && CONFIG_PWM_NCHANNELS == 2
-struct rp2040_pwm_lowerhalf_s *rp2040_pwm_initialize(int      port,
+struct j721e_pwm_lowerhalf_s *j721e_pwm_initialize(int      port,
                                                      int      pin_a,
                                                      int      pin_b,
                                                      uint32_t flags);
 #else
-struct rp2040_pwm_lowerhalf_s *rp2040_pwm_initialize(int      port,
+struct j721e_pwm_lowerhalf_s *j721e_pwm_initialize(int      port,
                                                      int      pin,
                                                      uint32_t flags);
 #endif
 
 /****************************************************************************
- * Name: rp2040_pwmdev_uninitialize
+ * Name: j721e_pwmdev_uninitialize
  *
  * Description:
  *   De-initialize the selected pwm port, and power down the device.
  *
  * Input Parameter:
- *   Device structure as returned by the rp2040_pwmdev_initialize()
+ *   Device structure as returned by the j721e_pwmdev_initialize()
  *
  * Returned Value:
  *   OK on success, ERROR when internal reference count mismatch or dev
@@ -109,7 +109,7 @@ struct rp2040_pwm_lowerhalf_s *rp2040_pwm_initialize(int      port,
  *
  ****************************************************************************/
 
-int rp2040_pwm_uninitialize(struct pwm_lowerhalf_s *dev);
+int j721e_pwm_uninitialize(struct pwm_lowerhalf_s *dev);
 
 #undef EXTERN
 #if defined(__cplusplus)
@@ -117,4 +117,4 @@ int rp2040_pwm_uninitialize(struct pwm_lowerhalf_s *dev);
 #endif
 
 #endif /* __ASSEMBLY__ */
-#endif /* __ARCH_ARM_SRC_RP2040_RP2040_I2C_H */
+#endif /* __ARCH_ARM_SRC_J721E_J721E_I2C_H */

@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_irq.c
+ * arch/arm/src/j721e/j721e_irq.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #ifdef CONFIG_SMP
-extern void rp2040_send_irqreq(int irqreq);
+extern void j721e_send_irqreq(int irqreq);
 #endif
 
 #if defined(CONFIG_SMP) && CONFIG_ARCH_INTERRUPTSTACK > 7
@@ -81,7 +81,7 @@ const uint32_t g_cpu_intstack_top[CONFIG_SMP_NCPUS] =
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_dumpnvic
+ * Name: j721e_dumpnvic
  *
  * Description:
  *   Dump some interesting NVIC registers
@@ -89,7 +89,7 @@ const uint32_t g_cpu_intstack_top[CONFIG_SMP_NCPUS] =
  ****************************************************************************/
 
 #if defined(CONFIG_DEBUG_IRQ_INFO)
-static void rp2040_dumpnvic(const char *msg, int irq)
+static void j721e_dumpnvic(const char *msg, int irq)
 {
   irqstate_t flags;
 
@@ -121,12 +121,12 @@ static void rp2040_dumpnvic(const char *msg, int irq)
 }
 
 #else
-#  define rp2040_dumpnvic(msg, irq)
+#  define j721e_dumpnvic(msg, irq)
 #endif
 
 /****************************************************************************
- * Name: rp2040_nmi, rp2040_busfault, rp2040_usagefault, rp2040_pendsv,
- *       rp2040_dbgmonitor, rp2040_pendsv, rp2040_reserved
+ * Name: j721e_nmi, j721e_busfault, j721e_usagefault, j721e_pendsv,
+ *       j721e_dbgmonitor, j721e_pendsv, j721e_reserved
  *
  * Description:
  *   Handlers for various exceptions.  None are handled and all are fatal
@@ -136,7 +136,7 @@ static void rp2040_dumpnvic(const char *msg, int irq)
  ****************************************************************************/
 
 #ifdef CONFIG_DEBUG_FEATURES
-static int rp2040_nmi(int irq, void *context, void *arg)
+static int j721e_nmi(int irq, void *context, void *arg)
 {
   up_irq_save();
   _err("PANIC!!! NMI received\n");
@@ -144,7 +144,7 @@ static int rp2040_nmi(int irq, void *context, void *arg)
   return 0;
 }
 
-static int rp2040_pendsv(int irq, void *context, void *arg)
+static int j721e_pendsv(int irq, void *context, void *arg)
 {
   up_irq_save();
   _err("PANIC!!! PendSV received\n");
@@ -152,7 +152,7 @@ static int rp2040_pendsv(int irq, void *context, void *arg)
   return 0;
 }
 
-static int rp2040_reserved(int irq, void *context, void *arg)
+static int j721e_reserved(int irq, void *context, void *arg)
 {
   up_irq_save();
   _err("PANIC!!! Reserved interrupt\n");
@@ -162,14 +162,14 @@ static int rp2040_reserved(int irq, void *context, void *arg)
 #endif
 
 /****************************************************************************
- * Name: rp2040_clrpend
+ * Name: j721e_clrpend
  *
  * Description:
  *   Clear a pending interrupt at the NVIC.
  *
  ****************************************************************************/
 
-static inline void rp2040_clrpend(int irq)
+static inline void j721e_clrpend(int irq)
 {
   /* This will be called on each interrupt exit whether the interrupt can be
    * enambled or not.  So this assertion is necessarily lame.
@@ -179,13 +179,13 @@ static inline void rp2040_clrpend(int irq)
 
   /* Check for an external interrupt */
 
-  if (irq >= RP2040_IRQ_EXTINT && irq < RP2040_IRQ_EXTINT + 32)
+  if (irq >= J721E_IRQ_EXTINT && irq < J721E_IRQ_EXTINT + 32)
     {
       /* Set the appropriate bit in the ISER register to enable the
        * interrupt
        */
 
-      putreg32((1 << (irq - RP2040_IRQ_EXTINT)), ARMV6M_NVIC_ICPR);
+      putreg32((1 << (irq - J721E_IRQ_EXTINT)), ARMV6M_NVIC_ICPR);
     }
 }
 
@@ -243,18 +243,18 @@ void up_irqinitialize(void)
    * under certain conditions.
    */
 
-  irq_attach(RP2040_IRQ_SVCALL, arm_svcall, NULL);
-  irq_attach(RP2040_IRQ_HARDFAULT, arm_hardfault, NULL);
+  irq_attach(J721E_IRQ_SVCALL, arm_svcall, NULL);
+  irq_attach(J721E_IRQ_HARDFAULT, arm_hardfault, NULL);
 
   /* Attach all other processor exceptions (except reset and sys tick) */
 
 #ifdef CONFIG_DEBUG_FEATURES
-  irq_attach(RP2040_IRQ_NMI, rp2040_nmi, NULL);
-  irq_attach(RP2040_IRQ_PENDSV, rp2040_pendsv, NULL);
-  irq_attach(RP2040_IRQ_RESERVED, rp2040_reserved, NULL);
+  irq_attach(J721E_IRQ_NMI, j721e_nmi, NULL);
+  irq_attach(J721E_IRQ_PENDSV, j721e_pendsv, NULL);
+  irq_attach(J721E_IRQ_RESERVED, j721e_reserved, NULL);
 #endif
 
-  rp2040_dumpnvic("initial", NR_IRQS);
+  j721e_dumpnvic("initial", NR_IRQS);
 
   /* And finally, enable interrupts */
 
@@ -276,35 +276,35 @@ void up_disable_irq(int irq)
   DEBUGASSERT((unsigned)irq < NR_IRQS);
 
 #ifdef CONFIG_SMP
-  if (irq >= RP2040_IRQ_EXTINT && irq != RP2040_SIO_IRQ_PROC1 &&
+  if (irq >= J721E_IRQ_EXTINT && irq != J721E_SIO_IRQ_PROC1 &&
       up_cpu_index() != 0)
     {
       /* Must be handled by Core 0 */
 
-      rp2040_send_irqreq(-irq);
+      j721e_send_irqreq(-irq);
       return;
     }
 #endif
 
   /* Check for an external interrupt */
 
-  if (irq >= RP2040_IRQ_EXTINT && irq < RP2040_IRQ_EXTINT + 32)
+  if (irq >= J721E_IRQ_EXTINT && irq < J721E_IRQ_EXTINT + 32)
     {
       /* Set the appropriate bit in the ICER register to disable the
        * interrupt
        */
 
-      putreg32((1 << (irq - RP2040_IRQ_EXTINT)), ARMV6M_NVIC_ICER);
+      putreg32((1 << (irq - J721E_IRQ_EXTINT)), ARMV6M_NVIC_ICER);
     }
 
   /* Handle processor exceptions.  Only SysTick can be disabled */
 
-  else if (irq == RP2040_IRQ_SYSTICK)
+  else if (irq == J721E_IRQ_SYSTICK)
     {
       modifyreg32(ARMV6M_SYSTICK_CSR, SYSTICK_CSR_ENABLE, 0);
     }
 
-  rp2040_dumpnvic("disable", irq);
+  j721e_dumpnvic("disable", irq);
 }
 
 /****************************************************************************
@@ -324,35 +324,35 @@ void up_enable_irq(int irq)
   DEBUGASSERT((unsigned)irq < NR_IRQS);
 
 #ifdef CONFIG_SMP
-  if (irq >= RP2040_IRQ_EXTINT && irq != RP2040_SIO_IRQ_PROC1 &&
+  if (irq >= J721E_IRQ_EXTINT && irq != J721E_SIO_IRQ_PROC1 &&
       up_cpu_index() != 0)
     {
       /* Must be handled by Core 0 */
 
-      rp2040_send_irqreq(irq);
+      j721e_send_irqreq(irq);
       return;
     }
 #endif
 
   /* Check for external interrupt */
 
-  if (irq >= RP2040_IRQ_EXTINT && irq < RP2040_IRQ_EXTINT + 32)
+  if (irq >= J721E_IRQ_EXTINT && irq < J721E_IRQ_EXTINT + 32)
     {
       /* Set the appropriate bit in the ISER register to enable the
        * interrupt
        */
 
-      putreg32((1 << (irq - RP2040_IRQ_EXTINT)), ARMV6M_NVIC_ISER);
+      putreg32((1 << (irq - J721E_IRQ_EXTINT)), ARMV6M_NVIC_ISER);
     }
 
   /* Handle processor exceptions.  Only SysTick can be disabled */
 
-  else if (irq == RP2040_IRQ_SYSTICK)
+  else if (irq == J721E_IRQ_SYSTICK)
     {
       modifyreg32(ARMV6M_SYSTICK_CSR, 0, SYSTICK_CSR_ENABLE);
     }
 
-  rp2040_dumpnvic("enable", irq);
+  j721e_dumpnvic("enable", irq);
 }
 
 /****************************************************************************
@@ -365,7 +365,7 @@ void up_enable_irq(int irq)
 
 void arm_ack_irq(int irq)
 {
-  rp2040_clrpend(irq);
+  j721e_clrpend(irq);
 }
 
 /****************************************************************************
@@ -386,16 +386,16 @@ int up_prioritize_irq(int irq, int priority)
   uint32_t regval;
   int shift;
 
-  DEBUGASSERT(irq == RP2040_IRQ_SVCALL ||
-              irq == RP2040_IRQ_PENDSV ||
-              irq == RP2040_IRQ_SYSTICK ||
-             (irq >= RP2040_IRQ_EXTINT && irq < NR_IRQS));
+  DEBUGASSERT(irq == J721E_IRQ_SVCALL ||
+              irq == J721E_IRQ_PENDSV ||
+              irq == J721E_IRQ_SYSTICK ||
+             (irq >= J721E_IRQ_EXTINT && irq < NR_IRQS));
   DEBUGASSERT(priority >= NVIC_SYSH_PRIORITY_MAX &&
               priority <= NVIC_SYSH_PRIORITY_MIN);
 
   /* Check for external interrupt */
 
-  if (irq >= RP2040_IRQ_EXTINT && irq < RP2040_IRQ_EXTINT + 32)
+  if (irq >= J721E_IRQ_EXTINT && irq < J721E_IRQ_EXTINT + 32)
     {
       /* ARMV6M_NVIC_IPR() maps register IPR0-IPR7 with four settings per
        * register.
@@ -410,12 +410,12 @@ int up_prioritize_irq(int irq, int priority)
    * this function.
    */
 
-  else if (irq == RP2040_IRQ_PENDSV)
+  else if (irq == J721E_IRQ_PENDSV)
     {
       regaddr = ARMV6M_SYSCON_SHPR2;
       shift   = SYSCON_SHPR3_PRI_14_SHIFT;
     }
-  else if (irq == RP2040_IRQ_SYSTICK)
+  else if (irq == J721E_IRQ_SYSTICK)
     {
       regaddr = ARMV6M_SYSCON_SHPR2;
       shift   = SYSCON_SHPR3_PRI_15_SHIFT;
@@ -432,7 +432,7 @@ int up_prioritize_irq(int irq, int priority)
   regval |= ((uint32_t)priority << shift);
   putreg32(regval, regaddr);
 
-  rp2040_dumpnvic("prioritize", irq);
+  j721e_dumpnvic("prioritize", irq);
   return OK;
 }
 #endif

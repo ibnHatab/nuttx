@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_spi.h
+ * arch/arm/src/j721e/j721e_spi.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_RP2040_SPI_H
-#define __ARCH_ARM_SRC_RP2040_RP2040_SPI_H
+#ifndef __ARCH_ARM_SRC_J721E_J721E_SPI_H
+#define __ARCH_ARM_SRC_J721E_J721E_SPI_H
 
 /****************************************************************************
  * Included Files
@@ -27,12 +27,12 @@
 
 #include <nuttx/config.h>
 #include <nuttx/spi/spi.h>
-#include "hardware/rp2040_spi.h"
-#ifdef CONFIG_RP2040_SPI_DMA
-#include "rp2040_dmac.h"
+#include "hardware/j721e_spi.h"
+#ifdef CONFIG_J721E_SPI_DMA
+#include "j721e_dmac.h"
 #endif
 
-#if defined(CONFIG_RP2040_SPI0) || defined(CONFIG_RP2040_SPI1)
+#if defined(CONFIG_J721E_SPI0) || defined(CONFIG_J721E_SPI1)
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -41,18 +41,18 @@
 /* This header file defines interfaces to common SPI logic.
  * To use this common SPI logic on your board:
  *
- * 1. Provide logic in rp2040_boardinitialize() to configure SPI chip select
+ * 1. Provide logic in j721e_boardinitialize() to configure SPI chip select
  *    pins.
- * 2. Provide rp2040_spi0/1select() and rp2040_spi0/1status() functions in
+ * 2. Provide j721e_spi0/1select() and j721e_spi0/1status() functions in
  *    your board-specific logic.  These functions will perform chip selection
  *    and status operations using GPIOs in the way your board is configured.
  * 3. If CONFIG_SPI_CMDDATA is defined in the NuttX configuration, provide
- *    rp2040_spi0/1cmddata() functions in your board-specific logic.  These
+ *    j721e_spi0/1cmddata() functions in your board-specific logic.  These
  *    functions will perform cmd/data selection operations using GPIOs in the
  *    way your board is configured.
  * 4. Your low level board initialization logic should call
- *    rp2040_spibus_initialize.
- * 5. The handle returned by rp2040_spibus_initialize() may then be used to
+ *    j721e_spibus_initialize.
+ * 5. The handle returned by j721e_spibus_initialize() may then be used to
  *    bind the SPI driver to higher level logic
  *    (e.g., calling  mmcsd_spislotinitialize(), for example, will bind the
  *    SPI driver to the SPI MMC/SD driver).
@@ -82,7 +82,7 @@ extern "C"
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_spibus_initialize
+ * Name: j721e_spibus_initialize
  *
  * Description:
  *   Initialize the selected SPI port
@@ -95,45 +95,45 @@ extern "C"
  *
  ****************************************************************************/
 
-struct spi_dev_s *rp2040_spibus_initialize(int port);
+struct spi_dev_s *j721e_spibus_initialize(int port);
 
 /****************************************************************************
- * Name:  rp2040_spiXselect, rp2040_spiXstatus, and rp2040_spiXcmddata
+ * Name:  j721e_spiXselect, j721e_spiXstatus, and j721e_spiXcmddata
  *
  * Description:
  *   These functions must be provided in your board-specific logic.
- *   The rp2040_spi0/1select functions will perform chip selection and the
- *   rp2040_spi0/1status will perform status operations using GPIOs in
+ *   The j721e_spi0/1select functions will perform chip selection and the
+ *   j721e_spi0/1status will perform status operations using GPIOs in
  *   the way your board is configured.
  *
  *   If CONFIG_SPI_CMDDATA is defined in the NuttX configuration, then
- *   rp2040_spi0/1cmddata must also be provided.
+ *   j721e_spi0/1cmddata must also be provided.
  *   This functions performs cmd/data selection operations using GPIOs in
  *   the way your board is configured.
  *
  ****************************************************************************/
 
-#ifdef CONFIG_RP2040_SPI0
-void  rp2040_spi0select(struct spi_dev_s *dev,
+#ifdef CONFIG_J721E_SPI0
+void  j721e_spi0select(struct spi_dev_s *dev,
                         uint32_t devid,
                         bool selected);
-uint8_t rp2040_spi0status(struct spi_dev_s *dev,
+uint8_t j721e_spi0status(struct spi_dev_s *dev,
                           uint32_t devid);
 #ifdef CONFIG_SPI_CMDDATA
-int rp2040_spi0cmddata(struct spi_dev_s *dev,
+int j721e_spi0cmddata(struct spi_dev_s *dev,
                        uint32_t devid,
                        bool cmd);
 #endif
 #endif
 
-#ifdef CONFIG_RP2040_SPI1
-void  rp2040_spi1select(struct spi_dev_s *dev,
+#ifdef CONFIG_J721E_SPI1
+void  j721e_spi1select(struct spi_dev_s *dev,
                         uint32_t devid,
                         bool selected);
-uint8_t rp2040_spi1status(struct spi_dev_s *dev,
+uint8_t j721e_spi1status(struct spi_dev_s *dev,
                           uint32_t devid);
 #ifdef CONFIG_SPI_CMDDATA
-int rp2040_spi1cmddata(struct spi_dev_s *dev,
+int j721e_spi1cmddata(struct spi_dev_s *dev,
                        uint32_t devid,
                        bool cmd);
 #endif
@@ -158,7 +158,7 @@ int rp2040_spi1cmddata(struct spi_dev_s *dev,
 void spi_flush(struct spi_dev_s *dev);
 
 /****************************************************************************
- * Name: rp2040_spiXregister
+ * Name: j721e_spiXregister
  *
  * Description:
  *   If the board supports a card detect callback to inform the SPI-based
@@ -178,13 +178,13 @@ void spi_flush(struct spi_dev_s *dev);
  ****************************************************************************/
 
 #ifdef CONFIG_SPI_CALLBACK
-#ifdef CONFIG_RP2040_SPI0
-int rp2040_spi0register(struct spi_dev_s *dev,
+#ifdef CONFIG_J721E_SPI0
+int j721e_spi0register(struct spi_dev_s *dev,
                         spi_mediachange_t callback, void *arg);
 #endif
 
-#ifdef CONFIG_RP2040_SPI1
-int rp2040_spi1register(struct spi_dev_s *dev,
+#ifdef CONFIG_J721E_SPI1
+int j721e_spi1register(struct spi_dev_s *dev,
                         spi_mediachange_t callback, void *arg);
 #endif
 #endif
@@ -195,5 +195,5 @@ int rp2040_spi1register(struct spi_dev_s *dev,
 #endif
 
 #endif /* __ASSEMBLY__ */
-#endif /* CONFIG_RP2040_SPI0/1 */
-#endif /* __ARCH_ARM_SRC_RP2040_RP2040_SPI_H */
+#endif /* CONFIG_J721E_SPI0/1 */
+#endif /* __ARCH_ARM_SRC_J721E_J721E_SPI_H */

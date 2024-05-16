@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_config.h
+ * arch/arm/src/j721e/j721e_config.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_RP2040_CONFIG_H
-#define __ARCH_ARM_SRC_RP2040_RP2040_CONFIG_H
+#ifndef __ARCH_ARM_SRC_J721E_J721E_CONFIG_H
+#define __ARCH_ARM_SRC_J721E_J721E_CONFIG_H
 
 /****************************************************************************
  * Included Files
@@ -36,7 +36,7 @@
 /* Are any UARTs enabled? */
 
 #undef HAVE_UART
-#if defined(CONFIG_RP2040_UART0) || defined(CONFIG_RP2040_UART1)
+#if defined(CONFIG_J721E_UART0) || defined(CONFIG_J721E_UART1)
 #  define HAVE_UART 1
 #endif
 
@@ -44,13 +44,13 @@
  * checking later.
  */
 
-#ifndef CONFIG_RP2040_UART0
+#ifndef CONFIG_J721E_UART0
 #  undef CONFIG_UART0_SERIAL_CONSOLE
 #  undef CONFIG_UART0_RS485MODE
 #  undef CONFIG_UART0_RS485_DTRDIR
 #endif
 
-#ifndef CONFIG_RP2040_UART1
+#ifndef CONFIG_J721E_UART1
 #  undef CONFIG_UART1_SERIAL_CONSOLE
 #  undef CONFIG_UART1_RS485MODE
 #  undef CONFIG_UART1_RS485_DTRDIR
@@ -94,4 +94,4 @@
  * Public Function Prototypes
  ****************************************************************************/
 
-#endif /* __ARCH_ARM_SRC_RP2040_RP2040_CONFIG_H */
+#endif /* __ARCH_ARM_SRC_J721E_J721E_CONFIG_H */

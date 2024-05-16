@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_i2c_slave.c
+ * arch/arm/src/j721e/j721e_i2c_slave.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -43,12 +43,12 @@
 
 #include "chip.h"
 #include "arm_internal.h"
-#include "rp2040_i2c.h"
-#include "hardware/rp2040_i2c.h"
-#include "hardware/rp2040_resets.h"
-#include "rp2040_gpio.h"
+#include "j721e_i2c.h"
+#include "hardware/j721e_i2c.h"
+#include "hardware/j721e_resets.h"
+#include "j721e_gpio.h"
 
-#ifdef CONFIG_RP2040_I2C_SLAVE
+#ifdef CONFIG_J721E_I2C_SLAVE
 
 #define FIFO_LENGTH 16
 
@@ -59,7 +59,7 @@
  * Private Types
  ****************************************************************************/
 
-typedef struct rp2040_i2c_slave_s
+typedef struct j721e_i2c_slave_s
 {
   struct i2c_slave_s     dev;          /* Generic I2C device */
   int8_t                 controller;   /* I2C controller number */
@@ -75,7 +75,7 @@ typedef struct rp2040_i2c_slave_s
 
   i2c_slave_callback_t  *callback;     /* Callback function */
   void                  *callback_arg; /* Argument for callback */
-} rp2040_i2c_slave_t;
+} j721e_i2c_slave_t;
 
 /****************************************************************************
  * Private Function Prototypes
@@ -115,9 +115,9 @@ struct i2c_slaveops_s i2c_slaveops =
   .registercallback     = my_register_callback,
 };
 
-#ifdef CONFIG_RP2040_I2C0_SLAVE
+#ifdef CONFIG_J721E_I2C0_SLAVE
 
-rp2040_i2c_slave_t i2c0_slave_dev =
+j721e_i2c_slave_t i2c0_slave_dev =
 {
   .dev.ops      = &i2c_slaveops, /* Slave operations */
   .controller   =             0, /* I2C controller number */
@@ -125,9 +125,9 @@ rp2040_i2c_slave_t i2c0_slave_dev =
 
 #endif
 
-#ifdef CONFIG_RP2040_I2C1_SLAVE
+#ifdef CONFIG_J721E_I2C1_SLAVE
 
-rp2040_i2c_slave_t i2c1_slave_dev =
+j721e_i2c_slave_t i2c1_slave_dev =
 {
   .dev.ops      = &i2c_slaveops, /* Slave operations */
   .controller   =             1, /* I2C controller number */
@@ -149,43 +149,43 @@ rp2040_i2c_slave_t i2c1_slave_dev =
 
 static int i2c_interrupt(int irq, void *context, void *arg)
 {
-  rp2040_i2c_slave_t *priv = (rp2040_i2c_slave_t *)arg;
+  j721e_i2c_slave_t *priv = (j721e_i2c_slave_t *)arg;
   uint32_t  data_cmd;
   uint32_t  state;
 
-  state = getreg32(RP2040_I2C_IC_INTR_STAT(priv->controller));
+  state = getreg32(J721E_I2C_IC_INTR_STAT(priv->controller));
 
   /* -- We need to transmit data (Read Request) -- */
 
-  if (state & RP2040_I2C_IC_INTR_STAT_R_RD_REQ)
+  if (state & J721E_I2C_IC_INTR_STAT_R_RD_REQ)
     {
       if (priv->tx_buf_ptr < priv->tx_buf_end)
         {
           while (priv->tx_buf_ptr < priv->tx_buf_end
-                 &&   getreg32(RP2040_I2C_IC_TXFLR(priv->controller))
+                 &&   getreg32(J721E_I2C_IC_TXFLR(priv->controller))
                     < FIFO_LENGTH)
             {
               putreg32(*priv->tx_buf_ptr++,
-                       RP2040_I2C_IC_DATA_CMD(priv->controller));
+                       J721E_I2C_IC_DATA_CMD(priv->controller));
             }
         }
       else
         {
-          putreg32(0, RP2040_I2C_IC_DATA_CMD(priv->controller));
+          putreg32(0, J721E_I2C_IC_DATA_CMD(priv->controller));
         }
 
-      getreg32(RP2040_I2C_IC_CLR_RD_REQ(priv->controller));
+      getreg32(J721E_I2C_IC_CLR_RD_REQ(priv->controller));
     }
 
   /* -- We are receiving data (Write Request) -- */
 
-  if (state & RP2040_I2C_IC_INTR_STAT_R_RX_FULL)
+  if (state & J721E_I2C_IC_INTR_STAT_R_RX_FULL)
     {
-      while (getreg32(RP2040_I2C_IC_RXFLR(priv->controller)) > 0)
+      while (getreg32(J721E_I2C_IC_RXFLR(priv->controller)) > 0)
         {
-          data_cmd = getreg32(RP2040_I2C_IC_DATA_CMD(priv->controller));
+          data_cmd = getreg32(J721E_I2C_IC_DATA_CMD(priv->controller));
 
-          if (data_cmd & RP2040_I2C_IC_DATA_CMD_FIRST_DATA_BYTE)
+          if (data_cmd & J721E_I2C_IC_DATA_CMD_FIRST_DATA_BYTE)
             {
               priv->rx_buf_ptr = priv->rx_buffer;
             }
@@ -199,7 +199,7 @@ static int i2c_interrupt(int irq, void *context, void *arg)
 
   /* -- Restart -- */
 
-  if (state & RP2040_I2C_IC_INTR_STAT_R_RESTART_DET)
+  if (state & J721E_I2C_IC_INTR_STAT_R_RESTART_DET)
     {
       if (priv->callback != NULL && priv->rx_buf_ptr > priv->rx_buffer)
         {
@@ -207,12 +207,12 @@ static int i2c_interrupt(int irq, void *context, void *arg)
           priv->rx_buf_ptr = priv->rx_buffer;
         }
 
-      getreg32(RP2040_I2C_IC_CLR_RESTART_DET(priv->controller));
+      getreg32(J721E_I2C_IC_CLR_RESTART_DET(priv->controller));
     }
 
   /* -- End of transfer -- */
 
-  if (state & RP2040_I2C_IC_INTR_STAT_R_STOP_DET)
+  if (state & J721E_I2C_IC_INTR_STAT_R_STOP_DET)
     {
       if (priv->callback != NULL && priv->rx_buf_ptr > priv->rx_buffer)
         {
@@ -220,62 +220,62 @@ static int i2c_interrupt(int irq, void *context, void *arg)
           priv->rx_buf_ptr = priv->rx_buffer;
         }
 
-      getreg32(RP2040_I2C_IC_CLR_STOP_DET(priv->controller));
+      getreg32(J721E_I2C_IC_CLR_STOP_DET(priv->controller));
     }
 
   /* -- Transmit Abort -- */
 
-  if (state & RP2040_I2C_IC_INTR_STAT_R_TX_ABRT)
+  if (state & J721E_I2C_IC_INTR_STAT_R_TX_ABRT)
     {
-      getreg32(RP2040_I2C_IC_CLR_TX_ABRT(priv->controller));
+      getreg32(J721E_I2C_IC_CLR_TX_ABRT(priv->controller));
       priv->error = -ENODEV;
     }
 
-  if (state & RP2040_I2C_IC_INTR_STAT_R_TX_OVER)
+  if (state & J721E_I2C_IC_INTR_STAT_R_TX_OVER)
     {
-      getreg32(RP2040_I2C_IC_CLR_TX_OVER(priv->controller));
+      getreg32(J721E_I2C_IC_CLR_TX_OVER(priv->controller));
       priv->error = -EIO;
     }
 
-  if (state & RP2040_I2C_IC_INTR_STAT_R_RX_OVER)
+  if (state & J721E_I2C_IC_INTR_STAT_R_RX_OVER)
     {
-      getreg32(RP2040_I2C_IC_CLR_RX_OVER(priv->controller));
+      getreg32(J721E_I2C_IC_CLR_RX_OVER(priv->controller));
       priv->error = -EIO;
     }
 
-  if (state & RP2040_I2C_IC_INTR_STAT_R_RX_UNDER)
+  if (state & J721E_I2C_IC_INTR_STAT_R_RX_UNDER)
     {
-      getreg32(RP2040_I2C_IC_CLR_RX_UNDER(priv->controller));
+      getreg32(J721E_I2C_IC_CLR_RX_UNDER(priv->controller));
       priv->error = -EIO;
     }
 
 #ifdef NEEDED_FOR_MASTER_MODE_
-  if (state & RP2040_I2C_IC_INTR_STAT_R_TX_EMPTY)
+  if (state & J721E_I2C_IC_INTR_STAT_R_TX_EMPTY)
     {
       /* TX_EMPTY is automatically cleared by hardware
        * when the buffer level goes above the threshold.
        */
 
-      modbits_reg32(RP2040_I2C_IC_INTR_MASK(priv->controller),
+      modbits_reg32(J721E_I2C_IC_INTR_MASK(priv->controller),
                     0,
-                    RP2040_I2C_IC_INTR_MASK_M_TX_EMPTY);
+                    J721E_I2C_IC_INTR_MASK_M_TX_EMPTY);
     }
 
-  if (state & RP2040_I2C_IC_INTR_STAT_R_RX_FULL)
+  if (state & J721E_I2C_IC_INTR_STAT_R_RX_FULL)
     {
       /* RX_FULL is automatically cleared by hardware
        * when the buffer level goes below the threshold.
        */
 
-      modbits_reg32(RP2040_I2C_IC_INTR_MASK(priv->controller),
+      modbits_reg32(J721E_I2C_IC_INTR_MASK(priv->controller),
                     0,
-                    RP2040_I2C_IC_INTR_MASK_M_RX_FULL);
+                    J721E_I2C_IC_INTR_MASK_M_RX_FULL);
 
-      rp2040_i2c_drainrxfifo(priv);
+      j721e_i2c_drainrxfifo(priv);
     }
 
-  if ((priv->error) || (state & RP2040_I2C_IC_INTR_STAT_R_TX_EMPTY)
-                    || (state & RP2040_I2C_IC_INTR_STAT_R_RX_FULL))
+  if ((priv->error) || (state & J721E_I2C_IC_INTR_STAT_R_TX_EMPTY)
+                    || (state & J721E_I2C_IC_INTR_STAT_R_RX_FULL))
     {
       /* Failure of wd_cancel() means that the timer expired.
        * In this case, nxsem_post() has already been called.
@@ -303,36 +303,36 @@ static int i2c_interrupt(int irq, void *context, void *arg)
 
 static void enable_i2c_slave(struct i2c_slave_s *dev)
 {
-  rp2040_i2c_slave_t *priv = (rp2040_i2c_slave_t *) dev;
+  j721e_i2c_slave_t *priv = (j721e_i2c_slave_t *) dev;
   irqstate_t flags;
 
   flags = enter_critical_section();
 
-  uint32_t intr_mask =   RP2040_I2C_IC_INTR_STAT_R_RD_REQ
-                       | RP2040_I2C_IC_INTR_STAT_R_RX_FULL
-                       | RP2040_I2C_IC_INTR_STAT_R_STOP_DET
-                       | RP2040_I2C_IC_INTR_STAT_R_RESTART_DET
-                       | RP2040_I2C_IC_INTR_STAT_R_TX_ABRT;
+  uint32_t intr_mask =   J721E_I2C_IC_INTR_STAT_R_RD_REQ
+                       | J721E_I2C_IC_INTR_STAT_R_RX_FULL
+                       | J721E_I2C_IC_INTR_STAT_R_STOP_DET
+                       | J721E_I2C_IC_INTR_STAT_R_RESTART_DET
+                       | J721E_I2C_IC_INTR_STAT_R_TX_ABRT;
 
-  putreg32(0, RP2040_I2C_IC_ENABLE(priv->controller));
+  putreg32(0, J721E_I2C_IC_ENABLE(priv->controller));
 
-  putreg32(intr_mask, RP2040_I2C_IC_INTR_MASK(priv->controller));
+  putreg32(intr_mask, J721E_I2C_IC_INTR_MASK(priv->controller));
 
-  putreg32(0, RP2040_I2C_IC_ENABLE(priv->controller));
+  putreg32(0, J721E_I2C_IC_ENABLE(priv->controller));
 
   if (priv->controller == 0)
     {
-      irq_attach(RP2040_I2C0_IRQ, i2c_interrupt, dev);
-      up_enable_irq(RP2040_I2C0_IRQ);
+      irq_attach(J721E_I2C0_IRQ, i2c_interrupt, dev);
+      up_enable_irq(J721E_I2C0_IRQ);
     }
   else
     {
-      irq_attach(RP2040_I2C1_IRQ, i2c_interrupt, dev);
-      up_enable_irq(RP2040_I2C1_IRQ);
+      irq_attach(J721E_I2C1_IRQ, i2c_interrupt, dev);
+      up_enable_irq(J721E_I2C1_IRQ);
     }
 
-  putreg32(RP2040_I2C_IC_ENABLE_ENABLE,
-           RP2040_I2C_IC_ENABLE(priv->controller));
+  putreg32(J721E_I2C_IC_ENABLE_ENABLE,
+           J721E_I2C_IC_ENABLE(priv->controller));
 
   leave_critical_section(flags);
 }
@@ -349,22 +349,22 @@ static int my_set_own_address(struct i2c_slave_s  *dev,
                               int                  address,
                               int                  nbits)
 {
-  rp2040_i2c_slave_t *priv = (rp2040_i2c_slave_t *) dev;
+  j721e_i2c_slave_t *priv = (j721e_i2c_slave_t *) dev;
 
-  uint32_t con =   RP2040_I2C_IC_CON_RX_FIFO_FULL_HLD_CTRL
-                 | RP2040_I2C_IC_CON_SPEED_FAST;
+  uint32_t con =   J721E_I2C_IC_CON_RX_FIFO_FULL_HLD_CTRL
+                 | J721E_I2C_IC_CON_SPEED_FAST;
   irqstate_t flags;
 
   flags = enter_critical_section();
 
-  putreg32(address, RP2040_I2C_IC_SAR(priv->controller));
+  putreg32(address, J721E_I2C_IC_SAR(priv->controller));
 
   if (nbits == 10)
     {
-      con |= RP2040_I2C_IC_CON_IC_10BITADDR_SLAVE;
+      con |= J721E_I2C_IC_CON_IC_10BITADDR_SLAVE;
     }
 
-  putreg32(con, RP2040_I2C_IC_CON(priv->controller));
+  putreg32(con, J721E_I2C_IC_CON(priv->controller));
 
   enable_i2c_slave(dev);
 
@@ -385,7 +385,7 @@ static int my_write(struct i2c_slave_s  *dev,
                     const uint8_t       *buffer,
                     int                  length)
 {
-  rp2040_i2c_slave_t *priv = (rp2040_i2c_slave_t *) dev;
+  j721e_i2c_slave_t *priv = (j721e_i2c_slave_t *) dev;
   irqstate_t flags;
 
   flags = enter_critical_section();
@@ -412,7 +412,7 @@ static int my_read(struct i2c_slave_s  *dev,
                    uint8_t             *buffer,
                    int                  length)
 {
-  rp2040_i2c_slave_t *priv = (rp2040_i2c_slave_t *) dev;
+  j721e_i2c_slave_t *priv = (j721e_i2c_slave_t *) dev;
   irqstate_t flags;
 
   flags = enter_critical_section();
@@ -439,7 +439,7 @@ static int my_register_callback(struct i2c_slave_s   *dev,
                                 i2c_slave_callback_t *callback,
                                 void                 *arg)
 {
-  rp2040_i2c_slave_t *priv = (rp2040_i2c_slave_t *) dev;
+  j721e_i2c_slave_t *priv = (j721e_i2c_slave_t *) dev;
   irqstate_t flags;
 
   flags = enter_critical_section();
@@ -457,7 +457,7 @@ static int my_register_callback(struct i2c_slave_s   *dev,
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_i2c0_slave_initialize
+ * Name: j721e_i2c0_slave_initialize
  *
  * Description:
  *   Initialize I2C controller zero for slave operation, and return a pointer
@@ -478,24 +478,24 @@ static int my_register_callback(struct i2c_slave_s   *dev,
  *
  ****************************************************************************/
 
-#ifdef CONFIG_RP2040_I2C0_SLAVE
+#ifdef CONFIG_J721E_I2C0_SLAVE
 
-struct i2c_slave_s * rp2040_i2c0_slave_initialize
+struct i2c_slave_s * j721e_i2c0_slave_initialize
                            (uint8_t              *rx_buffer,
                             size_t                rx_buffer_len,
                             i2c_slave_callback_t *callback)
 {
-  rp2040_i2c_slave_t *priv = &i2c0_slave_dev;
+  j721e_i2c_slave_t *priv = &i2c0_slave_dev;
 
-  rp2040_gpio_set_function(CONFIG_RP2040_I2C0_SDA_GPIO,
-                           RP2040_GPIO_FUNC_I2C);
+  j721e_gpio_set_function(CONFIG_J721E_I2C0_SDA_GPIO,
+                           J721E_GPIO_FUNC_I2C);
 
-  rp2040_gpio_set_pulls(CONFIG_RP2040_I2C0_SDA_GPIO, true, false);
+  j721e_gpio_set_pulls(CONFIG_J721E_I2C0_SDA_GPIO, true, false);
 
-  rp2040_gpio_set_function(CONFIG_RP2040_I2C0_SCL_GPIO,
-                           RP2040_GPIO_FUNC_I2C);
+  j721e_gpio_set_function(CONFIG_J721E_I2C0_SCL_GPIO,
+                           J721E_GPIO_FUNC_I2C);
 
-  rp2040_gpio_set_pulls(CONFIG_RP2040_I2C0_SCL_GPIO, true, false);
+  j721e_gpio_set_pulls(CONFIG_J721E_I2C0_SCL_GPIO, true, false);
 
   priv->rx_buffer  = rx_buffer;
   priv->rx_buf_ptr = rx_buffer;
@@ -506,23 +506,23 @@ struct i2c_slave_s * rp2040_i2c0_slave_initialize
       my_register_callback(&(priv->dev), callback, priv);
     }
 
-#ifdef CONFIG_RP2040_I2C0_SLAVE_10BIT
+#ifdef CONFIG_J721E_I2C0_SLAVE_10BIT
   my_set_own_address(&(priv->dev),
-                     CONFIG_RP2040_I2C0_SLAVE_ADDRESS,
+                     CONFIG_J721E_I2C0_SLAVE_ADDRESS,
                      10);
 #else
   my_set_own_address(&(priv->dev),
-                     CONFIG_RP2040_I2C0_SLAVE_ADDRESS,
+                     CONFIG_J721E_I2C0_SLAVE_ADDRESS,
                      7);
 #endif
 
   return &(priv->dev);
 }
 
-#endif /* CONFIG_RP2040_I2C0_SLAVE */
+#endif /* CONFIG_J721E_I2C0_SLAVE */
 
 /****************************************************************************
- * Name: rp2040_i2c1_slave_initialize
+ * Name: j721e_i2c1_slave_initialize
  *
  * Description:
  *   Initialize I2C controller one for slave operation, and return a pointer
@@ -543,24 +543,24 @@ struct i2c_slave_s * rp2040_i2c0_slave_initialize
  *
  ****************************************************************************/
 
-#ifdef CONFIG_RP2040_I2C1_SLAVE
+#ifdef CONFIG_J721E_I2C1_SLAVE
 
-struct i2c_slave_s * rp2040_i2c1_slave_initialize
+struct i2c_slave_s * j721e_i2c1_slave_initialize
                            (uint8_t              *rx_buffer,
                             size_t                rx_buffer_len,
                             i2c_slave_callback_t *callback)
 {
-  rp2040_i2c_slave_t *priv = &i2c1_slave_dev;
+  j721e_i2c_slave_t *priv = &i2c1_slave_dev;
 
-  rp2040_gpio_set_function(CONFIG_RP2040_I2C1_SDA_GPIO,
-                           RP2040_GPIO_FUNC_I2C);
+  j721e_gpio_set_function(CONFIG_J721E_I2C1_SDA_GPIO,
+                           J721E_GPIO_FUNC_I2C);
 
-  rp2040_gpio_set_pulls(CONFIG_RP2040_I2C1_SDA_GPIO, true, false);
+  j721e_gpio_set_pulls(CONFIG_J721E_I2C1_SDA_GPIO, true, false);
 
-  rp2040_gpio_set_function(CONFIG_RP2040_I2C1_SCL_GPIO,
-                           RP2040_GPIO_FUNC_I2C);
+  j721e_gpio_set_function(CONFIG_J721E_I2C1_SCL_GPIO,
+                           J721E_GPIO_FUNC_I2C);
 
-  rp2040_gpio_set_pulls(CONFIG_RP2040_I2C1_SCL_GPIO, true, false);
+  j721e_gpio_set_pulls(CONFIG_J721E_I2C1_SCL_GPIO, true, false);
 
   priv->rx_buffer  = rx_buffer;
   priv->rx_buf_ptr = rx_buffer;
@@ -571,19 +571,19 @@ struct i2c_slave_s * rp2040_i2c1_slave_initialize
       my_register_callback(&(priv->dev), callback, priv);
     }
 
-#ifdef CONFIG_RP2040_I2C1_SLAVE_10BIT
+#ifdef CONFIG_J721E_I2C1_SLAVE_10BIT
   my_set_own_address(&(priv->dev),
-                     CONFIG_RP2040_I2C1_SLAVE_ADDRESS,
+                     CONFIG_J721E_I2C1_SLAVE_ADDRESS,
                      10);
 #else
   my_set_own_address(&(priv->dev),
-                     CONFIG_RP2040_I2C1_SLAVE_ADDRESS,
+                     CONFIG_J721E_I2C1_SLAVE_ADDRESS,
                      7);
 #endif
 
   return &(priv->dev);
 }
 
-#endif /* CONFIG_RP2040_I2C1_SLAVE */
+#endif /* CONFIG_J721E_I2C1_SLAVE */
 
-#endif /* CONFIG_RP2040_I2C_SLAVE */
+#endif /* CONFIG_J721E_I2C_SLAVE */

@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_cpupause.c
+ * arch/arm/src/j721e/j721e_cpupause.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -36,7 +36,7 @@
 
 #include "sched/sched.h"
 #include "arm_internal.h"
-#include "hardware/rp2040_sio.h"
+#include "hardware/j721e_sio.h"
 
 #ifdef CONFIG_SMP
 
@@ -73,7 +73,7 @@ static volatile spinlock_t g_cpu_paused[CONFIG_SMP_NCPUS];
 static volatile spinlock_t g_cpu_resumed[CONFIG_SMP_NCPUS];
 
 /****************************************************************************
- * Name: rp2040_handle_irqreq
+ * Name: j721e_handle_irqreq
  *
  * Description:
  *   If an irq handling request is found on cpu, call up_enable_irq() or
@@ -84,7 +84,7 @@ static volatile spinlock_t g_cpu_resumed[CONFIG_SMP_NCPUS];
  *
  ****************************************************************************/
 
-static void rp2040_handle_irqreq(int irqreq)
+static void j721e_handle_irqreq(int irqreq)
 {
   DEBUGASSERT(up_cpu_index() == 0);
 
@@ -280,28 +280,28 @@ int arm_pause_handler(int irq, void *c, void *arg)
   int irqreq;
   uint32_t stat;
 
-  stat = getreg32(RP2040_SIO_FIFO_ST);
-  if (stat & (RP2040_SIO_FIFO_ST_ROE | RP2040_SIO_FIFO_ST_WOF))
+  stat = getreg32(J721E_SIO_FIFO_ST);
+  if (stat & (J721E_SIO_FIFO_ST_ROE | J721E_SIO_FIFO_ST_WOF))
     {
       /* Clear sticky flag */
 
-      putreg32(0, RP2040_SIO_FIFO_ST);
+      putreg32(0, J721E_SIO_FIFO_ST);
     }
 
-  if (!(stat & RP2040_SIO_FIFO_ST_VLD))
+  if (!(stat & J721E_SIO_FIFO_ST_VLD))
     {
       /* No data received */
 
       return OK;
     }
 
-  irqreq = getreg32(RP2040_SIO_FIFO_RD);
+  irqreq = getreg32(J721E_SIO_FIFO_RD);
 
   if (irqreq != 0)
     {
       /* Handle IRQ enable/disable request */
 
-      rp2040_handle_irqreq(irqreq);
+      j721e_handle_irqreq(irqreq);
       return OK;
     }
 
@@ -383,9 +383,9 @@ int up_cpu_pause(int cpu)
 
   /* Generate IRQ for CPU(cpu) */
 
-  while (!(getreg32(RP2040_SIO_FIFO_ST) & RP2040_SIO_FIFO_ST_RDY))
+  while (!(getreg32(J721E_SIO_FIFO_ST) & J721E_SIO_FIFO_ST_RDY))
     ;
-  putreg32(0, RP2040_SIO_FIFO_WR);
+  putreg32(0, J721E_SIO_FIFO_WR);
 
   /* Wait for the other CPU to unlock g_cpu_paused meaning that
    * it is fully paused and ready for up_cpu_resume();
@@ -452,7 +452,7 @@ int up_cpu_resume(int cpu)
 }
 
 /****************************************************************************
- * Name: rp2040_send_irqreq()
+ * Name: j721e_send_irqreq()
  *
  * Description:
  *   Send up_enable_irq() / up_disable_irq() request to the Core #0
@@ -466,7 +466,7 @@ int up_cpu_resume(int cpu)
  *
  ****************************************************************************/
 
-void rp2040_send_irqreq(int irqreq)
+void j721e_send_irqreq(int irqreq)
 {
   /* Wait for the spinlocks to be released */
 
@@ -475,9 +475,9 @@ void rp2040_send_irqreq(int irqreq)
 
   /* Send IRQ number to Core #0 */
 
-  while (!(getreg32(RP2040_SIO_FIFO_ST) & RP2040_SIO_FIFO_ST_RDY))
+  while (!(getreg32(J721E_SIO_FIFO_ST) & J721E_SIO_FIFO_ST_RDY))
     ;
-  putreg32(irqreq, RP2040_SIO_FIFO_WR);
+  putreg32(irqreq, J721E_SIO_FIFO_WR);
 
   /* Wait for the handler is executed on cpu */
 

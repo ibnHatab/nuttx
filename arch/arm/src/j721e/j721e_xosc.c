@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_xosc.c
+ * arch/arm/src/j721e/j721e_xosc.c
  *
  * Based upon the software originally developed by
  *   Raspberry Pi (Trading) Ltd.
@@ -52,8 +52,8 @@
 #include "arm_internal.h"
 #include "chip.h"
 
-#include "rp2040_xosc.h"
-#include "hardware/rp2040_xosc.h"
+#include "j721e_xosc.h"
+#include "hardware/j721e_xosc.h"
 
 /****************************************************************************
  * Private Functions
@@ -64,31 +64,31 @@
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_xosc_init
+ * Name: j721e_xosc_init
  *
  * Description:
  *   Initialize Crystal Oscillator (XOSC).
  *
  ****************************************************************************/
 
-void rp2040_xosc_init(void)
+void j721e_xosc_init(void)
 {
   /* Assumes 1-15 MHz input */
 
   assert(BOARD_XOSC_FREQ <= (15 * MHZ));
-  putreg32(RP2040_XOSC_CTRL_FREQ_RANGE_1_15MHZ, RP2040_XOSC_CTRL);
+  putreg32(J721E_XOSC_CTRL_FREQ_RANGE_1_15MHZ, J721E_XOSC_CTRL);
 
   /* Set xosc startup delay */
 
   uint32_t startup_delay = (((12 * MHZ) / 1000) + 128) / 256;
-  putreg32(startup_delay, RP2040_XOSC_STARTUP);
+  putreg32(startup_delay, J721E_XOSC_STARTUP);
 
   /* Set the enable bit now that we have set freq range and startup delay */
 
-  setbits_reg32(RP2040_XOSC_CTRL_ENABLE_ENABLE, RP2040_XOSC_CTRL);
+  setbits_reg32(J721E_XOSC_CTRL_ENABLE_ENABLE, J721E_XOSC_CTRL);
 
   /* Wait for XOSC to be stable */
 
-  while (!(getreg32(RP2040_XOSC_STATUS) & RP2040_XOSC_STATUS_STABLE))
+  while (!(getreg32(J721E_XOSC_STATUS) & J721E_XOSC_STATUS_STABLE))
     ;
 }

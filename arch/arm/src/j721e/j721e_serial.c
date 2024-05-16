@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_serial.c
+ * arch/arm/src/j721e/j721e_serial.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -46,8 +46,8 @@
 
 #include "chip.h"
 #include "arm_internal.h"
-#include "rp2040_config.h"
-#include "rp2040_serial.h"
+#include "j721e_config.h"
+#include "j721e_serial.h"
 
 /****************************************************************************
  * Pre-processor definitions
@@ -133,25 +133,25 @@ static const struct uart_ops_s g_uart_ops =
 
 /* I/O buffers */
 
-#ifdef CONFIG_RP2040_UART0
+#ifdef CONFIG_J721E_UART0
 static char g_uart0rxbuffer[CONFIG_UART0_RXBUFSIZE];
 static char g_uart0txbuffer[CONFIG_UART0_TXBUFSIZE];
 #endif
-#ifdef CONFIG_RP2040_UART1
+#ifdef CONFIG_J721E_UART1
 static char g_uart1rxbuffer[CONFIG_UART1_RXBUFSIZE];
 static char g_uart1txbuffer[CONFIG_UART1_TXBUFSIZE];
 #endif
 
-/* This describes the state of the RP2040 UART0 port. */
+/* This describes the state of the J721E UART0 port. */
 
-#ifdef CONFIG_RP2040_UART0
+#ifdef CONFIG_J721E_UART0
 static struct up_dev_s g_uart0priv =
 {
-  .uartbase  = RP2040_UART0_BASE,
+  .uartbase  = J721E_UART0_BASE,
   .basefreq  = BOARD_UART_BASEFREQ,
   .baud      = CONFIG_UART0_BAUD,
   .id        = 0,
-  .irq       = RP2040_UART0_IRQ,
+  .irq       = J721E_UART0_IRQ,
   .parity    = CONFIG_UART0_PARITY,
   .bits      = CONFIG_UART0_BITS,
   .stopbits2 = CONFIG_UART0_2STOP,
@@ -181,16 +181,16 @@ static uart_dev_t g_uart0port =
 #  define TTYS0_DEV g_uart0port /* UART0=ttyS0 */
 #endif
 
-/* This describes the state of the RP2040 UART1 port. */
+/* This describes the state of the J721E UART1 port. */
 
-#ifdef CONFIG_RP2040_UART1
+#ifdef CONFIG_J721E_UART1
 static struct up_dev_s g_uart1priv =
 {
-  .uartbase  = RP2040_UART1_BASE,
+  .uartbase  = J721E_UART1_BASE,
   .basefreq  = BOARD_UART_BASEFREQ,
   .baud      = CONFIG_UART1_BAUD,
   .id        = 1,
-  .irq       = RP2040_UART1_IRQ,
+  .irq       = J721E_UART1_IRQ,
   .parity    = CONFIG_UART1_PARITY,
   .bits      = CONFIG_UART1_BITS,
   .stopbits2 = CONFIG_UART1_2STOP,
@@ -265,11 +265,11 @@ static inline void up_disableuartint(struct up_dev_s *priv,
   flags = spin_lock_irqsave(&priv->lock);
   if (ier)
     {
-      *ier = priv->ier & RP2040_UART_INTR_ALL;
+      *ier = priv->ier & J721E_UART_INTR_ALL;
     }
 
-  priv->ier &= ~RP2040_UART_INTR_ALL;
-  up_serialout(priv, RP2040_UART_UARTIMSC_OFFSET, priv->ier);
+  priv->ier &= ~J721E_UART_INTR_ALL;
+  up_serialout(priv, J721E_UART_UARTIMSC_OFFSET, priv->ier);
   spin_unlock_irqrestore(&priv->lock, flags);
 }
 
@@ -282,8 +282,8 @@ static inline void up_restoreuartint(struct up_dev_s *priv, uint32_t ier)
   irqstate_t flags;
 
   flags = spin_lock_irqsave(&priv->lock);
-  priv->ier |= ier & RP2040_UART_INTR_ALL;
-  up_serialout(priv, RP2040_UART_UARTIMSC_OFFSET, priv->ier);
+  priv->ier |= ier & J721E_UART_INTR_ALL;
+  up_serialout(priv, J721E_UART_UARTIMSC_OFFSET, priv->ier);
   spin_unlock_irqrestore(&priv->lock, flags);
 }
 
@@ -293,17 +293,17 @@ static inline void up_restoreuartint(struct up_dev_s *priv, uint32_t ier)
 
 static inline void up_enablebreaks(struct up_dev_s *priv, bool enable)
 {
-  uint32_t lcr = up_serialin(priv, RP2040_UART_UARTLCR_H_OFFSET);
+  uint32_t lcr = up_serialin(priv, J721E_UART_UARTLCR_H_OFFSET);
   if (enable)
     {
-      lcr |= RP2040_UART_UARTLCR_H_BRK;
+      lcr |= J721E_UART_UARTLCR_H_BRK;
     }
   else
     {
-      lcr &= ~RP2040_UART_UARTLCR_H_BRK;
+      lcr &= ~J721E_UART_UARTLCR_H_BRK;
     }
 
-  up_serialout(priv, RP2040_UART_UARTLCR_H_OFFSET, lcr);
+  up_serialout(priv, J721E_UART_UARTLCR_H_OFFSET, lcr);
 }
 
 /****************************************************************************
@@ -327,68 +327,68 @@ static void up_set_format(struct uart_dev_s *dev)
 
   /* Get the original state of control register */
 
-  cr    = up_serialin(priv, RP2040_UART_UARTCR_OFFSET);
-  cr_en = cr & RP2040_UART_UARTCR_UARTEN;
-  cr   &= ~RP2040_UART_UARTCR_UARTEN;
+  cr    = up_serialin(priv, J721E_UART_UARTCR_OFFSET);
+  cr_en = cr & J721E_UART_UARTCR_UARTEN;
+  cr   &= ~J721E_UART_UARTCR_UARTEN;
 
   /* Disable until the format bits and baud rate registers are updated */
 
-  up_serialout(priv, RP2040_UART_UARTCR_OFFSET, cr);
+  up_serialout(priv, J721E_UART_UARTCR_OFFSET, cr);
 
   /* Set the BAUD divisor */
 
-  rp2040_setbaud(priv->uartbase, priv->basefreq, priv->baud);
+  j721e_setbaud(priv->uartbase, priv->basefreq, priv->baud);
 
   /* Set up the LCR */
 
-  lcr = up_serialin(priv, RP2040_UART_UARTLCR_H_OFFSET);
+  lcr = up_serialin(priv, J721E_UART_UARTLCR_H_OFFSET);
 
-  lcr &= ~(RP2040_UART_LCR_H_WLEN(8) | RP2040_UART_UARTLCR_H_STP2 |
-           RP2040_UART_UARTLCR_H_EPS | RP2040_UART_UARTLCR_H_PEN);
+  lcr &= ~(J721E_UART_LCR_H_WLEN(8) | J721E_UART_UARTLCR_H_STP2 |
+           J721E_UART_UARTLCR_H_EPS | J721E_UART_UARTLCR_H_PEN);
 
   if ((5 <= priv->bits) && (priv->bits < 8))
     {
-      lcr |= RP2040_UART_LCR_H_WLEN(priv->bits);
+      lcr |= J721E_UART_LCR_H_WLEN(priv->bits);
     }
   else
     {
-      lcr |= RP2040_UART_LCR_H_WLEN(8);
+      lcr |= J721E_UART_LCR_H_WLEN(8);
     }
 
   if (priv->stopbits2)
     {
-      lcr |= RP2040_UART_UARTLCR_H_STP2;
+      lcr |= J721E_UART_UARTLCR_H_STP2;
     }
 
   if (priv->parity == 1)
     {
-      lcr |= (RP2040_UART_UARTLCR_H_PEN);
+      lcr |= (J721E_UART_UARTLCR_H_PEN);
     }
   else if (priv->parity == 2)
     {
-      lcr |= (RP2040_UART_UARTLCR_H_PEN | RP2040_UART_UARTLCR_H_EPS);
+      lcr |= (J721E_UART_UARTLCR_H_PEN | J721E_UART_UARTLCR_H_EPS);
     }
 
-  up_serialout(priv, RP2040_UART_UARTLCR_H_OFFSET, lcr);
+  up_serialout(priv, J721E_UART_UARTLCR_H_OFFSET, lcr);
 
   /* Enable Auto-RTS and Auto-CS Flow Control in the Modem Control Register */
 
-  cr &= ~(RP2040_UART_UARTCR_RTSEN | RP2040_UART_UARTCR_CTSEN);
-  cr |= RP2040_UART_UARTCR_RTS;
+  cr &= ~(J721E_UART_UARTCR_RTSEN | J721E_UART_UARTCR_CTSEN);
+  cr |= J721E_UART_UARTCR_RTS;
 
 #ifdef CONFIG_SERIAL_IFLOWCONTROL
   if (priv->iflow)
     {
-      cr |= RP2040_UART_UARTCR_RTSEN;
+      cr |= J721E_UART_UARTCR_RTSEN;
     }
 #endif
 #ifdef CONFIG_SERIAL_OFLOWCONTROL
   if (priv->oflow)
     {
-      cr |= RP2040_UART_UARTCR_CTSEN;
+      cr |= J721E_UART_UARTCR_CTSEN;
     }
 #endif
-  up_serialout(priv, RP2040_UART_UARTCR_OFFSET, cr | cr_en);
+  up_serialout(priv, J721E_UART_UARTCR_OFFSET, cr | cr_en);
 
   spin_unlock_irqrestore(&priv->lock, flags);
 }
@@ -412,14 +412,14 @@ static int up_setup(struct uart_dev_s *dev)
 
   /* Init HW */
 
-  up_serialout(priv, RP2040_UART_UARTCR_OFFSET, 0);
-  up_serialout(priv, RP2040_UART_UARTLCR_H_OFFSET, 0);
-  up_serialout(priv, RP2040_UART_UARTDMACR_OFFSET, 0);
-  up_serialout(priv, RP2040_UART_UARTRSR_OFFSET, 0xf);
+  up_serialout(priv, J721E_UART_UARTCR_OFFSET, 0);
+  up_serialout(priv, J721E_UART_UARTLCR_H_OFFSET, 0);
+  up_serialout(priv, J721E_UART_UARTDMACR_OFFSET, 0);
+  up_serialout(priv, J721E_UART_UARTRSR_OFFSET, 0xf);
 
   /* Set up the IER */
 
-  priv->ier = up_serialin(priv, RP2040_UART_UARTIMSC_OFFSET);
+  priv->ier = up_serialin(priv, J721E_UART_UARTIMSC_OFFSET);
 
   /* Configure the UART line format and speed. */
 
@@ -427,22 +427,22 @@ static int up_setup(struct uart_dev_s *dev)
 
   /* Set interrupt FIFO level */
 
-  up_serialout(priv, RP2040_UART_UARTIFLS_OFFSET, 0);
+  up_serialout(priv, J721E_UART_UARTIFLS_OFFSET, 0);
 
   /* Clear all interrupts */
 
-  up_serialout(priv, RP2040_UART_UARTICR_OFFSET, 0x7ff);
+  up_serialout(priv, J721E_UART_UARTICR_OFFSET, 0x7ff);
 
   /* Enable FIFO and UART in the last */
 
-  lcr = up_serialin(priv, RP2040_UART_UARTLCR_H_OFFSET);
-  lcr |= RP2040_UART_UARTLCR_H_FEN;
-  up_serialout(priv, RP2040_UART_UARTLCR_H_OFFSET, lcr);
+  lcr = up_serialin(priv, J721E_UART_UARTLCR_H_OFFSET);
+  lcr |= J721E_UART_UARTLCR_H_FEN;
+  up_serialout(priv, J721E_UART_UARTLCR_H_OFFSET, lcr);
 
-  cr = up_serialin(priv, RP2040_UART_UARTCR_OFFSET);
-  cr |= RP2040_UART_UARTCR_RXE | RP2040_UART_UARTCR_TXE |
-        RP2040_UART_UARTCR_UARTEN;
-  up_serialout(priv, RP2040_UART_UARTCR_OFFSET, cr);
+  cr = up_serialin(priv, J721E_UART_UARTCR_OFFSET);
+  cr |= J721E_UART_UARTCR_RXE | J721E_UART_UARTCR_TXE |
+        J721E_UART_UARTCR_UARTEN;
+  up_serialout(priv, J721E_UART_UARTCR_OFFSET, cr);
 #endif
 
   return OK;
@@ -582,52 +582,52 @@ static int up_interrupt(int irq, void *context, void *arg)
        * termination conditions
        */
 
-      status = up_serialin(priv, RP2040_UART_UARTMIS_OFFSET);
+      status = up_serialin(priv, J721E_UART_UARTMIS_OFFSET);
       if (status == 0)
         {
           return OK;
         }
 
-      up_serialout(priv, RP2040_UART_UARTICR_OFFSET, status);
-      if (status & RP2040_UART_UARTICR_RIMIC)
+      up_serialout(priv, J721E_UART_UARTICR_OFFSET, status);
+      if (status & J721E_UART_UARTICR_RIMIC)
         {
         }
 
-      if (status & RP2040_UART_UARTICR_CTSMIC)
+      if (status & J721E_UART_UARTICR_CTSMIC)
         {
         }
 
-      if (status & RP2040_UART_UARTICR_DCDMIC)
+      if (status & J721E_UART_UARTICR_DCDMIC)
         {
         }
 
-      if (status & RP2040_UART_UARTICR_DSRMIC)
+      if (status & J721E_UART_UARTICR_DSRMIC)
         {
         }
 
-      if (status & (RP2040_UART_UARTICR_RXIC | RP2040_UART_UARTICR_RTIC))
+      if (status & (J721E_UART_UARTICR_RXIC | J721E_UART_UARTICR_RTIC))
         {
           uart_recvchars(dev);
         }
 
-      if (status & RP2040_UART_UARTICR_TXIC)
+      if (status & J721E_UART_UARTICR_TXIC)
         {
           uart_xmitchars(dev);
         }
 
-      if (status & RP2040_UART_UARTICR_FEIC)
+      if (status & J721E_UART_UARTICR_FEIC)
         {
         }
 
-      if (status & RP2040_UART_UARTICR_PEIC)
+      if (status & J721E_UART_UARTICR_PEIC)
         {
         }
 
-      if (status & RP2040_UART_UARTICR_BEIC)
+      if (status & J721E_UART_UARTICR_BEIC)
         {
         }
 
-      if (status & RP2040_UART_UARTICR_OEIC)
+      if (status & J721E_UART_UARTICR_OEIC)
         {
         }
     }
@@ -825,7 +825,7 @@ static int up_receive(struct uart_dev_s *dev, unsigned int *status)
   struct up_dev_s *priv = (struct up_dev_s *)dev->priv;
   uint32_t rbr;
 
-  rbr     = up_serialin(priv, RP2040_UART_UARTDR_OFFSET);
+  rbr     = up_serialin(priv, J721E_UART_UARTDR_OFFSET);
   *status = rbr & 0xf00;
   return rbr & 0xff;
 }
@@ -847,15 +847,15 @@ static void up_rxint(struct uart_dev_s *dev, bool enable)
   if (enable)
     {
 #ifndef CONFIG_SUPPRESS_SERIAL_INTS
-      priv->ier |= (RP2040_UART_UARTICR_RXIC | RP2040_UART_UARTICR_RTIC);
+      priv->ier |= (J721E_UART_UARTICR_RXIC | J721E_UART_UARTICR_RTIC);
 #endif
     }
   else
     {
-      priv->ier &= ~(RP2040_UART_UARTICR_RXIC | RP2040_UART_UARTICR_RTIC);
+      priv->ier &= ~(J721E_UART_UARTICR_RXIC | J721E_UART_UARTICR_RTIC);
     }
 
-  up_serialout(priv, RP2040_UART_UARTIMSC_OFFSET, priv->ier);
+  up_serialout(priv, J721E_UART_UARTIMSC_OFFSET, priv->ier);
   spin_unlock_irqrestore(&priv->lock, flags);
 }
 
@@ -870,8 +870,8 @@ static void up_rxint(struct uart_dev_s *dev, bool enable)
 static bool up_rxavailable(struct uart_dev_s *dev)
 {
   struct up_dev_s *priv = (struct up_dev_s *)dev->priv;
-  return ((up_serialin(priv, RP2040_UART_UARTFR_OFFSET)
-           & RP2040_UART_UARTFR_RXFE) == 0);
+  return ((up_serialin(priv, J721E_UART_UARTFR_OFFSET)
+           & J721E_UART_UARTFR_RXFE) == 0);
 }
 
 /****************************************************************************
@@ -885,7 +885,7 @@ static bool up_rxavailable(struct uart_dev_s *dev)
 static void up_send(struct uart_dev_s *dev, int ch)
 {
   struct up_dev_s *priv = (struct up_dev_s *)dev->priv;
-  up_serialout(priv, RP2040_UART_UARTDR_OFFSET, (uint32_t)ch);
+  up_serialout(priv, J721E_UART_UARTDR_OFFSET, (uint32_t)ch);
 }
 
 /****************************************************************************
@@ -905,8 +905,8 @@ static void up_txint(struct uart_dev_s *dev, bool enable)
   if (enable)
     {
 #ifndef CONFIG_SUPPRESS_SERIAL_INTS
-      priv->ier |= RP2040_UART_UARTICR_TXIC;
-      up_serialout(priv, RP2040_UART_UARTIMSC_OFFSET, priv->ier);
+      priv->ier |= J721E_UART_UARTICR_TXIC;
+      up_serialout(priv, J721E_UART_UARTIMSC_OFFSET, priv->ier);
 
       /* Fake a TX interrupt here by just calling uart_xmitchars() with
        * interrupts disabled (note this may recurse).
@@ -917,8 +917,8 @@ static void up_txint(struct uart_dev_s *dev, bool enable)
     }
   else
     {
-      priv->ier &= ~RP2040_UART_UARTICR_TXIC;
-      up_serialout(priv, RP2040_UART_UARTIMSC_OFFSET, priv->ier);
+      priv->ier &= ~J721E_UART_UARTICR_TXIC;
+      up_serialout(priv, J721E_UART_UARTIMSC_OFFSET, priv->ier);
     }
 
   leave_critical_section(flags);
@@ -935,8 +935,8 @@ static void up_txint(struct uart_dev_s *dev, bool enable)
 static bool up_txready(struct uart_dev_s *dev)
 {
   struct up_dev_s *priv = (struct up_dev_s *)dev->priv;
-  return ((up_serialin(priv, RP2040_UART_UARTFR_OFFSET)
-           & RP2040_UART_UARTFR_TXFF) == 0);
+  return ((up_serialin(priv, J721E_UART_UARTFR_OFFSET)
+           & J721E_UART_UARTFR_TXFF) == 0);
 }
 
 /****************************************************************************
@@ -951,9 +951,9 @@ static bool up_txempty(struct uart_dev_s *dev)
 {
   struct up_dev_s *priv = (struct up_dev_s *)dev->priv;
   uint32_t rbr = 0;
-  rbr = up_serialin(priv, RP2040_UART_UARTFR_OFFSET);
-  return (((rbr & RP2040_UART_UARTFR_TXFE) != 0) &&
-          ((rbr & RP2040_UART_UARTFR_BUSY) == 0));
+  rbr = up_serialin(priv, J721E_UART_UARTFR_OFFSET);
+  return (((rbr & J721E_UART_UARTFR_TXFE) != 0) &&
+          ((rbr & J721E_UART_UARTFR_BUSY) == 0));
 }
 
 /****************************************************************************

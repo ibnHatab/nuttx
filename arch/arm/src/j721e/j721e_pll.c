@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_pll.c
+ * arch/arm/src/j721e/j721e_pll.c
  *
  * Based upon the software originally developed by
  *   Raspberry Pi (Trading) Ltd.
@@ -52,8 +52,8 @@
 #include "arm_internal.h"
 #include "chip.h"
 
-#include "rp2040_pll.h"
-#include "hardware/rp2040_pll.h"
+#include "j721e_pll.h"
+#include "hardware/j721e_pll.h"
 
 /****************************************************************************
  * Private Functions
@@ -64,23 +64,23 @@
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_pll_init
+ * Name: j721e_pll_init
  *
  * Description:
  *   Initialize PLL.
  *
  ****************************************************************************/
 
-void rp2040_pll_init(uint32_t base, uint32_t refdiv, uint32_t vco_freq,
+void j721e_pll_init(uint32_t base, uint32_t refdiv, uint32_t vco_freq,
                      uint32_t post_div1, uint8_t post_div2)
 {
   /* Turn off PLL in case it is already running */
 
-  putreg32(0xffffffff, base + RP2040_PLL_PWR_OFFSET);
-  putreg32(0, base + RP2040_PLL_FBDIV_INT_OFFSET);
+  putreg32(0xffffffff, base + J721E_PLL_PWR_OFFSET);
+  putreg32(0, base + J721E_PLL_FBDIV_INT_OFFSET);
 
   uint32_t ref_mhz = BOARD_XOSC_FREQ / refdiv;
-  putreg32(refdiv, base + RP2040_PLL_CS_OFFSET);
+  putreg32(refdiv, base + J721E_PLL_CS_OFFSET);
 
   /* What are we multiplying the reference clock by to get the vco freq
    * (The regs are called div, because you divide the vco output and compare
@@ -99,25 +99,25 @@ void rp2040_pll_init(uint32_t base, uint32_t refdiv, uint32_t vco_freq,
 
   /* Put calculated value into feedback divider */
 
-  putreg32(fbdiv, base + RP2040_PLL_FBDIV_INT_OFFSET);
+  putreg32(fbdiv, base + J721E_PLL_FBDIV_INT_OFFSET);
 
   /* Turn on PLL */
 
-  clrbits_reg32(RP2040_PLL_PWR_PD | RP2040_PLL_PWR_VCOPD,
-                base + RP2040_PLL_PWR_OFFSET);
+  clrbits_reg32(J721E_PLL_PWR_PD | J721E_PLL_PWR_VCOPD,
+                base + J721E_PLL_PWR_OFFSET);
 
   /* Wait for PLL to lock */
 
-  while (!(getreg32(base + RP2040_PLL_CS_OFFSET) & RP2040_PLL_CS_LOCK))
+  while (!(getreg32(base + J721E_PLL_CS_OFFSET) & J721E_PLL_CS_LOCK))
     ;
 
   /* Set up post dividers */
 
-  putreg32((post_div1 << RP2040_PLL_PRIM_POSTDIV1_SHIFT) |
-           (post_div2 << RP2040_PLL_PRIM_POSTDIV2_SHIFT),
-           base + RP2040_PLL_PRIM_OFFSET);
+  putreg32((post_div1 << J721E_PLL_PRIM_POSTDIV1_SHIFT) |
+           (post_div2 << J721E_PLL_PRIM_POSTDIV2_SHIFT),
+           base + J721E_PLL_PRIM_OFFSET);
 
   /* Turn on post divider */
 
-  clrbits_reg32(RP2040_PLL_PWR_POSTDIVPD, base + RP2040_PLL_PWR_OFFSET);
+  clrbits_reg32(J721E_PLL_PWR_POSTDIVPD, base + J721E_PLL_PWR_OFFSET);
 }

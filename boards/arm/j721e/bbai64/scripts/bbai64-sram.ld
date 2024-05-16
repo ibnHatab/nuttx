@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/rp2040/raspberrypi-pico/scripts/raspberrypi-pico-sram.ld
+ * boards/arm/j721e/bbai64/scripts/bbai64-sram.ld
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -32,7 +32,7 @@ SECTIONS
 {
     .text : {
         _stext = ABSOLUTE(.);
-        rp2040_start.o(.text)
+        j721e_start.o(.text)
         . = ALIGN(256);
         *(.vectors)
         *(.text .text.*)

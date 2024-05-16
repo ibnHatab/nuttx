@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_dmac.c
+ * arch/arm/src/j721e/j721e_dmac.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -37,8 +37,8 @@
 #include <nuttx/semaphore.h>
 
 #include "arm_internal.h"
-#include "hardware/rp2040_dma.h"
-#include "rp2040_dmac.h"
+#include "hardware/j721e_dma.h"
+#include "j721e_dmac.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -52,7 +52,7 @@
 
 struct dma_channel_s
 {
-  uint8_t        chan;          /* DMA channel number (0-RP2040_DMA_NCHANNELS) */
+  uint8_t        chan;          /* DMA channel number (0-J721E_DMA_NCHANNELS) */
   bool           inuse;         /* TRUE: The DMA channel is in use */
   dma_callback_t callback;      /* Callback invoked when the DMA completes */
   void          *arg;           /* Argument passed to callback function */
@@ -75,12 +75,12 @@ struct dma_controller_s
 static struct dma_controller_s g_dmac =
 {
   .lock = NXMUTEX_INITIALIZER,
-  .chansem = SEM_INITIALIZER(RP2040_DMA_NCHANNELS),
+  .chansem = SEM_INITIALIZER(J721E_DMA_NCHANNELS),
 };
 
 /* This is the array of all DMA channels */
 
-static struct dma_channel_s g_dmach[RP2040_DMA_NCHANNELS];
+static struct dma_channel_s g_dmach[J721E_DMA_NCHANNELS];
 
 /****************************************************************************
  * Public Data
@@ -91,14 +91,14 @@ static struct dma_channel_s g_dmach[RP2040_DMA_NCHANNELS];
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_dmac_interrupt
+ * Name: j721e_dmac_interrupt
  *
  * Description:
  *  DMA interrupt handler
  *
  ****************************************************************************/
 
-static int rp2040_dmac_interrupt(int irq, void *context, void *arg)
+static int j721e_dmac_interrupt(int irq, void *context, void *arg)
 {
   struct dma_channel_s *dmach;
   int result = OK;
@@ -108,21 +108,21 @@ static int rp2040_dmac_interrupt(int irq, void *context, void *arg)
 
   /* Get and clear pending DMA interrupt status */
 
-  stat = getreg32(RP2040_DMA_INTS0) & RP2040_DMA_INTS0_MASK;
-  putreg32(stat, RP2040_DMA_INTS0);
+  stat = getreg32(J721E_DMA_INTS0) & J721E_DMA_INTS0_MASK;
+  putreg32(stat, J721E_DMA_INTS0);
 
   while (stat != 0)
     {
       ch = ffs(stat) - 1;
       stat &= ~(1 << ch);
 
-      ctrl = getreg32(RP2040_DMA_CTRL_TRIG(ch));
+      ctrl = getreg32(J721E_DMA_CTRL_TRIG(ch));
 
-      if (ctrl & RP2040_DMA_CTRL_TRIG_AHB_ERROR)
+      if (ctrl & J721E_DMA_CTRL_TRIG_AHB_ERROR)
         {
-          setbits_reg32(RP2040_DMA_CTRL_TRIG_READ_ERROR |
-                        RP2040_DMA_CTRL_TRIG_WRITE_ERROR,
-                        RP2040_DMA_CTRL_TRIG(ch));
+          setbits_reg32(J721E_DMA_CTRL_TRIG_READ_ERROR |
+                        J721E_DMA_CTRL_TRIG_WRITE_ERROR,
+                        J721E_DMA_CTRL_TRIG(ch));
           result = EIO;
         }
 
@@ -165,31 +165,31 @@ void weak_function arm_dma_initialize(void)
 
   /* Initialize the channel list  */
 
-  for (i = 0; i < RP2040_DMA_NCHANNELS; i++)
+  for (i = 0; i < J721E_DMA_NCHANNELS; i++)
     {
       g_dmach[i].chan = i;
-      putreg32(0, RP2040_DMA_CTRL_TRIG(i));
+      putreg32(0, J721E_DMA_CTRL_TRIG(i));
     }
 
-  putreg32(0, RP2040_DMA_INTE0);
-  putreg32(RP2040_DMA_INTS0_MASK, RP2040_DMA_INTS0);
+  putreg32(0, J721E_DMA_INTE0);
+  putreg32(J721E_DMA_INTS0_MASK, J721E_DMA_INTS0);
 
   /* Attach DMA completion interrupt handler */
 
-  irq_attach(RP2040_DMA_IRQ_0, rp2040_dmac_interrupt, NULL);
-  up_enable_irq(RP2040_DMA_IRQ_0);
+  irq_attach(J721E_DMA_IRQ_0, j721e_dmac_interrupt, NULL);
+  up_enable_irq(J721E_DMA_IRQ_0);
 }
 
 /****************************************************************************
- * Name: rp2040_dmachannel
+ * Name: j721e_dmachannel
  *
  * Description:
  *   Allocate a DMA channel.  This function gives the caller mutually
  *   exclusive access to a DMA channel.
  *
- *   If no DMA channel is available, then rp2040_dmachannel() will wait
+ *   If no DMA channel is available, then j721e_dmachannel() will wait
  *   until the holder of a channel relinquishes the channel by calling
- *   rp2040_dmafree().
+ *   j721e_dmafree().
  *
  * Input parameters:
  *   None
@@ -203,7 +203,7 @@ void weak_function arm_dma_initialize(void)
  *
  ****************************************************************************/
 
-DMA_HANDLE rp2040_dmachannel(void)
+DMA_HANDLE j721e_dmachannel(void)
 {
   struct dma_channel_s *dmach;
   unsigned int ch;
@@ -233,7 +233,7 @@ DMA_HANDLE rp2040_dmachannel(void)
 
   /* Search for an available DMA channel */
 
-  for (ch = 0, dmach = NULL; ch < RP2040_DMA_NCHANNELS; ch++)
+  for (ch = 0, dmach = NULL; ch < J721E_DMA_NCHANNELS; ch++)
     {
       struct dma_channel_s *candidate = &g_dmach[ch];
       if (!candidate->inuse)
@@ -248,8 +248,8 @@ DMA_HANDLE rp2040_dmachannel(void)
 
   nxmutex_unlock(&g_dmac.lock);
 
-  setbits_reg32(bit, RP2040_DMA_INTS0);
-  setbits_reg32(bit, RP2040_DMA_INTE0);
+  setbits_reg32(bit, J721E_DMA_INTS0);
+  setbits_reg32(bit, J721E_DMA_INTE0);
 
   /* Since we have reserved a DMA descriptor by taking a count from chansem,
    * it would be a serious logic failure if we could not find a free channel
@@ -261,14 +261,14 @@ DMA_HANDLE rp2040_dmachannel(void)
 }
 
 /****************************************************************************
- * Name: rp2040_dmafree
+ * Name: j721e_dmafree
  *
  * Description:
  *   Release a DMA channel.  If another thread is waiting for this DMA
- *   channel in a call to rp2040_dmachannel, then this function will
+ *   channel in a call to j721e_dmachannel, then this function will
  *   re-assign the DMA channel to that thread and wake it up.  NOTE:  The
  *   'handle' used in this argument must NEVER be used again until
- *   rp2040_dmachannel() is called again to re-gain access to the channel.
+ *   j721e_dmachannel() is called again to re-gain access to the channel.
  *
  * Returned Value:
  *   None
@@ -279,7 +279,7 @@ DMA_HANDLE rp2040_dmachannel(void)
  *
  ****************************************************************************/
 
-void rp2040_dmafree(DMA_HANDLE handle)
+void j721e_dmafree(DMA_HANDLE handle)
 {
   struct dma_channel_s *dmach = (struct dma_channel_s *)handle;
   unsigned int ch;
@@ -290,10 +290,10 @@ void rp2040_dmafree(DMA_HANDLE handle)
 
   /* Disable the channel */
 
-  setbits_reg32(1 << dmach->chan, RP2040_DMA_CHAN_ABORT);
-  putreg32(0, RP2040_DMA_CTRL_TRIG(ch));
-  clrbits_reg32(1 << dmach->chan, RP2040_DMA_INTE0);
-  clrbits_reg32(1 << dmach->chan, RP2040_DMA_INTS0);
+  setbits_reg32(1 << dmach->chan, J721E_DMA_CHAN_ABORT);
+  putreg32(0, J721E_DMA_CTRL_TRIG(ch));
+  clrbits_reg32(1 << dmach->chan, J721E_DMA_INTE0);
+  clrbits_reg32(1 << dmach->chan, J721E_DMA_INTS0);
 
   /* Mark the channel no longer in use.  Clearing the in-use flag is an
    * atomic operation and so should be safe.
@@ -309,7 +309,7 @@ void rp2040_dmafree(DMA_HANDLE handle)
 }
 
 /****************************************************************************
- * Name: rp2040_rxdmasetup
+ * Name: j721e_rxdmasetup
  *
  * Description:
  *   Configure an RX (peripheral-to-memory) DMA before starting the transfer.
@@ -323,7 +323,7 @@ void rp2040_dmafree(DMA_HANDLE handle)
  *
  ****************************************************************************/
 
-void rp2040_rxdmasetup(DMA_HANDLE handle, uintptr_t paddr, uintptr_t maddr,
+void j721e_rxdmasetup(DMA_HANDLE handle, uintptr_t paddr, uintptr_t maddr,
                        size_t nbytes, dma_config_t config)
 {
   struct dma_channel_s *dmach = (struct dma_channel_s *)handle;
@@ -335,8 +335,8 @@ void rp2040_rxdmasetup(DMA_HANDLE handle, uintptr_t paddr, uintptr_t maddr,
   DEBUGASSERT(dmach != NULL && dmach->inuse);
   ch  = dmach->chan;
 
-  DEBUGASSERT(config.size >= RP2040_DMA_SIZE_BYTE &&
-              config.size <= RP2040_DMA_SIZE_WORD);
+  DEBUGASSERT(config.size >= J721E_DMA_SIZE_BYTE &&
+              config.size <= J721E_DMA_SIZE_WORD);
 
   mask = (1 << config.size) - 1;
   count = nbytes >> config.size;
@@ -345,28 +345,28 @@ void rp2040_rxdmasetup(DMA_HANDLE handle, uintptr_t paddr, uintptr_t maddr,
 
   /* Set DMA registers */
 
-  putreg32(paddr & ~mask, RP2040_DMA_READ_ADDR(ch));
-  putreg32(maddr & ~mask, RP2040_DMA_WRITE_ADDR(ch));
-  putreg32(count, RP2040_DMA_TRANS_COUNT(ch));
+  putreg32(paddr & ~mask, J721E_DMA_READ_ADDR(ch));
+  putreg32(maddr & ~mask, J721E_DMA_WRITE_ADDR(ch));
+  putreg32(count, J721E_DMA_TRANS_COUNT(ch));
 
-  ctrl = RP2040_DMA_CTRL_TRIG_READ_ERROR |
-         RP2040_DMA_CTRL_TRIG_WRITE_ERROR |
-         ((config.dreq << RP2040_DMA_CTRL_TRIG_TREQ_SEL_SHIFT) &
-          RP2040_DMA_CTRL_TRIG_TREQ_SEL_MASK) |
-         ((ch << RP2040_DMA_CTRL_TRIG_CHAIN_TO_SHIFT) &
-          RP2040_DMA_CTRL_TRIG_CHAIN_TO_MASK) |
-         (config.size << RP2040_DMA_CTRL_TRIG_DATA_SIZE_SHIFT);
+  ctrl = J721E_DMA_CTRL_TRIG_READ_ERROR |
+         J721E_DMA_CTRL_TRIG_WRITE_ERROR |
+         ((config.dreq << J721E_DMA_CTRL_TRIG_TREQ_SEL_SHIFT) &
+          J721E_DMA_CTRL_TRIG_TREQ_SEL_MASK) |
+         ((ch << J721E_DMA_CTRL_TRIG_CHAIN_TO_SHIFT) &
+          J721E_DMA_CTRL_TRIG_CHAIN_TO_MASK) |
+         (config.size << J721E_DMA_CTRL_TRIG_DATA_SIZE_SHIFT);
 
   if (!config.noincr)
     {
-      ctrl |= RP2040_DMA_CTRL_TRIG_INCR_WRITE;
+      ctrl |= J721E_DMA_CTRL_TRIG_INCR_WRITE;
     }
 
-  putreg32(ctrl, RP2040_DMA_CTRL_TRIG(ch));
+  putreg32(ctrl, J721E_DMA_CTRL_TRIG(ch));
 }
 
 /****************************************************************************
- * Name: rp2040_txdmasetup
+ * Name: j721e_txdmasetup
  *
  * Description:
  *   Configure an TX (memory-to-peripheral) DMA before starting the transfer.
@@ -380,7 +380,7 @@ void rp2040_rxdmasetup(DMA_HANDLE handle, uintptr_t paddr, uintptr_t maddr,
  *
  ****************************************************************************/
 
-void rp2040_txdmasetup(DMA_HANDLE handle, uintptr_t paddr, uintptr_t maddr,
+void j721e_txdmasetup(DMA_HANDLE handle, uintptr_t paddr, uintptr_t maddr,
                        size_t nbytes, dma_config_t config)
 {
   struct dma_channel_s *dmach = (struct dma_channel_s *)handle;
@@ -392,8 +392,8 @@ void rp2040_txdmasetup(DMA_HANDLE handle, uintptr_t paddr, uintptr_t maddr,
   DEBUGASSERT(dmach != NULL && dmach->inuse);
   ch  = dmach->chan;
 
-  DEBUGASSERT(config.size >= RP2040_DMA_SIZE_BYTE &&
-              config.size <= RP2040_DMA_SIZE_WORD);
+  DEBUGASSERT(config.size >= J721E_DMA_SIZE_BYTE &&
+              config.size <= J721E_DMA_SIZE_WORD);
 
   mask = (1 << config.size) - 1;
   count = nbytes >> config.size;
@@ -402,28 +402,28 @@ void rp2040_txdmasetup(DMA_HANDLE handle, uintptr_t paddr, uintptr_t maddr,
 
   /* Set DMA registers */
 
-  putreg32(maddr & ~mask, RP2040_DMA_READ_ADDR(ch));
-  putreg32(paddr & ~mask, RP2040_DMA_WRITE_ADDR(ch));
-  putreg32(count, RP2040_DMA_TRANS_COUNT(ch));
+  putreg32(maddr & ~mask, J721E_DMA_READ_ADDR(ch));
+  putreg32(paddr & ~mask, J721E_DMA_WRITE_ADDR(ch));
+  putreg32(count, J721E_DMA_TRANS_COUNT(ch));
 
-  ctrl = RP2040_DMA_CTRL_TRIG_READ_ERROR |
-         RP2040_DMA_CTRL_TRIG_WRITE_ERROR |
-         ((config.dreq << RP2040_DMA_CTRL_TRIG_TREQ_SEL_SHIFT) &
-          RP2040_DMA_CTRL_TRIG_TREQ_SEL_MASK) |
-         ((ch << RP2040_DMA_CTRL_TRIG_CHAIN_TO_SHIFT) &
-          RP2040_DMA_CTRL_TRIG_CHAIN_TO_MASK) |
-         (config.size << RP2040_DMA_CTRL_TRIG_DATA_SIZE_SHIFT);
+  ctrl = J721E_DMA_CTRL_TRIG_READ_ERROR |
+         J721E_DMA_CTRL_TRIG_WRITE_ERROR |
+         ((config.dreq << J721E_DMA_CTRL_TRIG_TREQ_SEL_SHIFT) &
+          J721E_DMA_CTRL_TRIG_TREQ_SEL_MASK) |
+         ((ch << J721E_DMA_CTRL_TRIG_CHAIN_TO_SHIFT) &
+          J721E_DMA_CTRL_TRIG_CHAIN_TO_MASK) |
+         (config.size << J721E_DMA_CTRL_TRIG_DATA_SIZE_SHIFT);
 
   if (!config.noincr)
     {
-      ctrl |= RP2040_DMA_CTRL_TRIG_INCR_READ;
+      ctrl |= J721E_DMA_CTRL_TRIG_INCR_READ;
     }
 
-  putreg32(ctrl, RP2040_DMA_CTRL_TRIG(ch));
+  putreg32(ctrl, J721E_DMA_CTRL_TRIG(ch));
 }
 
 /****************************************************************************
- * Name: rp2040_ctrl_dmasetup
+ * Name: j721e_ctrl_dmasetup
  *
  * Description:
  *   Configure a dma channel to send a list of channel control blocks to
@@ -440,7 +440,7 @@ void rp2040_txdmasetup(DMA_HANDLE handle, uintptr_t paddr, uintptr_t maddr,
  *
  ****************************************************************************/
 
-void rp2040_ctrl_dmasetup(DMA_HANDLE           control,
+void j721e_ctrl_dmasetup(DMA_HANDLE           control,
                           DMA_HANDLE           transfer,
                           dma_control_block_t *ctrl_blks,
                           dma_callback_t       callback,
@@ -462,13 +462,13 @@ void rp2040_ctrl_dmasetup(DMA_HANDLE           control,
   xfer_dmach->callback = callback;
   xfer_dmach->arg      = arg;
 
-  xfer_reg_addr = RP2040_DMA_AL1_CTRL(xfer_ch);
+  xfer_reg_addr = J721E_DMA_AL1_CTRL(xfer_ch);
 
   /* Set DMA registers */
 
-  putreg32((uint32_t)ctrl_blks, RP2040_DMA_READ_ADDR(ctrl_ch));
-  putreg32(xfer_reg_addr, RP2040_DMA_WRITE_ADDR(ctrl_ch));
-  putreg32(4, RP2040_DMA_TRANS_COUNT(ctrl_ch));
+  putreg32((uint32_t)ctrl_blks, J721E_DMA_READ_ADDR(ctrl_ch));
+  putreg32(xfer_reg_addr, J721E_DMA_WRITE_ADDR(ctrl_ch));
+  putreg32(4, J721E_DMA_TRANS_COUNT(ctrl_ch));
 
   /* Configure the xfer dma channel as follows:
    *    clear read and write error flags
@@ -481,22 +481,22 @@ void rp2040_ctrl_dmasetup(DMA_HANDLE           control,
    *    use un-paced transfer mode  TREQ_SEL = 0x3f
    */
 
-  ctrl = RP2040_DMA_CTRL_TRIG_READ_ERROR
-       | RP2040_DMA_CTRL_TRIG_WRITE_ERROR
-       | RP2040_DMA_CTRL_TRIG_INCR_READ
-       | RP2040_DMA_CTRL_TRIG_INCR_WRITE
-       | RP2040_DMA_CTRL_TRIG_HIGH_PRIORITY
-       | RP2040_DMA_CTRL_TRIG_RING_SEL
-       | (4 << RP2040_DMA_CTRL_TRIG_RING_SIZE_SHIFT)
-       | (RP2040_DMA_SIZE_WORD << RP2040_DMA_CTRL_TRIG_DATA_SIZE_SHIFT)
-       | (ctrl_ch << RP2040_DMA_CTRL_TRIG_CHAIN_TO_SHIFT)
-       | (0x3f << RP2040_DMA_CTRL_TRIG_TREQ_SEL_SHIFT);
+  ctrl = J721E_DMA_CTRL_TRIG_READ_ERROR
+       | J721E_DMA_CTRL_TRIG_WRITE_ERROR
+       | J721E_DMA_CTRL_TRIG_INCR_READ
+       | J721E_DMA_CTRL_TRIG_INCR_WRITE
+       | J721E_DMA_CTRL_TRIG_HIGH_PRIORITY
+       | J721E_DMA_CTRL_TRIG_RING_SEL
+       | (4 << J721E_DMA_CTRL_TRIG_RING_SIZE_SHIFT)
+       | (J721E_DMA_SIZE_WORD << J721E_DMA_CTRL_TRIG_DATA_SIZE_SHIFT)
+       | (ctrl_ch << J721E_DMA_CTRL_TRIG_CHAIN_TO_SHIFT)
+       | (0x3f << J721E_DMA_CTRL_TRIG_TREQ_SEL_SHIFT);
 
-  putreg32(ctrl, RP2040_DMA_CTRL_TRIG(ctrl_ch));
+  putreg32(ctrl, J721E_DMA_CTRL_TRIG(ctrl_ch));
 }
 
 /****************************************************************************
- * Name: rp2040_ctrl_dmasetup
+ * Name: j721e_ctrl_dmasetup
  *
  * Description:
  *   Configure a dma channel to send a list of channel control blocks to
@@ -511,7 +511,7 @@ void rp2040_ctrl_dmasetup(DMA_HANDLE           control,
  *
  ****************************************************************************/
 
-uint32_t rp2040_dma_ctrl_blk_ctrl(DMA_HANDLE  control,
+uint32_t j721e_dma_ctrl_blk_ctrl(DMA_HANDLE  control,
                                   int         size,
                                   uint32_t    pacing,
                                   uint32_t    ctrl)
@@ -523,27 +523,27 @@ uint32_t rp2040_dma_ctrl_blk_ctrl(DMA_HANDLE  control,
 
   ctrl_ch = ctrl_dmach->chan;
 
-  return   RP2040_DMA_CTRL_TRIG_EN
-         | RP2040_DMA_CTRL_TRIG_IRQ_QUIET
-         | (ctrl_ch << RP2040_DMA_CTRL_TRIG_CHAIN_TO_SHIFT)
-         | (size    << RP2040_DMA_CTRL_TRIG_DATA_SIZE_SHIFT)
-         | (pacing  << RP2040_DMA_CTRL_TRIG_TREQ_SEL_SHIFT)
+  return   J721E_DMA_CTRL_TRIG_EN
+         | J721E_DMA_CTRL_TRIG_IRQ_QUIET
+         | (ctrl_ch << J721E_DMA_CTRL_TRIG_CHAIN_TO_SHIFT)
+         | (size    << J721E_DMA_CTRL_TRIG_DATA_SIZE_SHIFT)
+         | (pacing  << J721E_DMA_CTRL_TRIG_TREQ_SEL_SHIFT)
          | ctrl;
 }
 
 /****************************************************************************
- * Name: rp2040_dmastart
+ * Name: j721e_dmastart
  *
  * Description:
  *   Start the DMA transfer
  *
  * Assumptions:
- *   - DMA handle allocated by rp2040_dmachannel()
+ *   - DMA handle allocated by j721e_dmachannel()
  *   - No DMA in progress
  *
  ****************************************************************************/
 
-void rp2040_dmastart(DMA_HANDLE handle, dma_callback_t callback, void *arg)
+void j721e_dmastart(DMA_HANDLE handle, dma_callback_t callback, void *arg)
 {
   struct dma_channel_s *dmach = (struct dma_channel_s *)handle;
   uint32_t ch;
@@ -558,23 +558,23 @@ void rp2040_dmastart(DMA_HANDLE handle, dma_callback_t callback, void *arg)
 
   /* Enable the channel */
 
-  setbits_reg32(RP2040_DMA_CTRL_TRIG_EN, RP2040_DMA_CTRL_TRIG(ch));
+  setbits_reg32(J721E_DMA_CTRL_TRIG_EN, J721E_DMA_CTRL_TRIG(ch));
 }
 
 /****************************************************************************
- * Name: rp2040_dmastop
+ * Name: j721e_dmastop
  *
  * Description:
- *   Cancel the DMA.  After rp2040_dmastop() is called, the DMA channel is
- *   reset and rp2040_dmasetup() must be called before rp2040_dmastart()
+ *   Cancel the DMA.  After j721e_dmastop() is called, the DMA channel is
+ *   reset and j721e_dmasetup() must be called before j721e_dmastart()
  *   can be called again
  *
  * Assumptions:
- *   - DMA handle allocated by rp2040_dmachannel()
+ *   - DMA handle allocated by j721e_dmachannel()
  *
  ****************************************************************************/
 
-void rp2040_dmastop(DMA_HANDLE handle)
+void j721e_dmastop(DMA_HANDLE handle)
 {
   struct dma_channel_s *dmach = (struct dma_channel_s *)handle;
   uint32_t bit;
@@ -585,17 +585,17 @@ void rp2040_dmastop(DMA_HANDLE handle)
 
   /* Disable the channel */
 
-  setbits_reg32(bit, RP2040_DMA_CHAN_ABORT);
+  setbits_reg32(bit, J721E_DMA_CHAN_ABORT);
 
   do
     {
-      stat = getreg32(RP2040_DMA_CHAN_ABORT);
+      stat = getreg32(J721E_DMA_CHAN_ABORT);
     }
   while (stat & bit);
 }
 
 /****************************************************************************
- * Name: rp2040_dma_register
+ * Name: j721e_dma_register
  *
  * Description:
  *   Get the address of a DMA register based on the given dma handle that
@@ -604,15 +604,15 @@ void rp2040_dmastop(DMA_HANDLE handle)
  *   This allows other configuration options not normally supplied.
  *
  * Assumptions:
- *   - DMA handle allocated by rp2040_dmachannel()
+ *   - DMA handle allocated by j721e_dmachannel()
  *
  ****************************************************************************/
 
-uintptr_t rp2040_dma_register(DMA_HANDLE handle, uint16_t offset)
+uintptr_t j721e_dma_register(DMA_HANDLE handle, uint16_t offset)
 {
   struct dma_channel_s *dmach = (struct dma_channel_s *)handle;
 
   DEBUGASSERT(dmach && dmach->inuse);
 
-  return RP2040_DMA_CH(dmach->chan) + offset;
+  return J721E_DMA_CH(dmach->chan) + offset;
 }

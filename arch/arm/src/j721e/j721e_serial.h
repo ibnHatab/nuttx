@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_serial.h
+ * arch/arm/src/j721e/j721e_serial.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,15 +18,15 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_RP2040_SERIAL_H
-#define __ARCH_ARM_SRC_RP2040_RP2040_SERIAL_H
+#ifndef __ARCH_ARM_SRC_J721E_J721E_SERIAL_H
+#define __ARCH_ARM_SRC_J721E_J721E_SERIAL_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
-#include "rp2040_uart.h"
+#include "j721e_uart.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -48,4 +48,4 @@
  * Public Functions Prototypes
  ****************************************************************************/
 
-#endif /* __ARCH_ARM_SRC_RP2040_RP2040_SERIAL_H */
+#endif /* __ARCH_ARM_SRC_J721E_J721E_SERIAL_H */

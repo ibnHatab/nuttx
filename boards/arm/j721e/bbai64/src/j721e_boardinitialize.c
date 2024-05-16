@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/rp2040/raspberrypi-pico/src/rp2040_boardinitialize.c
+ * boards/arm/j721e/bbai64/src/j721e_boardinitialize.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -30,10 +30,10 @@
 #include <arch/board/board.h>
 
 #include "arm_internal.h"
-#include "rp2040_gpio.h"
+#include "j721e_gpio.h"
 
 #ifdef CONFIG_ARCH_BOARD_COMMON
-#include "rp2040_common_initialize.h"
+#include "j721e_common_initialize.h"
 #endif /* CONFIG_ARCH_BOARD_COMMON */
 
 /****************************************************************************
@@ -49,38 +49,38 @@
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_boardearlyinitialize
+ * Name: j721e_boardearlyinitialize
  *
  * Description:
  *
  ****************************************************************************/
 
-void rp2040_boardearlyinitialize(void)
+void j721e_boardearlyinitialize(void)
 {
   #ifdef CONFIG_ARCH_BOARD_COMMON
-  rp2040_common_earlyinitialize();
+  j721e_common_earlyinitialize();
   #endif
 
   /* --- Place any board specific early initialization here --- */
 
   /* Set board LED pin */
 
-  rp2040_gpio_init(BOARD_GPIO_LED_PIN);
-  rp2040_gpio_setdir(BOARD_GPIO_LED_PIN, true);
-  rp2040_gpio_put(BOARD_GPIO_LED_PIN, true);
+  j721e_gpio_init(BOARD_GPIO_LED_PIN);
+  j721e_gpio_setdir(BOARD_GPIO_LED_PIN, true);
+  j721e_gpio_put(BOARD_GPIO_LED_PIN, true);
 }
 
 /****************************************************************************
- * Name: rp2040_boardinitialize
+ * Name: j721e_boardinitialize
  *
  * Description:
  *
  ****************************************************************************/
 
-void rp2040_boardinitialize(void)
+void j721e_boardinitialize(void)
 {
   #ifdef CONFIG_ARCH_BOARD_COMMON
-  rp2040_common_initialize();
+  j721e_common_initialize();
   #endif
 
   /* --- Place any board specific initialization here --- */

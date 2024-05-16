@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/rp2040/raspberrypi-pico/include/board.h
+ * boards/arm/j721e/bbai64/include/board.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __BOARDS_ARM_RP2040_RASPBERRYPI_PICO_INCLUDE_BOARD_H
-#define __BOARDS_ARM_RP2040_RASPBERRYPI_PICO_INCLUDE_BOARD_H
+#ifndef __BOARDS_ARM_J721E_BBAI64_INCLUDE_BOARD_H
+#define __BOARDS_ARM_J721E_BBAI64_INCLUDE_BOARD_H
 
 /****************************************************************************
  * Included Files
@@ -27,11 +27,11 @@
 
 #include <nuttx/config.h>
 
-#include "rp2040_i2cdev.h"
-#include "rp2040_spidev.h"
-#include "rp2040_i2sdev.h"
+#include "j721e_i2cdev.h"
+#include "j721e_spidev.h"
+#include "j721e_i2sdev.h"
 
-#include "rp2040_spisd.h"
+#include "j721e_spisd.h"
 
 #ifndef __ASSEMBLY__
 #  include <stdint.h>
@@ -86,7 +86,7 @@
 
 /* This LED is not used by the board port unless CONFIG_ARCH_LEDS is
  * defined.  In that case, the usage by the board port is defined in
- * include/board.h and src/rp2040_autoleds.c. The LED is used to encode
+ * include/board.h and src/j721e_autoleds.c. The LED is used to encode
  * OS-related events as follows:
  *
  *   -------------------- ----------------------------- ------
@@ -142,26 +142,26 @@ extern "C"
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_boardearlyinitialize
+ * Name: j721e_boardearlyinitialize
  *
  * Description:
  *
  ****************************************************************************/
 
-void rp2040_boardearlyinitialize(void);
+void j721e_boardearlyinitialize(void);
 
 /****************************************************************************
- * Name: rp2040_boardinitialize
+ * Name: j721e_boardinitialize
  *
  * Description:
  *
  ****************************************************************************/
 
-void rp2040_boardinitialize(void);
+void j721e_boardinitialize(void);
 
 #undef EXTERN
 #if defined(__cplusplus)
 }
 #endif
 #endif /* __ASSEMBLY__ */
-#endif /* __BOARDS_ARM_RP2040_RASPBERRYPI_PICO_INCLUDE_BOARD_H */
+#endif /* __BOARDS_ARM_J721E_BBAI64_INCLUDE_BOARD_H */

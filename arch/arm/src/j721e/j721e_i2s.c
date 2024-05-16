@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_i2s.c
+ * arch/arm/src/j721e/j721e_i2s.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -48,11 +48,11 @@
 #include <arch/board/board.h>
 
 #include "arm_internal.h"
-#include "rp2040_gpio.h"
-#include "rp2040_dmac.h"
-#include "rp2040_i2s_pio.h"
+#include "j721e_gpio.h"
+#include "j721e_dmac.h"
+#include "j721e_i2s_pio.h"
 
-#ifdef CONFIG_RP2040_I2S
+#ifdef CONFIG_J721E_I2S
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -68,8 +68,8 @@
 #  error CONFIG_AUDIO required by this driver
 #endif
 
-#ifndef CONFIG_RP2040_I2S_MAXINFLIGHT
-#  define CONFIG_RP2040_I2S_MAXINFLIGHT 16
+#ifndef CONFIG_J721E_I2S_MAXINFLIGHT
+#  define CONFIG_J721E_I2S_MAXINFLIGHT 16
 #endif
 
 /* Debug ********************************************************************/
@@ -79,25 +79,25 @@
  */
 
 #ifndef CONFIG_DEBUG_I2S_INFO
-#  undef CONFIG_RP2040_I2S_DUMPBUFFERS
+#  undef CONFIG_J721E_I2S_DUMPBUFFERS
 #endif
 
 /* The I2S can handle most any bit width from 8 to 32.  However, the DMA
  * logic here is constrained to byte, half-word, and word sizes.
  */
 
-#ifndef CONFIG_RP2040_I2S_DATALEN
-#  define CONFIG_RP2040_I2S_DATALEN 16
+#ifndef CONFIG_J721E_I2S_DATALEN
+#  define CONFIG_J721E_I2S_DATALEN 16
 #endif
 
-#if CONFIG_RP2040_I2S_DATALEN == 8
-#  define RP2040_I2S_DATAMASK  0
-#elif CONFIG_RP2040_I2S_DATALEN == 16
-#  define RP2040_I2S_DATAMASK  1
-#elif  CONFIG_RP2040_I2S_DATALEN < 8 || CONFIG_RP2040_I2S_DATALEN > 16
-#  error Invalid value for CONFIG_RP2040_I2S_DATALEN
+#if CONFIG_J721E_I2S_DATALEN == 8
+#  define J721E_I2S_DATAMASK  0
+#elif CONFIG_J721E_I2S_DATALEN == 16
+#  define J721E_I2S_DATAMASK  1
+#elif  CONFIG_J721E_I2S_DATALEN < 8 || CONFIG_J721E_I2S_DATALEN > 16
+#  error Invalid value for CONFIG_J721E_I2S_DATALEN
 #else
-#  error Valid but supported value for CONFIG_RP2040_I2S_DATALEN
+#  error Valid but supported value for CONFIG_J721E_I2S_DATALEN
 #endif
 
 /****************************************************************************
@@ -106,9 +106,9 @@
 
 /* I2S buffer container */
 
-struct rp2040_buffer_s
+struct j721e_buffer_s
 {
-  struct rp2040_buffer_s *flink; /* Supports a singly linked list */
+  struct j721e_buffer_s *flink; /* Supports a singly linked list */
   i2s_callback_t callback;       /* Function to call when the transfer
                                   * completes */
   uint32_t timeout;              /* The timeout value to use with DMA
@@ -123,7 +123,7 @@ struct rp2040_buffer_s
  * transport.
  */
 
-struct rp2040_transport_s
+struct j721e_transport_s
 {
   DMA_HANDLE dma;               /* I2S DMA handle */
   struct wdog_s dog;            /* Watchdog that handles DMA timeouts */
@@ -136,7 +136,7 @@ struct rp2040_transport_s
 
 /* The state of the one I2S peripheral */
 
-struct rp2040_i2s_s
+struct j721e_i2s_s
 {
   struct i2s_dev_s  dev;            /* Externally visible I2S interface */
   mutex_t           lock;           /* Assures mutually exclusive access to I2S */
@@ -148,13 +148,13 @@ struct rp2040_i2s_s
   uint32_t          samplerate;     /* Data sample rate */
   uint32_t          channels;       /* Audio channels (1:mono or 2:stereo) */
   dma_config_t      txconfig;       /* TX DMA configuration */
-  struct rp2040_transport_s tx;     /* TX transport state */
+  struct j721e_transport_s tx;     /* TX transport state */
 
   /* Pre-allocated pool of buffer containers */
 
   sem_t bufsem;                     /* Buffer wait semaphore */
-  struct rp2040_buffer_s *freelist; /* A list a free buffer containers */
-  struct rp2040_buffer_s containers[CONFIG_RP2040_I2S_MAXINFLIGHT];
+  struct j721e_buffer_s *freelist; /* A list a free buffer containers */
+  struct j721e_buffer_s containers[CONFIG_J721E_I2S_MAXINFLIGHT];
 };
 
 /****************************************************************************
@@ -163,7 +163,7 @@ struct rp2040_i2s_s
 
 /* Register helpers */
 
-#ifdef CONFIG_RP2040_I2S_DUMPBUFFERS
+#ifdef CONFIG_J721E_I2S_DUMPBUFFERS
 #  define       i2s_dump_buffer(m,b,s) lib_dumpbuffer(m,b,s)
 #else
 #  define       i2s_dump_buffer(m,b,s)
@@ -171,43 +171,43 @@ struct rp2040_i2s_s
 
 /* Buffer container helpers */
 
-static struct rp2040_buffer_s *
-                i2s_buf_allocate(struct rp2040_i2s_s *priv);
-static void     i2s_buf_free(struct rp2040_i2s_s *priv,
-                             struct rp2040_buffer_s *bfcontainer);
-static void     i2s_buf_initialize(struct rp2040_i2s_s *priv);
+static struct j721e_buffer_s *
+                i2s_buf_allocate(struct j721e_i2s_s *priv);
+static void     i2s_buf_free(struct j721e_i2s_s *priv,
+                             struct j721e_buffer_s *bfcontainer);
+static void     i2s_buf_initialize(struct j721e_i2s_s *priv);
 
 /* DMA support */
 
 static void     i2s_txdma_timeout(wdparm_t arg);
-static int      i2s_txdma_setup(struct rp2040_i2s_s *priv);
+static int      i2s_txdma_setup(struct j721e_i2s_s *priv);
 static void     i2s_tx_worker(void *arg);
-static void     i2s_tx_schedule(struct rp2040_i2s_s *priv, int result);
+static void     i2s_tx_schedule(struct j721e_i2s_s *priv, int result);
 static void     i2s_txdma_callback(DMA_HANDLE handle, uint8_t result,
                                    void *arg);
 
 /* I2S methods (and close friends) */
 
-static int      i2s_checkwidth(struct rp2040_i2s_s *priv, int bits);
+static int      i2s_checkwidth(struct j721e_i2s_s *priv, int bits);
 
-static int      rp2040_i2s_txchannels(struct i2s_dev_s *dev,
+static int      j721e_i2s_txchannels(struct i2s_dev_s *dev,
                                       uint8_t channels);
-static uint32_t rp2040_i2s_txsamplerate(struct i2s_dev_s *dev,
+static uint32_t j721e_i2s_txsamplerate(struct i2s_dev_s *dev,
                                         uint32_t rate);
-static uint32_t rp2040_i2s_txdatawidth(struct i2s_dev_s *dev, int bits);
-static int      rp2040_i2s_send(struct i2s_dev_s *dev,
+static uint32_t j721e_i2s_txdatawidth(struct i2s_dev_s *dev, int bits);
+static int      j721e_i2s_send(struct i2s_dev_s *dev,
                                 struct ap_buffer_s *apb,
                                 i2s_callback_t callback, void *arg,
                                 uint32_t timeout);
-static int      rp2040_i2s_ioctl(struct i2s_dev_s *dev, int cmd,
+static int      j721e_i2s_ioctl(struct i2s_dev_s *dev, int cmd,
                                  unsigned long arg);
 
 /* Initialization */
 
-static int      i2s_dma_flags(struct rp2040_i2s_s *priv);
-static int      i2s_dma_allocate(struct rp2040_i2s_s *priv);
-static void     i2s_dma_free(struct rp2040_i2s_s *priv);
-static void     i2s_configure(struct rp2040_i2s_s *priv);
+static int      i2s_dma_flags(struct j721e_i2s_s *priv);
+static int      i2s_dma_allocate(struct j721e_i2s_s *priv);
+static void     i2s_dma_free(struct j721e_i2s_s *priv);
+static void     i2s_configure(struct j721e_i2s_s *priv);
 
 /****************************************************************************
  * Private Data
@@ -217,11 +217,11 @@ static void     i2s_configure(struct rp2040_i2s_s *priv);
 
 static const struct i2s_ops_s g_i2sops =
 {
-  .i2s_txchannels   = rp2040_i2s_txchannels,
-  .i2s_txsamplerate = rp2040_i2s_txsamplerate,
-  .i2s_txdatawidth  = rp2040_i2s_txdatawidth,
-  .i2s_send         = rp2040_i2s_send,
-  .i2s_ioctl        = rp2040_i2s_ioctl,
+  .i2s_txchannels   = j721e_i2s_txchannels,
+  .i2s_txsamplerate = j721e_i2s_txsamplerate,
+  .i2s_txdatawidth  = j721e_i2s_txdatawidth,
+  .i2s_send         = j721e_i2s_send,
+  .i2s_ioctl        = j721e_i2s_ioctl,
 };
 
 /****************************************************************************
@@ -248,9 +248,9 @@ static const struct i2s_ops_s g_i2sops =
  *
  ****************************************************************************/
 
-static struct rp2040_buffer_s *i2s_buf_allocate(struct rp2040_i2s_s *priv)
+static struct j721e_buffer_s *i2s_buf_allocate(struct j721e_i2s_s *priv)
 {
-  struct rp2040_buffer_s *bfcontainer;
+  struct j721e_buffer_s *bfcontainer;
   irqstate_t flags;
   int ret;
 
@@ -295,8 +295,8 @@ static struct rp2040_buffer_s *i2s_buf_allocate(struct rp2040_i2s_s *priv)
  *
  ****************************************************************************/
 
-static void i2s_buf_free(struct rp2040_i2s_s *priv,
-                         struct rp2040_buffer_s *bfcontainer)
+static void i2s_buf_free(struct j721e_i2s_s *priv,
+                         struct j721e_buffer_s *bfcontainer)
 {
   irqstate_t flags;
 
@@ -331,14 +331,14 @@ static void i2s_buf_free(struct rp2040_i2s_s *priv,
  *
  ****************************************************************************/
 
-static void i2s_buf_initialize(struct rp2040_i2s_s *priv)
+static void i2s_buf_initialize(struct j721e_i2s_s *priv)
 {
   int i;
 
   priv->freelist = NULL;
-  nxsem_init(&priv->bufsem, 0, CONFIG_RP2040_I2S_MAXINFLIGHT);
+  nxsem_init(&priv->bufsem, 0, CONFIG_J721E_I2S_MAXINFLIGHT);
 
-  for (i = 0; i < CONFIG_RP2040_I2S_MAXINFLIGHT; i++)
+  for (i = 0; i < CONFIG_J721E_I2S_MAXINFLIGHT; i++)
     {
       i2s_buf_free(priv, &priv->containers[i]);
     }
@@ -363,12 +363,12 @@ static void i2s_buf_initialize(struct rp2040_i2s_s *priv)
 
 static void i2s_txdma_timeout(wdparm_t arg)
 {
-  struct rp2040_i2s_s *priv = (struct rp2040_i2s_s *)arg;
+  struct j721e_i2s_s *priv = (struct j721e_i2s_s *)arg;
   DEBUGASSERT(priv != NULL);
 
   /* Cancel the DMA */
 
-  rp2040_dmastop(priv->tx.dma);
+  j721e_dmastop(priv->tx.dma);
 
   /* Then schedule completion of the transfer to occur on the worker thread.
    */
@@ -393,9 +393,9 @@ static void i2s_txdma_timeout(wdparm_t arg)
  *
  ****************************************************************************/
 
-static int i2s_txdma_setup(struct rp2040_i2s_s *priv)
+static int i2s_txdma_setup(struct j721e_i2s_s *priv)
 {
-  struct rp2040_buffer_s *bfcontainer;
+  struct j721e_buffer_s *bfcontainer;
   struct ap_buffer_s *apb;
   uintptr_t samp;
   uint32_t timeout;
@@ -424,7 +424,7 @@ static int i2s_txdma_setup(struct rp2040_i2s_s *priv)
    * queue.
    */
 
-  bfcontainer = (struct rp2040_buffer_s *)sq_remfirst(&priv->tx.pend);
+  bfcontainer = (struct j721e_buffer_s *)sq_remfirst(&priv->tx.pend);
   DEBUGASSERT(bfcontainer && bfcontainer->apb);
 
   apb = bfcontainer->apb;
@@ -439,8 +439,8 @@ static int i2s_txdma_setup(struct rp2040_i2s_s *priv)
 
   /* Configure DMA stream */
 
-  rp2040_txdmasetup(priv->tx.dma,
-                    rp2040_i2s_pio_getdmaaddr(),
+  j721e_txdmasetup(priv->tx.dma,
+                    j721e_i2s_pio_getdmaaddr(),
                     (uint32_t)samp, nbytes,
                     priv->txconfig);
 
@@ -452,8 +452,8 @@ static int i2s_txdma_setup(struct rp2040_i2s_s *priv)
 
   /* Start the DMA, saving the container as the current active transfer */
 
-  rp2040_dmastart(priv->tx.dma, i2s_txdma_callback, priv);
-  rp2040_i2s_pio_enable(true);
+  j721e_dmastart(priv->tx.dma, i2s_txdma_callback, priv);
+  j721e_i2s_pio_enable(true);
 
   /* Start a watchdog to catch DMA timeouts */
 
@@ -495,8 +495,8 @@ static int i2s_txdma_setup(struct rp2040_i2s_s *priv)
 
 static void i2s_tx_worker(void *arg)
 {
-  struct rp2040_i2s_s *priv = (struct rp2040_i2s_s *)arg;
-  struct rp2040_buffer_s *bfcontainer;
+  struct j721e_i2s_s *priv = (struct j721e_i2s_s *)arg;
+  struct j721e_buffer_s *bfcontainer;
   irqstate_t flags;
 
   DEBUGASSERT(priv);
@@ -537,7 +537,7 @@ static void i2s_tx_worker(void *arg)
        */
 
       flags = enter_critical_section();
-      bfcontainer = (struct rp2040_buffer_s *)sq_remfirst(&priv->tx.done);
+      bfcontainer = (struct j721e_buffer_s *)sq_remfirst(&priv->tx.done);
       leave_critical_section(flags);
 
       /* Perform the TX transfer done callback */
@@ -578,9 +578,9 @@ static void i2s_tx_worker(void *arg)
  *
  ****************************************************************************/
 
-static void i2s_tx_schedule(struct rp2040_i2s_s *priv, int result)
+static void i2s_tx_schedule(struct j721e_i2s_s *priv, int result)
 {
-  struct rp2040_buffer_s *bfcontainer;
+  struct j721e_buffer_s *bfcontainer;
   int ret;
 
   /* Upon entry, the transfer(s) that just completed are the ones in the
@@ -593,7 +593,7 @@ static void i2s_tx_schedule(struct rp2040_i2s_s *priv, int result)
     {
       /* Remove the next buffer container from the tx.act list */
 
-      bfcontainer = (struct rp2040_buffer_s *)sq_remfirst(&priv->tx.act);
+      bfcontainer = (struct j721e_buffer_s *)sq_remfirst(&priv->tx.act);
 
       /* Report the result of the transfer */
 
@@ -641,7 +641,7 @@ static void i2s_tx_schedule(struct rp2040_i2s_s *priv, int result)
 
 static void i2s_txdma_callback(DMA_HANDLE handle, uint8_t result, void *arg)
 {
-  struct rp2040_i2s_s *priv = (struct rp2040_i2s_s *)arg;
+  struct j721e_i2s_s *priv = (struct j721e_i2s_s *)arg;
   DEBUGASSERT(priv != NULL);
 
   /* Cancel the watchdog timeout */
@@ -673,7 +673,7 @@ static void i2s_txdma_callback(DMA_HANDLE handle, uint8_t result, void *arg)
  *
  ****************************************************************************/
 
-static int i2s_checkwidth(struct rp2040_i2s_s *priv, int bits)
+static int i2s_checkwidth(struct j721e_i2s_s *priv, int bits)
 {
   /* The I2S can handle most any bit width from 8 to 32.  However, the DMA
    * logic here is constrained to byte, half-word, and word sizes.
@@ -705,7 +705,7 @@ static int i2s_checkwidth(struct rp2040_i2s_s *priv, int bits)
 }
 
 /****************************************************************************
- * Name: rp2040_i2s_txchannels
+ * Name: j721e_i2s_txchannels
  *
  * Description:
  *   Set the I2S TX number of channels.
@@ -719,9 +719,9 @@ static int i2s_checkwidth(struct rp2040_i2s_s *priv, int bits)
  *
  ****************************************************************************/
 
-static int rp2040_i2s_txchannels(struct i2s_dev_s *dev, uint8_t channels)
+static int j721e_i2s_txchannels(struct i2s_dev_s *dev, uint8_t channels)
 {
-  struct rp2040_i2s_s *priv = (struct rp2040_i2s_s *)dev;
+  struct j721e_i2s_s *priv = (struct j721e_i2s_s *)dev;
 
   if (channels != 1 && channels != 2)
     {
@@ -733,7 +733,7 @@ static int rp2040_i2s_txchannels(struct i2s_dev_s *dev, uint8_t channels)
 }
 
 /****************************************************************************
- * Name: rp2040_i2s_txsamplerate
+ * Name: j721e_i2s_txsamplerate
  *
  * Description:
  *   Set the I2S TX sample rate.
@@ -747,9 +747,9 @@ static int rp2040_i2s_txchannels(struct i2s_dev_s *dev, uint8_t channels)
  *
  ****************************************************************************/
 
-static uint32_t rp2040_i2s_txsamplerate(struct i2s_dev_s *dev, uint32_t rate)
+static uint32_t j721e_i2s_txsamplerate(struct i2s_dev_s *dev, uint32_t rate)
 {
-  struct rp2040_i2s_s *priv = (struct rp2040_i2s_s *)dev;
+  struct j721e_i2s_s *priv = (struct j721e_i2s_s *)dev;
 
   DEBUGASSERT(priv && priv->samplerate >= 0 && rate > 0);
 
@@ -763,7 +763,7 @@ static uint32_t rp2040_i2s_txsamplerate(struct i2s_dev_s *dev, uint32_t rate)
 }
 
 /****************************************************************************
- * Name: rp2040_i2s_txdatawidth
+ * Name: j721e_i2s_txdatawidth
  *
  * Description:
  *   Set the I2S TX data width.  The TX bitrate is determined by
@@ -778,9 +778,9 @@ static uint32_t rp2040_i2s_txsamplerate(struct i2s_dev_s *dev, uint32_t rate)
  *
  ****************************************************************************/
 
-static uint32_t rp2040_i2s_txdatawidth(struct i2s_dev_s *dev, int bits)
+static uint32_t j721e_i2s_txdatawidth(struct i2s_dev_s *dev, int bits)
 {
-  struct rp2040_i2s_s *priv = (struct rp2040_i2s_s *)dev;
+  struct j721e_i2s_s *priv = (struct j721e_i2s_s *)dev;
   int ret;
 
   i2sinfo("Data width bits of tx = %d\n", bits);
@@ -808,7 +808,7 @@ static uint32_t rp2040_i2s_txdatawidth(struct i2s_dev_s *dev, int bits)
 }
 
 /****************************************************************************
- * Name: rp2040_i2s_send
+ * Name: j721e_i2s_send
  *
  * Description:
  *   Send a block of data on I2S.
@@ -837,11 +837,11 @@ static uint32_t rp2040_i2s_txdatawidth(struct i2s_dev_s *dev, int bits)
  *
  ****************************************************************************/
 
-static int rp2040_i2s_send(struct i2s_dev_s *dev, struct ap_buffer_s *apb,
+static int j721e_i2s_send(struct i2s_dev_s *dev, struct ap_buffer_s *apb,
                     i2s_callback_t callback, void *arg, uint32_t timeout)
 {
-  struct rp2040_i2s_s *priv = (struct rp2040_i2s_s *)dev;
-  struct rp2040_buffer_s *bfcontainer;
+  struct j721e_i2s_s *priv = (struct j721e_i2s_s *)dev;
+  struct j721e_buffer_s *bfcontainer;
   irqstate_t flags;
   int ret;
 
@@ -899,7 +899,7 @@ errout_with_buf:
 }
 
 /****************************************************************************
- * Name: rp2040_i2s_cleanup_queues
+ * Name: j721e_i2s_cleanup_queues
  *
  * Description:
  *   Clean up the all buffers in the queues.
@@ -912,15 +912,15 @@ errout_with_buf:
  *
  ****************************************************************************/
 
-static void i2s_cleanup_queues(struct rp2040_i2s_s *priv)
+static void i2s_cleanup_queues(struct j721e_i2s_s *priv)
 {
   irqstate_t flags;
-  struct rp2040_buffer_s *bfcontainer;
+  struct j721e_buffer_s *bfcontainer;
 
   while (sq_peek(&priv->tx.done) != NULL)
     {
       flags = enter_critical_section();
-      bfcontainer = (struct rp2040_buffer_s *)sq_remfirst(&priv->tx.done);
+      bfcontainer = (struct j721e_buffer_s *)sq_remfirst(&priv->tx.done);
       leave_critical_section(flags);
       bfcontainer->callback(&priv->dev, bfcontainer->apb,
                             bfcontainer->arg, OK);
@@ -931,7 +931,7 @@ static void i2s_cleanup_queues(struct rp2040_i2s_s *priv)
   while (sq_peek(&priv->tx.act) != NULL)
     {
       flags = enter_critical_section();
-      bfcontainer = (struct rp2040_buffer_s *)sq_remfirst(&priv->tx.act);
+      bfcontainer = (struct j721e_buffer_s *)sq_remfirst(&priv->tx.act);
       leave_critical_section(flags);
       bfcontainer->callback(&priv->dev, bfcontainer->apb,
                             bfcontainer->arg, OK);
@@ -942,7 +942,7 @@ static void i2s_cleanup_queues(struct rp2040_i2s_s *priv)
   while (sq_peek(&priv->tx.pend) != NULL)
     {
       flags = enter_critical_section();
-      bfcontainer = (struct rp2040_buffer_s *)sq_remfirst(&priv->tx.pend);
+      bfcontainer = (struct j721e_buffer_s *)sq_remfirst(&priv->tx.pend);
       leave_critical_section(flags);
       bfcontainer->apb->flags |= AUDIO_APB_FINAL;
       bfcontainer->callback(&priv->dev, bfcontainer->apb,
@@ -953,17 +953,17 @@ static void i2s_cleanup_queues(struct rp2040_i2s_s *priv)
 }
 
 /****************************************************************************
- * Name: rp2040_i2s_ioctl
+ * Name: j721e_i2s_ioctl
  *
  * Description:
  *   Perform a device ioctl
  *
  ****************************************************************************/
 
-static int rp2040_i2s_ioctl(struct i2s_dev_s *dev, int cmd,
+static int j721e_i2s_ioctl(struct i2s_dev_s *dev, int cmd,
                             unsigned long arg)
 {
-  struct rp2040_i2s_s *priv = (struct rp2040_i2s_s *)dev;
+  struct j721e_i2s_s *priv = (struct j721e_i2s_s *)dev;
   struct audio_buf_desc_s *bufdesc;
   int ret = -ENOTTY;
 
@@ -984,19 +984,19 @@ static int rp2040_i2s_ioctl(struct i2s_dev_s *dev, int cmd,
           if (priv->channels == 1)
             {
               if (priv->datalen == 16)
-                mode = RP2040_I2S_PIO_16BIT_MONO;
+                mode = J721E_I2S_PIO_16BIT_MONO;
               else
-                mode = RP2040_I2S_PIO_8BIT_MONO;
+                mode = J721E_I2S_PIO_8BIT_MONO;
             }
           else
             {
               if (priv->datalen == 16)
-                mode = RP2040_I2S_PIO_16BIT_STEREO;
+                mode = J721E_I2S_PIO_16BIT_STEREO;
               else
-                mode = RP2040_I2S_PIO_8BIT_STEREO;
+                mode = J721E_I2S_PIO_8BIT_STEREO;
            }
 
-          rp2040_i2s_pio_configure(mode, priv->samplerate);
+          j721e_i2s_pio_configure(mode, priv->samplerate);
 
           flags = enter_critical_section();
           ret = i2s_txdma_setup(priv);
@@ -1022,7 +1022,7 @@ static int rp2040_i2s_ioctl(struct i2s_dev_s *dev, int cmd,
               wd_cancel(&priv->tx.dog);
             }
 
-          rp2040_dmastop(priv->tx.dma);
+          j721e_dmastop(priv->tx.dma);
           leave_critical_section(flags);
 
           i2s_cleanup_queues(priv);
@@ -1052,7 +1052,7 @@ static int rp2040_i2s_ioctl(struct i2s_dev_s *dev, int cmd,
               wd_cancel(&priv->tx.dog);
             }
 
-          rp2040_i2s_pio_enable(false);
+          j721e_i2s_pio_enable(false);
           leave_critical_section(flags);
 
           ret = 0;
@@ -1077,7 +1077,7 @@ static int rp2040_i2s_ioctl(struct i2s_dev_s *dev, int cmd,
                        i2s_txdma_timeout, (wdparm_t)priv);
             }
 
-          rp2040_i2s_pio_enable(true);
+          j721e_i2s_pio_enable(true);
           leave_critical_section(flags);
 
           ret = 0;
@@ -1137,16 +1137,16 @@ static int rp2040_i2s_ioctl(struct i2s_dev_s *dev, int cmd,
  *
  ****************************************************************************/
 
-static int i2s_dma_flags(struct rp2040_i2s_s *priv)
+static int i2s_dma_flags(struct j721e_i2s_s *priv)
 {
   switch (priv->datalen)
     {
     case 8:
-      priv->txconfig.size = RP2040_DMA_SIZE_BYTE;
+      priv->txconfig.size = J721E_DMA_SIZE_BYTE;
       break;
 
     case 16:
-      priv->txconfig.size = RP2040_DMA_SIZE_HALFWORD;
+      priv->txconfig.size = J721E_DMA_SIZE_HALFWORD;
       break;
 
     default:
@@ -1155,7 +1155,7 @@ static int i2s_dma_flags(struct rp2040_i2s_s *priv)
     }
 
   priv->txconfig.noincr = false;
-  priv->txconfig.dreq = rp2040_i2s_pio_getdreq();
+  priv->txconfig.dreq = j721e_i2s_pio_getdreq();
 
   return OK;
 }
@@ -1175,11 +1175,11 @@ static int i2s_dma_flags(struct rp2040_i2s_s *priv)
  *
  ****************************************************************************/
 
-static int i2s_dma_allocate(struct rp2040_i2s_s *priv)
+static int i2s_dma_allocate(struct j721e_i2s_s *priv)
 {
   /* Allocate a TX DMA channel */
 
-  priv->tx.dma = rp2040_dmachannel();
+  priv->tx.dma = j721e_dmachannel();
   if (!priv->tx.dma)
     {
       i2serr("ERROR: Failed to allocate the TX DMA channel\n");
@@ -1211,7 +1211,7 @@ errout:
  *
  ****************************************************************************/
 
-static void i2s_dma_free(struct rp2040_i2s_s *priv)
+static void i2s_dma_free(struct j721e_i2s_s *priv)
 {
   if (priv->tx.timeout > 0)
     {
@@ -1220,7 +1220,7 @@ static void i2s_dma_free(struct rp2040_i2s_s *priv)
 
   if (priv->tx.dma)
     {
-      rp2040_dmafree(priv->tx.dma);
+      j721e_dmafree(priv->tx.dma);
     }
 }
 
@@ -1239,18 +1239,18 @@ static void i2s_dma_free(struct rp2040_i2s_s *priv)
  *
  ****************************************************************************/
 
-static void i2s_configure(struct rp2040_i2s_s *priv)
+static void i2s_configure(struct j721e_i2s_s *priv)
 {
   /* Only configure if the port is not already configured */
 
   if (!priv->initialized)
     {
-      rp2040_gpio_set_function(CONFIG_RP2040_I2S_DATA,
-                               RP2040_GPIO_FUNC_PIO0);
-      rp2040_gpio_set_function(CONFIG_RP2040_I2S_CLOCK,
-                               RP2040_GPIO_FUNC_PIO0);
-      rp2040_gpio_set_function(CONFIG_RP2040_I2S_CLOCK + 1,
-                               RP2040_GPIO_FUNC_PIO0);
+      j721e_gpio_set_function(CONFIG_J721E_I2S_DATA,
+                               J721E_GPIO_FUNC_PIO0);
+      j721e_gpio_set_function(CONFIG_J721E_I2S_CLOCK,
+                               J721E_GPIO_FUNC_PIO0);
+      j721e_gpio_set_function(CONFIG_J721E_I2S_CLOCK + 1,
+                               J721E_GPIO_FUNC_PIO0);
 
       priv->initialized = true;
     }
@@ -1259,9 +1259,9 @@ static void i2s_configure(struct rp2040_i2s_s *priv)
 
   priv->channels = 2;
   priv->samplerate = 44100;
-  priv->datalen = CONFIG_RP2040_I2S_DATALEN;
+  priv->datalen = CONFIG_J721E_I2S_DATALEN;
 #ifdef CONFIG_DEBUG
-  priv->align   = RP2040_I2S_DATAMASK;
+  priv->align   = J721E_I2S_DATAMASK;
 #endif
 }
 
@@ -1270,7 +1270,7 @@ static void i2s_configure(struct rp2040_i2s_s *priv)
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_i2sbus_initialize
+ * Name: j721e_i2sbus_initialize
  *
  * Description:
  *   Initialize the selected i2S port
@@ -1283,15 +1283,15 @@ static void i2s_configure(struct rp2040_i2s_s *priv)
  *
  ****************************************************************************/
 
-struct i2s_dev_s *rp2040_i2sbus_initialize(int port)
+struct i2s_dev_s *j721e_i2sbus_initialize(int port)
 {
-  struct rp2040_i2s_s *priv = NULL;
+  struct j721e_i2s_s *priv = NULL;
   irqstate_t flags;
   int ret;
 
   i2sinfo("port: %d\n", port);
 
-  priv = kmm_zalloc(sizeof(struct rp2040_i2s_s));
+  priv = kmm_zalloc(sizeof(struct j721e_i2s_s));
   if (!priv)
     {
       i2serr("ERROR: Failed to allocate a chip select structure\n");
@@ -1338,4 +1338,4 @@ errout_with_alloc:
   return NULL;
 }
 
-#endif /* CONFIG_RP2040_I2S */
+#endif /* CONFIG_J721E_I2S */

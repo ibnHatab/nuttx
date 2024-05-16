@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/rp2040/raspberrypi-pico/src/rp2040_autoleds.c
+ * boards/arm/j721e/bbai64/src/j721e_autoleds.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -33,7 +33,7 @@
  *
  * This LED is not used by the board port unless CONFIG_ARCH_LEDS is
  * defined.  In that case, the usage by the board port is defined in
- * include/board.h and src/rp2040_autoleds.c. The LED is used to encode
+ * include/board.h and src/j721e_autoleds.c. The LED is used to encode
  * OS-related events as follows:
  *
  *   -------------------- ----------------------- ------
@@ -65,9 +65,9 @@
 
 #include "arm_internal.h"
 #include "chip.h"
-#include "rp2040_gpio.h"
+#include "j721e_gpio.h"
 
-#include "rp2040_pico.h"
+#include "j721e_pico.h"
 
 #ifdef CONFIG_ARCH_LEDS
 
@@ -76,7 +76,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_autoled_initialize
+ * Name: j721e_autoled_initialize
  *
  * Description:
  *   Initialize NuttX-controlled LED logic
@@ -93,8 +93,8 @@ void board_autoled_initialize(void)
 {
   /* Configure LED GPIO for output */
 
-  rp2040_gpio_init(GPIO_LED1);
-  rp2040_gpio_setdir(GPIO_LED1, true);
+  j721e_gpio_init(GPIO_LED1);
+  j721e_gpio_setdir(GPIO_LED1, true);
 }
 
 /****************************************************************************
@@ -130,7 +130,7 @@ void board_autoled_on(int led)
         break;
     }
 
-  rp2040_gpio_put(GPIO_LED1, ledon); /* High illuminates */
+  j721e_gpio_put(GPIO_LED1, ledon); /* High illuminates */
 }
 
 /****************************************************************************
@@ -161,7 +161,7 @@ void board_autoled_off(int led)
         return;
     }
 
-  rp2040_gpio_put(GPIO_LED1, false); /* High illuminates */
+  j721e_gpio_put(GPIO_LED1, false); /* High illuminates */
 }
 
 #endif /* CONFIG_ARCH_LEDS */

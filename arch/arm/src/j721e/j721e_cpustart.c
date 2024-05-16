@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_cpustart.c
+ * arch/arm/src/j721e/j721e_cpustart.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -39,9 +39,9 @@
 #include "sched/sched.h"
 #include "init/init.h"
 #include "arm_internal.h"
-#include "hardware/rp2040_memorymap.h"
-#include "hardware/rp2040_sio.h"
-#include "hardware/rp2040_psm.h"
+#include "hardware/j721e_memorymap.h"
+#include "hardware/j721e_sio.h"
+#include "hardware/j721e_psm.h"
 
 #ifdef CONFIG_SMP
 
@@ -82,11 +82,11 @@ extern int arm_pause_handler(int irq, void *c, void *arg);
 
 static void fifo_drain(void)
 {
-  putreg32(0, RP2040_SIO_FIFO_ST);
+  putreg32(0, J721E_SIO_FIFO_ST);
 
-  while (getreg32(RP2040_SIO_FIFO_ST) & RP2040_SIO_FIFO_ST_VLD)
+  while (getreg32(J721E_SIO_FIFO_ST) & J721E_SIO_FIFO_ST_VLD)
     {
-      getreg32(RP2040_SIO_FIFO_RD);
+      getreg32(J721E_SIO_FIFO_RD);
     }
 
   __asm__ volatile ("sev");
@@ -110,15 +110,15 @@ static int fifo_comm(uint32_t msg)
 {
   uint32_t rcv;
 
-  while (!(getreg32(RP2040_SIO_FIFO_ST) & RP2040_SIO_FIFO_ST_RDY))
+  while (!(getreg32(J721E_SIO_FIFO_ST) & J721E_SIO_FIFO_ST_RDY))
     ;
-  putreg32(msg, RP2040_SIO_FIFO_WR);
+  putreg32(msg, J721E_SIO_FIFO_WR);
   __asm__ volatile ("sev");
 
-  while (!(getreg32(RP2040_SIO_FIFO_ST) & RP2040_SIO_FIFO_ST_VLD))
+  while (!(getreg32(J721E_SIO_FIFO_ST) & J721E_SIO_FIFO_ST_VLD))
     __asm__ volatile ("wfe");
 
-  rcv = getreg32(RP2040_SIO_FIFO_RD);
+  rcv = getreg32(J721E_SIO_FIFO_RD);
 
   return msg == rcv;
 }
@@ -151,8 +151,8 @@ static void core1_boot(void)
 
   /* Enable inter-processor FIFO interrupt */
 
-  irq_attach(RP2040_SIO_IRQ_PROC1, arm_pause_handler, NULL);
-  up_enable_irq(RP2040_SIO_IRQ_PROC1);
+  irq_attach(J721E_SIO_IRQ_PROC1, arm_pause_handler, NULL);
+  up_enable_irq(J721E_SIO_IRQ_PROC1);
 
   spin_unlock(&g_core1_boot);
 
@@ -214,10 +214,10 @@ int up_cpu_start(int cpu)
 
   /* Reset Core 1 */
 
-  setbits_reg32(RP2040_PSM_PROC1, RP2040_PSM_FRCE_OFF);
-  while (!(getreg32(RP2040_PSM_FRCE_OFF) & RP2040_PSM_PROC1))
+  setbits_reg32(J721E_PSM_PROC1, J721E_PSM_FRCE_OFF);
+  while (!(getreg32(J721E_PSM_FRCE_OFF) & J721E_PSM_PROC1))
     ;
-  clrbits_reg32(RP2040_PSM_PROC1, RP2040_PSM_FRCE_OFF);
+  clrbits_reg32(J721E_PSM_PROC1, J721E_PSM_FRCE_OFF);
 
   spin_lock(&g_core1_boot);
 
@@ -247,8 +247,8 @@ int up_cpu_start(int cpu)
 
   /* Enable inter-processor FIFO interrupt */
 
-  irq_attach(RP2040_SIO_IRQ_PROC0, arm_pause_handler, NULL);
-  up_enable_irq(RP2040_SIO_IRQ_PROC0);
+  irq_attach(J721E_SIO_IRQ_PROC0, arm_pause_handler, NULL);
+  up_enable_irq(J721E_SIO_IRQ_PROC0);
 
   spin_lock(&g_core1_boot);
 

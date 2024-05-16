@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_cyw43439.c
+ * arch/arm/src/j721e/j721e_cyw43439.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -34,9 +34,9 @@
 
 #include "barriers.h"
 
-#include "rp2040_cyw43439.h"
-#include "rp2040_pio.h"
-#include "rp2040_pio_instructions.h"
+#include "j721e_cyw43439.h"
+#include "j721e_pio.h"
+#include "j721e_pio_instructions.h"
 
 #ifdef CONFIG_NDEBUG
 #  define PRINT_GSPI(block)
@@ -99,7 +99,7 @@ static const uint16_t cyw_program_instructions[] =
   0x1084, /* 5: jmp  y--, 4      side 1 # Loop until read count is zero  */
 };
 
-static const rp2040_pio_program_t pio_program =
+static const j721e_pio_program_t pio_program =
 {
   .instructions = cyw_program_instructions,
   .length       = 6,    /* Six, count 'em, six.    */
@@ -143,11 +143,11 @@ static void dma_complete(DMA_HANDLE handle, uint8_t status, void *arg)
 
 static int my_init(gspi_dev_t  *gspi)
 {
-  rp2040_gspi_t *rp_io = (rp2040_gspi_t *)(gspi->io_dev);
+  j721e_gspi_t *rp_io = (j721e_gspi_t *)(gspi->io_dev);
 
   uint32_t              divisor;
   irqstate_t            flags;
-  rp2040_pio_sm_config  config =
+  j721e_pio_sm_config  config =
     {
       0
     };
@@ -156,18 +156,18 @@ static int my_init(gspi_dev_t  *gspi)
    * so we know it is reset
    */
 
-  rp2040_gpio_put(rp_io->gpio_select, true);  /* deselect  */
-  rp2040_gpio_put(rp_io->gpio_on, false);     /* power off */
+  j721e_gpio_put(rp_io->gpio_select, true);  /* deselect  */
+  j721e_gpio_put(rp_io->gpio_on, false);     /* power off */
 
   /* Pull the data line low so that we initialise to gSPI mode */
 
-  rp2040_gpio_init(rp_io->gpio_data);
-  rp2040_gpio_setdir(rp_io->gpio_data, true);
-  rp2040_gpio_put(rp_io->gpio_data, false);
+  j721e_gpio_init(rp_io->gpio_data);
+  j721e_gpio_setdir(rp_io->gpio_data, true);
+  j721e_gpio_put(rp_io->gpio_data, false);
 
   nxsig_usleep(50000); /* Leave off for at least 50ms. */
 
-  rp2040_gpio_put(rp_io->gpio_on, true);     /* power on */
+  j721e_gpio_put(rp_io->gpio_on, true);     /* power on */
 
   nxsig_usleep(50000); /* Wait a bit to let the power come up. */
 
@@ -177,11 +177,11 @@ static int my_init(gspi_dev_t  *gspi)
 
   /* Find a PIO instance and load program. */
 
-  for (rp_io->pio = 0; rp_io->pio < RP2040_PIO_NUM; ++rp_io->pio)
+  for (rp_io->pio = 0; rp_io->pio < J721E_PIO_NUM; ++rp_io->pio)
     {
       /* Try to claim a state machine. */
 
-      rp_io->pio_sm = rp2040_pio_claim_unused_sm(rp_io->pio, false);
+      rp_io->pio_sm = j721e_pio_claim_unused_sm(rp_io->pio, false);
 
       /* If we did not get one try the next pio block, if any. */
 
@@ -189,11 +189,11 @@ static int my_init(gspi_dev_t  *gspi)
 
       /* See if we have space in this block to load our program. */
 
-      if (rp2040_pio_can_add_program(rp_io->pio, &pio_program))
+      if (j721e_pio_can_add_program(rp_io->pio, &pio_program))
         {
           /* Great! load the program and exit the pio choice loop. */
 
-          rp_io->pio_location = rp2040_pio_add_program(rp_io->pio,
+          rp_io->pio_location = j721e_pio_add_program(rp_io->pio,
                                                       &pio_program);
 
           break;
@@ -201,10 +201,10 @@ static int my_init(gspi_dev_t  *gspi)
 
       /* Oops -- no room at the inn!  Release sm and try next pio. */
 
-      rp2040_pio_sm_unclaim(rp_io->pio, rp_io->pio_sm);
+      j721e_pio_sm_unclaim(rp_io->pio, rp_io->pio_sm);
     }
 
-  if (rp_io->pio >= RP2040_PIO_NUM)
+  if (rp_io->pio >= J721E_PIO_NUM)
     {
       leave_critical_section(flags);
       return -ENOMEM;
@@ -216,14 +216,14 @@ static int my_init(gspi_dev_t  *gspi)
 
   /* Configure pins that are used by PIO. */
 
-  rp2040_pio_gpio_init(rp_io->pio, rp_io->gpio_data);
-  rp2040_pio_gpio_init(rp_io->pio, rp_io->gpio_clock);
+  j721e_pio_gpio_init(rp_io->pio, rp_io->gpio_data);
+  j721e_pio_gpio_init(rp_io->pio, rp_io->gpio_clock);
 
-  rp2040_gpio_set_input_hysteresis_enabled(rp_io->gpio_data, true);
+  j721e_gpio_set_input_hysteresis_enabled(rp_io->gpio_data, true);
 
-  rp2040_gpio_set_slew_fast(rp_io->gpio_clock, true);
-  rp2040_gpio_set_drive_strength(rp_io->gpio_clock,
-                                 RP2040_PADS_BANK0_GPIO_DRIVE_12MA);
+  j721e_gpio_set_slew_fast(rp_io->gpio_clock, true);
+  j721e_gpio_set_drive_strength(rp_io->gpio_clock,
+                                 J721E_PADS_BANK0_GPIO_DRIVE_12MA);
 
   /* Set the clock divisor as appropriate for our system clock
    * speed, so the pio clock runs the requested bit clock rate.
@@ -231,45 +231,45 @@ static int my_init(gspi_dev_t  *gspi)
 
   divisor = ((uint64_t)BOARD_SYS_FREQ << 8) / (2 * GSPI_CLOCK_FREQ);
 
-  rp2040_sm_config_set_clkdiv_int_frac(&config,
+  j721e_sm_config_set_clkdiv_int_frac(&config,
                                        divisor >> 8,
                                        divisor & 0xff);
 
   /* Set the wrap points as required by the program. */
 
-  rp2040_sm_config_set_wrap(&config,
+  j721e_sm_config_set_wrap(&config,
                             rp_io->pio_location + PIO_WRAP_TARGET,
                             rp_io->pio_location + PIO_WRAP);
 
   /* set to shift left, 32 bits, with autopull/push  */
 
-  rp2040_sm_config_set_in_shift(&config, false, true, 32);
-  rp2040_sm_config_set_out_shift(&config, false, true, 32);
+  j721e_sm_config_set_in_shift(&config, false, true, 32);
+  j721e_sm_config_set_out_shift(&config, false, true, 32);
 
   /* Configure a single mandatory side-set pin. */
 
-  rp2040_sm_config_set_sideset(&config, 1, false, false);
+  j721e_sm_config_set_sideset(&config, 1, false, false);
 
   /* Configure our GPIO clock pin as side-set output. */
 
-  rp2040_sm_config_set_sideset_pins(&config, rp_io->gpio_clock);
+  j721e_sm_config_set_sideset_pins(&config, rp_io->gpio_clock);
 
   /* Configure out GPIO data pin as an OUT pin, SET pin, and IN pin */
 
-  rp2040_sm_config_set_out_pins(&config, rp_io->gpio_data, 1);
-  rp2040_sm_config_set_set_pins(&config, rp_io->gpio_data, 1);
-  rp2040_sm_config_set_in_pins (&config, rp_io->gpio_data);
+  j721e_sm_config_set_out_pins(&config, rp_io->gpio_data, 1);
+  j721e_sm_config_set_set_pins(&config, rp_io->gpio_data, 1);
+  j721e_sm_config_set_in_pins (&config, rp_io->gpio_data);
 
   /* Load the configuration into the state machine. */
 
-  rp2040_pio_sm_init(rp_io->pio,
+  j721e_pio_sm_init(rp_io->pio,
                      rp_io->pio_sm,
                      rp_io->pio_location,
                      &config);
 
   /* Disable the input synchronizers on the data pin */
 
-  rp2040_pio_set_input_sync_bypass(rp_io->pio, rp_io->gpio_data, true);
+  j721e_pio_set_input_sync_bypass(rp_io->pio, rp_io->gpio_data, true);
 
   wlinfo("finished\n");
 
@@ -288,12 +288,12 @@ static int my_set_isr(gspi_dev_t  *gspi,
                       xcpt_t           thread_isr,
                       void        *thread_isr_arg)
 {
-  rp2040_gspi_t *rp_io = (rp2040_gspi_t *)(gspi->io_dev);
+  j721e_gspi_t *rp_io = (j721e_gspi_t *)(gspi->io_dev);
 
   /* Set up, but do not enable, interrupt service for the data pin */
 
-  rp2040_gpio_irq_attach(rp_io->gpio_intr,
-                         RP2040_GPIO_INTR_LEVEL_HIGH,
+  j721e_gpio_irq_attach(rp_io->gpio_intr,
+                         J721E_GPIO_INTR_LEVEL_HIGH,
                          thread_isr,
                          thread_isr_arg);
 
@@ -313,16 +313,16 @@ static int my_set_isr(gspi_dev_t  *gspi,
 static int my_interrupt_enable(gspi_dev_t  *gspi,
                                bool             enable)
 {
-  rp2040_gspi_t *rp_io         = (rp2040_gspi_t *)(gspi->io_dev);
+  j721e_gspi_t *rp_io         = (j721e_gspi_t *)(gspi->io_dev);
   static int         disable_count = 0;
 
   if (enable)
     {
-      if (--disable_count <= 0) rp2040_gpio_enable_irq(rp_io->gpio_intr);
+      if (--disable_count <= 0) j721e_gpio_enable_irq(rp_io->gpio_intr);
     }
   else
     {
-      rp2040_gpio_disable_irq(rp_io->gpio_intr);
+      j721e_gpio_disable_irq(rp_io->gpio_intr);
       ++disable_count;
     }
 
@@ -339,20 +339,20 @@ static int my_interrupt_enable(gspi_dev_t  *gspi,
 
 static int my_deinit(gspi_dev_t *gspi)
 {
-  rp2040_gspi_t *rp_io = (rp2040_gspi_t *)(gspi->io_dev);
+  j721e_gspi_t *rp_io = (j721e_gspi_t *)(gspi->io_dev);
 
-  rp2040_gpio_irq_attach(rp_io->gpio_data,
-                         RP2040_GPIO_INTR_EDGE_LOW,
+  j721e_gpio_irq_attach(rp_io->gpio_data,
+                         J721E_GPIO_INTR_EDGE_LOW,
                          NULL,
                          NULL);
 
-  rp2040_pio_sm_set_enabled(rp_io->pio, rp_io->pio_sm, false);
-  rp2040_pio_remove_program(rp_io->pio, &pio_program, rp_io->pio_location);
-  rp2040_pio_sm_unclaim(rp_io->pio, rp_io->pio_sm);
+  j721e_pio_sm_set_enabled(rp_io->pio, rp_io->pio_sm, false);
+  j721e_pio_remove_program(rp_io->pio, &pio_program, rp_io->pio_location);
+  j721e_pio_sm_unclaim(rp_io->pio, rp_io->pio_sm);
 
   /* Turn the power off to the cyw43439. */
 
-  rp2040_gpio_put(rp_io->gpio_on, false);
+  j721e_gpio_put(rp_io->gpio_on, false);
 
   return OK;
 }
@@ -372,9 +372,9 @@ static int my_write(struct gspi_dev_s   *gspi,
                     uint16_t             length,
                     const uint32_t      *data)
 {
-  rp2040_gspi_t *rp_io      = (rp2040_gspi_t *)(gspi->io_dev);
+  j721e_gspi_t *rp_io      = (j721e_gspi_t *)(gspi->io_dev);
   dma_info_t         dma_info;
-  DMA_HANDLE         xfer_dma   = rp2040_dmachannel();
+  DMA_HANDLE         xfer_dma   = j721e_dmachannel();
   uint32_t           command    =    (0x1                  << 31)
                                    | ((increment ? 1 : 0)  << 30)
                                    | ((function & 0x3)     << 28)
@@ -383,9 +383,9 @@ static int my_write(struct gspi_dev_s   *gspi,
 
   dma_config_t       dma_config =
     {
-      .size   = RP2040_DMA_SIZE_WORD,
+      .size   = J721E_DMA_SIZE_WORD,
       .noincr = false,
-      .dreq   = rp2040_pio_get_dreq(rp_io->pio,
+      .dreq   = j721e_pio_get_dreq(rp_io->pio,
                                     rp_io->pio_sm,
                                     true),
     };
@@ -405,15 +405,15 @@ static int my_write(struct gspi_dev_s   *gspi,
 
   /* Reset the PIO state machine just to be sure. */
 
-  rp2040_pio_sm_set_enabled(rp_io->pio, rp_io->pio_sm, false);
+  j721e_pio_sm_set_enabled(rp_io->pio, rp_io->pio_sm, false);
 
-  rp2040_pio_sm_clear_fifos(rp_io->pio, rp_io->pio_sm);
+  j721e_pio_sm_clear_fifos(rp_io->pio, rp_io->pio_sm);
 
-  rp2040_pio_sm_restart(rp_io->pio, rp_io->pio_sm);
+  j721e_pio_sm_restart(rp_io->pio, rp_io->pio_sm);
 
-  rp2040_pio_sm_clkdiv_restart(rp_io->pio, rp_io->pio_sm);
+  j721e_pio_sm_clkdiv_restart(rp_io->pio, rp_io->pio_sm);
 
-  rp2040_pio_sm_exec(rp_io->pio,
+  j721e_pio_sm_exec(rp_io->pio,
                      rp_io->pio_sm,
                      pio_encode_jmp(rp_io->pio_location));
 
@@ -438,11 +438,11 @@ static int my_write(struct gspi_dev_s   *gspi,
    * Loading the Y works the same way.
    */
 
-  rp2040_pio_sm_put(rp_io->pio, rp_io->pio_sm, 32 * ((length + 3) / 4) + 31);
-  rp2040_pio_sm_exec(rp_io->pio, rp_io->pio_sm, pio_encode_out(pio_x, 32));
+  j721e_pio_sm_put(rp_io->pio, rp_io->pio_sm, 32 * ((length + 3) / 4) + 31);
+  j721e_pio_sm_exec(rp_io->pio, rp_io->pio_sm, pio_encode_out(pio_x, 32));
 
-  rp2040_pio_sm_put(rp_io->pio, rp_io->pio_sm, 0);
-  rp2040_pio_sm_exec(rp_io->pio, rp_io->pio_sm, pio_encode_out(pio_y, 32));
+  j721e_pio_sm_put(rp_io->pio, rp_io->pio_sm, 0);
+  j721e_pio_sm_exec(rp_io->pio, rp_io->pio_sm, pio_encode_out(pio_y, 32));
 
   /* Disable interrupts so data won't trigger interrupt. */
 
@@ -450,7 +450,7 @@ static int my_write(struct gspi_dev_s   *gspi,
 
   /* Make sure the clock and data pins direction set to output. */
 
-  rp2040_pio_sm_set_pindirs_with_mask(rp_io->pio,
+  j721e_pio_sm_set_pindirs_with_mask(rp_io->pio,
                                       rp_io->pio_sm,
                                         (1 << rp_io->gpio_data)
                                       | (1 << rp_io->gpio_clock),
@@ -459,7 +459,7 @@ static int my_write(struct gspi_dev_s   *gspi,
 
   /* Make sure there is nothing in the fifos before starting DMA. */
 
-  rp2040_pio_sm_clear_fifos(rp_io->pio, rp_io->pio_sm);
+  j721e_pio_sm_clear_fifos(rp_io->pio, rp_io->pio_sm);
 
   /* Load the command into the transmit fifo. */
 
@@ -470,7 +470,7 @@ static int my_write(struct gspi_dev_s   *gspi,
 
   __asm ("rev %0, %0" : "+l" (command) : :);
 
-  putreg32(command, RP2040_PIO_TXF(rp_io->pio, rp_io->pio_sm));
+  putreg32(command, J721E_PIO_TXF(rp_io->pio, rp_io->pio_sm));
 
   /* Initialize and start the transmit DMA.  It will
    * keep adding data to the TX_FIFO until all data is sent.
@@ -478,30 +478,30 @@ static int my_write(struct gspi_dev_s   *gspi,
 
   nxsem_init(&dma_info.sem, 0, 0);
 
-  rp2040_dmastop(xfer_dma);
+  j721e_dmastop(xfer_dma);
 
-  rp2040_txdmasetup(xfer_dma,
-                    (uintptr_t) RP2040_PIO_TXF(rp_io->pio,
+  j721e_txdmasetup(xfer_dma,
+                    (uintptr_t) J721E_PIO_TXF(rp_io->pio,
                                                 rp_io->pio_sm),
                     (uintptr_t) data,
                     (length + 3) & 0xfffffffc,
                     dma_config);
 
-  modifyreg32(rp2040_dma_register(xfer_dma,
-                                  RP2040_DMA_CTRL_TRIG_OFFSET),
-                                  RP2040_DMA_CTRL_TRIG_BSWAP,
-                                  RP2040_DMA_CTRL_TRIG_BSWAP);
+  modifyreg32(j721e_dma_register(xfer_dma,
+                                  J721E_DMA_CTRL_TRIG_OFFSET),
+                                  J721E_DMA_CTRL_TRIG_BSWAP,
+                                  J721E_DMA_CTRL_TRIG_BSWAP);
 
-  rp2040_dmastart(xfer_dma, dma_complete, &dma_info);
+  j721e_dmastart(xfer_dma, dma_complete, &dma_info);
 
   /* Assert gpio_select by pulling line low */
 
-  rp2040_gpio_put(rp_io->gpio_select, false);
+  j721e_gpio_put(rp_io->gpio_select, false);
   ARM_DMB();
 
   /* Enable the state machine.  This starts the pio program running */
 
-  rp2040_pio_sm_set_enabled(rp_io->pio, rp_io->pio_sm, true);
+  j721e_pio_sm_set_enabled(rp_io->pio, rp_io->pio_sm, true);
 
   /* Wait for transfer to complete */
 
@@ -512,8 +512,8 @@ static int my_write(struct gspi_dev_s   *gspi,
    * once all the data is sent so we'll check for this.
    */
 
-  while (getreg32(RP2040_IO_BANK0_GPIO_STATUS(rp_io->gpio_data))
-                  & RP2040_IO_BANK0_GPIO_STATUS_OEFROMPERI)
+  while (getreg32(J721E_IO_BANK0_GPIO_STATUS(rp_io->gpio_data))
+                  & J721E_IO_BANK0_GPIO_STATUS_OEFROMPERI)
     {
       /* Just busy wait -- testing indicates a worst case of
        * 20 loops (100 instructions).
@@ -523,19 +523,19 @@ static int my_write(struct gspi_dev_s   *gspi,
   /* Un-assert select by pulling line high. */
 
   ARM_DMB();
-  rp2040_gpio_put(rp_io->gpio_select, true);
+  j721e_gpio_put(rp_io->gpio_select, true);
 
   /* Free the DMA controller */
 
-  rp2040_dmafree(xfer_dma);
+  j721e_dmafree(xfer_dma);
   nxsem_destroy(&dma_info.sem);
 
   /* Disable the PIO */
 
-  rp2040_pio_sm_set_enabled(rp_io->pio, rp_io->pio_sm, false);
+  j721e_pio_sm_set_enabled(rp_io->pio, rp_io->pio_sm, false);
 
   /* At this point the data pin is input so it should have been
-   * pulled high by rp2040's gpio pullup.
+   * pulled high by j721e's gpio pullup.
    */
 
   my_interrupt_enable(gspi, true);
@@ -561,10 +561,10 @@ static int my_read(struct gspi_dev_s   *gspi,
                    uint16_t             length,
                    uint32_t            *buffer)
 {
-  rp2040_gspi_t *rp_io      = (rp2040_gspi_t *)(gspi->io_dev);
+  j721e_gspi_t *rp_io      = (j721e_gspi_t *)(gspi->io_dev);
   dma_info_t     dma_info;
-  DMA_HANDLE     xfer_dma   = rp2040_dmachannel();
-  DMA_HANDLE     ctrl_dma   = rp2040_dmachannel();
+  DMA_HANDLE     xfer_dma   = j721e_dmachannel();
+  DMA_HANDLE     ctrl_dma   = j721e_dmachannel();
   uint32_t       temp_word;
   uint32_t       bit_length;
   uint32_t       command    = ((increment ? 1 : 0) << 30)
@@ -572,7 +572,7 @@ static int my_read(struct gspi_dev_s   *gspi,
                             | ((address & 0x1ffff) << 11)
                             | (length & 0x7ff);
 
-  uint32_t       pacing     = rp2040_pio_get_dreq(rp_io->pio,
+  uint32_t       pacing     = j721e_pio_get_dreq(rp_io->pio,
                                                   rp_io->pio_sm,
                                                   false);
 
@@ -581,11 +581,11 @@ static int my_read(struct gspi_dev_s   *gspi,
       /* For F1 transfers we read 1 word that we throw away */
 
         {
-          rp2040_dma_ctrl_blk_ctrl(ctrl_dma,
-                                    RP2040_DMA_SIZE_WORD,
+          j721e_dma_ctrl_blk_ctrl(ctrl_dma,
+                                    J721E_DMA_SIZE_WORD,
                                     pacing,
                                     0),
-          (uintptr_t) RP2040_PIO_RXF(rp_io->pio, rp_io->pio_sm),
+          (uintptr_t) J721E_PIO_RXF(rp_io->pio, rp_io->pio_sm),
           (uintptr_t) &temp_word,
           1,
         },
@@ -593,17 +593,17 @@ static int my_read(struct gspi_dev_s   *gspi,
       /* Read requested data into output buffer */
 
         {
-          rp2040_dma_ctrl_blk_ctrl(ctrl_dma,
-                                    RP2040_DMA_SIZE_WORD,
+          j721e_dma_ctrl_blk_ctrl(ctrl_dma,
+                                    J721E_DMA_SIZE_WORD,
                                     pacing,
-                                      RP2040_DMA_CTRL_TRIG_INCR_WRITE
-                                    | RP2040_DMA_CTRL_TRIG_BSWAP),
-          (uintptr_t) RP2040_PIO_RXF(rp_io->pio, rp_io->pio_sm),
+                                      J721E_DMA_CTRL_TRIG_INCR_WRITE
+                                    | J721E_DMA_CTRL_TRIG_BSWAP),
+          (uintptr_t) J721E_PIO_RXF(rp_io->pio, rp_io->pio_sm),
           (uintptr_t) buffer,
           (length + 3) / 4,
         },
 
-      RP2040_DMA_CTRL_BLOCK_END
+      J721E_DMA_CTRL_BLOCK_END
     };
 
   PRINT_GSPI(
@@ -620,15 +620,15 @@ static int my_read(struct gspi_dev_s   *gspi,
 
   /* Reset the PIO state machine just to be sure. */
 
-  rp2040_pio_sm_set_enabled(rp_io->pio, rp_io->pio_sm, false);
+  j721e_pio_sm_set_enabled(rp_io->pio, rp_io->pio_sm, false);
 
-  rp2040_pio_sm_clear_fifos(rp_io->pio, rp_io->pio_sm);
+  j721e_pio_sm_clear_fifos(rp_io->pio, rp_io->pio_sm);
 
-  rp2040_pio_sm_restart(rp_io->pio, rp_io->pio_sm);
+  j721e_pio_sm_restart(rp_io->pio, rp_io->pio_sm);
 
-  rp2040_pio_sm_clkdiv_restart(rp_io->pio, rp_io->pio_sm);
+  j721e_pio_sm_clkdiv_restart(rp_io->pio, rp_io->pio_sm);
 
-  rp2040_pio_sm_exec(rp_io->pio,
+  j721e_pio_sm_exec(rp_io->pio,
                      rp_io->pio_sm,
                      pio_encode_jmp(rp_io->pio_location));
 
@@ -653,8 +653,8 @@ static int my_read(struct gspi_dev_s   *gspi,
    * Loading the Y works the same way.
    */
 
-  rp2040_pio_sm_put(rp_io->pio, rp_io->pio_sm, 31);
-  rp2040_pio_sm_exec(rp_io->pio, rp_io->pio_sm, pio_encode_out(pio_x, 32));
+  j721e_pio_sm_put(rp_io->pio, rp_io->pio_sm, 31);
+  j721e_pio_sm_exec(rp_io->pio, rp_io->pio_sm, pio_encode_out(pio_x, 32));
 
   /* RX bit length is 32 bits for each 4 bytes requested. */
 
@@ -667,8 +667,8 @@ static int my_read(struct gspi_dev_s   *gspi,
       bit_length += 32;
     }
 
-  rp2040_pio_sm_put(rp_io->pio, rp_io->pio_sm, bit_length);
-  rp2040_pio_sm_exec(rp_io->pio, rp_io->pio_sm, pio_encode_out(pio_y, 32));
+  j721e_pio_sm_put(rp_io->pio, rp_io->pio_sm, bit_length);
+  j721e_pio_sm_exec(rp_io->pio, rp_io->pio_sm, pio_encode_out(pio_y, 32));
 
   /* Disable interrupts so data won't trigger interrupt. */
 
@@ -676,7 +676,7 @@ static int my_read(struct gspi_dev_s   *gspi,
 
   /* Make sure the clock and data pins direction set to output. */
 
-  rp2040_pio_sm_set_pindirs_with_mask(rp_io->pio,
+  j721e_pio_sm_set_pindirs_with_mask(rp_io->pio,
                                       rp_io->pio_sm,
                                         (1 << rp_io->gpio_data)
                                       | (1 << rp_io->gpio_clock),
@@ -685,7 +685,7 @@ static int my_read(struct gspi_dev_s   *gspi,
 
   /* Make sure there is nothing in the fifos before starting DMA. */
 
-  rp2040_pio_sm_clear_fifos(rp_io->pio, rp_io->pio_sm);
+  j721e_pio_sm_clear_fifos(rp_io->pio, rp_io->pio_sm);
 
   /* Load the command into the transmit fifo. */
 
@@ -696,7 +696,7 @@ static int my_read(struct gspi_dev_s   *gspi,
 
   __asm ("rev %0, %0" : "+l" (command) : :);
 
-  putreg32(command, RP2040_PIO_TXF(rp_io->pio, rp_io->pio_sm));
+  putreg32(command, J721E_PIO_TXF(rp_io->pio, rp_io->pio_sm));
 
   /* Initialize and start the control DMA.  It will
    * use the xfer_dma to transfer data from the chip.
@@ -704,30 +704,30 @@ static int my_read(struct gspi_dev_s   *gspi,
 
   nxsem_init(&dma_info.sem, 0, 0);
 
-  rp2040_dmastop(ctrl_dma);
-  rp2040_dmastop(xfer_dma);
+  j721e_dmastop(ctrl_dma);
+  j721e_dmastop(xfer_dma);
 
   /* Check the function bits if the command word to see if
    * this is an F1 read.  If it is we throw away the first
    * four bytes read as this is a delay word.
    */
 
-  rp2040_ctrl_dmasetup(ctrl_dma,
+  j721e_ctrl_dmasetup(ctrl_dma,
                        xfer_dma,
                        &ctrl_blks[function == 1 ? 0 : 1],
                        dma_complete,
                        &dma_info);
 
-  rp2040_dmastart(ctrl_dma, NULL, NULL);
+  j721e_dmastart(ctrl_dma, NULL, NULL);
 
   /* Assert gpio_select by pulling line low */
 
-  rp2040_gpio_put(rp_io->gpio_select, false);
+  j721e_gpio_put(rp_io->gpio_select, false);
   ARM_DMB();
 
   /* Enable the state machine.  This starts the pio program running */
 
-  rp2040_pio_sm_set_enabled(rp_io->pio, rp_io->pio_sm, true);
+  j721e_pio_sm_set_enabled(rp_io->pio, rp_io->pio_sm, true);
 
   /* Wait for transfer to complete */
 
@@ -740,21 +740,21 @@ static int my_read(struct gspi_dev_s   *gspi,
   /* Un-assert select by pulling line high. */
 
   ARM_DMB();
-  rp2040_gpio_put(rp_io->gpio_select, true);
+  j721e_gpio_put(rp_io->gpio_select, true);
 
   /* Free the DMA controllers */
 
-  rp2040_dmafree(ctrl_dma);
-  rp2040_dmafree(xfer_dma);
+  j721e_dmafree(ctrl_dma);
+  j721e_dmafree(xfer_dma);
 
   nxsem_destroy(&dma_info.sem);
 
   /* Disable the PIO */
 
-  rp2040_pio_sm_set_enabled(rp_io->pio, rp_io->pio_sm, false);
+  j721e_pio_sm_set_enabled(rp_io->pio, rp_io->pio_sm, false);
 
   /* At this point the data pin is input so it should have been
-   * pulled high by rp2040's gpio pullup.
+   * pulled high by j721e's gpio pullup.
    */
 
   my_interrupt_enable(gspi, true);
@@ -770,20 +770,20 @@ static int my_read(struct gspi_dev_s   *gspi,
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_cyw_setup
+ * Name: j721e_cyw_setup
  *
  * Description:
  *   Initialize the cyw43439 private data and PIO communication.
  ****************************************************************************/
 
-gspi_dev_t *rp2040_cyw_setup(uint8_t gpio_on,
+gspi_dev_t *j721e_cyw_setup(uint8_t gpio_on,
                              uint8_t gpio_select,
                              uint8_t gpio_data,
                              uint8_t gpio_clock,
                              uint8_t gpio_intr)
 {
   gspi_dev_t    *gspi;
-  rp2040_gspi_t *rp_io;
+  j721e_gspi_t *rp_io;
   int            err;
 
   wlinfo("entered.\n");
@@ -796,7 +796,7 @@ gspi_dev_t *rp2040_cyw_setup(uint8_t gpio_on,
       return NULL;
     }
 
-  rp_io = kmm_zalloc(sizeof(rp2040_gspi_t));
+  rp_io = kmm_zalloc(sizeof(j721e_gspi_t));
 
   if (rp_io == NULL)
     {
@@ -823,13 +823,13 @@ gspi_dev_t *rp2040_cyw_setup(uint8_t gpio_on,
 
   /* Initialize the cyw43439 power-on and chip select lines. */
 
-  rp2040_gpio_init(gpio_on);
-  rp2040_gpio_setdir(gpio_on, true);
-  rp2040_gpio_put(gpio_on, false);  /* set low to turn wifi chip off */
+  j721e_gpio_init(gpio_on);
+  j721e_gpio_setdir(gpio_on, true);
+  j721e_gpio_put(gpio_on, false);  /* set low to turn wifi chip off */
 
-  rp2040_gpio_init(gpio_select);
-  rp2040_gpio_setdir(gpio_select, true);
-  rp2040_gpio_put(gpio_select, true); /* set high to deselect chip */
+  j721e_gpio_init(gpio_select);
+  j721e_gpio_setdir(gpio_select, true);
+  j721e_gpio_put(gpio_select, true); /* set high to deselect chip */
 
   err = bcmf_gspi_initialize(gspi);
 
@@ -848,13 +848,13 @@ gspi_dev_t *rp2040_cyw_setup(uint8_t gpio_on,
 }
 
 /****************************************************************************
- * Name: rp2040_cyw_remove
+ * Name: j721e_cyw_remove
  *
  * Description:
  *   Deinitialize the cyw43439 PIO communication.
  ****************************************************************************/
 
-void rp2040_cyw_remove(gspi_dev_t *gspi)
+void j721e_cyw_remove(gspi_dev_t *gspi)
 {
   /* gspi_deregister((gspi_dev_t *)gspi); */
 }

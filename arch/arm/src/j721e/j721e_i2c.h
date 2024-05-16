@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_i2c.h
+ * arch/arm/src/j721e/j721e_i2c.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_RP2040_I2C_H
-#define __ARCH_ARM_SRC_RP2040_RP2040_I2C_H
+#ifndef __ARCH_ARM_SRC_J721E_J721E_I2C_H
+#define __ARCH_ARM_SRC_J721E_J721E_I2C_H
 
 /****************************************************************************
  * Included Files
@@ -27,7 +27,7 @@
 
 #include <nuttx/config.h>
 #include <nuttx/i2c/i2c_master.h>
-#include "hardware/rp2040_i2c.h"
+#include "hardware/j721e_i2c.h"
 
 #ifndef __ASSEMBLY__
 #if defined(__cplusplus)
@@ -43,7 +43,7 @@ extern "C"
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_i2cbus_initialize
+ * Name: j721e_i2cbus_initialize
  *
  * Description:
  *   Initialize the selected I2C port. And return a unique instance of struct
@@ -59,16 +59,16 @@ extern "C"
  *
  ****************************************************************************/
 
-struct i2c_master_s *rp2040_i2cbus_initialize(int port);
+struct i2c_master_s *j721e_i2cbus_initialize(int port);
 
 /****************************************************************************
- * Name: rp2040_i2cbus_uninitialize
+ * Name: j721e_i2cbus_uninitialize
  *
  * Description:
  *   De-initialize the selected I2C port, and power down the device.
  *
  * Input Parameter:
- *   Device structure as returned by the rp2040_i2cbus_initialize()
+ *   Device structure as returned by the j721e_i2cbus_initialize()
  *
  * Returned Value:
  *   OK on success, ERROR when internal reference count mismatch or dev
@@ -76,7 +76,7 @@ struct i2c_master_s *rp2040_i2cbus_initialize(int port);
  *
  ****************************************************************************/
 
-int rp2040_i2cbus_uninitialize(struct i2c_master_s *dev);
+int j721e_i2cbus_uninitialize(struct i2c_master_s *dev);
 
 #undef EXTERN
 #if defined(__cplusplus)
@@ -84,4 +84,4 @@ int rp2040_i2cbus_uninitialize(struct i2c_master_s *dev);
 #endif
 
 #endif /* __ASSEMBLY__ */
-#endif /* __ARCH_ARM_SRC_RP2040_RP2040_I2C_H */
+#endif /* __ARCH_ARM_SRC_J721E_J721E_I2C_H */

@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_pio.h
+ * arch/arm/src/j721e/j721e_pio.h
  *
  * Based upon the software originally developed by
  *   Raspberry Pi (Trading) Ltd.
@@ -35,8 +35,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_RP2040_PIO_H
-#define __ARCH_ARM_SRC_RP2040_RP2040_PIO_H
+#ifndef __ARCH_ARM_SRC_J721E_J721E_PIO_H
+#define __ARCH_ARM_SRC_J721E_J721E_PIO_H
 
 /****************************************************************************
  * Included Files
@@ -50,23 +50,23 @@
 
 #include <arch/board/board.h>
 
-#include "rp2040_gpio.h"
-#include "rp2040_dmac.h"
-#include "hardware/rp2040_pio.h"
+#include "j721e_gpio.h"
+#include "j721e_dmac.h"
+#include "hardware/j721e_pio.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define RP2040_PIO_NUM        2     /* Number of PIOs */
-#define RP2040_PIO_SM_NUM     4     /* Number of state machines per PIO */
+#define J721E_PIO_NUM        2     /* Number of PIOs */
+#define J721E_PIO_SM_NUM     4     /* Number of state machines per PIO */
 
 #define PIO_INSTRUCTION_COUNT   32u
 
 #define valid_params_if(x, test)    DEBUGASSERT(test)
 
-#define check_sm_param(sm)   valid_params_if(PIO, sm < RP2040_PIO_SM_NUM)
-#define check_pio_param(pio) valid_params_if(PIO, pio < RP2040_PIO_NUM)
+#define check_sm_param(sm)   valid_params_if(PIO, sm < J721E_PIO_SM_NUM)
+#define check_pio_param(pio) valid_params_if(PIO, pio < J721E_PIO_NUM)
 
 #ifndef __ASSEMBLY__
 
@@ -85,19 +85,19 @@ extern "C"
 
 /* FIFO join states */
 
-enum rp2040_pio_fifo_join
+enum j721e_pio_fifo_join
   {
-    RP2040_PIO_FIFO_JOIN_NONE = 0,
-    RP2040_PIO_FIFO_JOIN_TX = 1,
-    RP2040_PIO_FIFO_JOIN_RX = 2,
+    J721E_PIO_FIFO_JOIN_NONE = 0,
+    J721E_PIO_FIFO_JOIN_TX = 1,
+    J721E_PIO_FIFO_JOIN_RX = 2,
   };
 
 /* MOV status types */
 
-enum rp2040_pio_mov_status_type
+enum j721e_pio_mov_status_type
   {
-    RP2040_STATUS_TX_LESSTHAN = 0,
-    RP2040_STATUS_RX_LESSTHAN = 1
+    J721E_STATUS_TX_LESSTHAN = 0,
+    J721E_STATUS_RX_LESSTHAN = 1
   };
 
 /* PIO Configuration structure */
@@ -109,22 +109,22 @@ typedef struct
     uint32_t shiftctrl;
     uint32_t pinctrl;
   }
-rp2040_pio_sm_config;
+j721e_pio_sm_config;
 
-typedef struct rp2040_pio_program
+typedef struct j721e_pio_program
   {
     const uint16_t *instructions;
     uint8_t length;
     int8_t origin; /* required instruction memory origin or -1 */
   }
-rp2040_pio_program_t;
+j721e_pio_program_t;
 
 /****************************************************************************
  * Inline Functions
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_sm_config_set_out_pins
+ * Name: j721e_sm_config_set_out_pins
  *
  * Description:
  *   Set the 'out' pins in a state machine configuration
@@ -140,20 +140,20 @@ rp2040_pio_program_t;
  *
  ****************************************************************************/
 
-static inline void rp2040_sm_config_set_out_pins(rp2040_pio_sm_config *c,
+static inline void j721e_sm_config_set_out_pins(j721e_pio_sm_config *c,
                                                  uint32_t out_base,
                                                  uint32_t out_count)
 {
   valid_params_if(PIO, out_base < 32);
   valid_params_if(PIO, out_count <= 32);
-  c->pinctrl = (c->pinctrl & ~(RP2040_PIO_SM_PINCTRL_OUT_BASE_MASK |
-                               RP2040_PIO_SM_PINCTRL_OUT_COUNT_MASK)) |
-               (out_base << RP2040_PIO_SM_PINCTRL_OUT_BASE_SHIFT) |
-               (out_count << RP2040_PIO_SM_PINCTRL_OUT_COUNT_SHIFT);
+  c->pinctrl = (c->pinctrl & ~(J721E_PIO_SM_PINCTRL_OUT_BASE_MASK |
+                               J721E_PIO_SM_PINCTRL_OUT_COUNT_MASK)) |
+               (out_base << J721E_PIO_SM_PINCTRL_OUT_BASE_SHIFT) |
+               (out_count << J721E_PIO_SM_PINCTRL_OUT_COUNT_SHIFT);
 }
 
 /****************************************************************************
- * Name: rp2040_sm_config_set_set_pins
+ * Name: j721e_sm_config_set_set_pins
  *
  * Description:
  *   Set the 'set' pins in a state machine configuration
@@ -169,20 +169,20 @@ static inline void rp2040_sm_config_set_out_pins(rp2040_pio_sm_config *c,
  *
  ****************************************************************************/
 
-static inline void rp2040_sm_config_set_set_pins(rp2040_pio_sm_config *c,
+static inline void j721e_sm_config_set_set_pins(j721e_pio_sm_config *c,
                                                  uint32_t set_base,
                                                  uint32_t set_count)
 {
   valid_params_if(PIO, set_base < 32);
   valid_params_if(PIO, set_count <= 5);
-  c->pinctrl = (c->pinctrl & ~(RP2040_PIO_SM_PINCTRL_SET_BASE_MASK |
-                               RP2040_PIO_SM_PINCTRL_SET_COUNT_MASK)) |
-               (set_base << RP2040_PIO_SM_PINCTRL_SET_BASE_SHIFT) |
-               (set_count << RP2040_PIO_SM_PINCTRL_SET_COUNT_SHIFT);
+  c->pinctrl = (c->pinctrl & ~(J721E_PIO_SM_PINCTRL_SET_BASE_MASK |
+                               J721E_PIO_SM_PINCTRL_SET_COUNT_MASK)) |
+               (set_base << J721E_PIO_SM_PINCTRL_SET_BASE_SHIFT) |
+               (set_count << J721E_PIO_SM_PINCTRL_SET_COUNT_SHIFT);
 }
 
 /****************************************************************************
- * Name: rp2040_sm_config_set_in_pins
+ * Name: j721e_sm_config_set_in_pins
  *
  * Description:
  *   Set the 'in' pins in a state machine configuration
@@ -197,16 +197,16 @@ static inline void rp2040_sm_config_set_set_pins(rp2040_pio_sm_config *c,
  *
  ****************************************************************************/
 
-static inline void rp2040_sm_config_set_in_pins(rp2040_pio_sm_config *c,
+static inline void j721e_sm_config_set_in_pins(j721e_pio_sm_config *c,
                                                 uint32_t in_base)
 {
   valid_params_if(PIO, in_base < 32);
-  c->pinctrl = (c->pinctrl & ~RP2040_PIO_SM_PINCTRL_IN_BASE_MASK) |
-               (in_base << RP2040_PIO_SM_PINCTRL_IN_BASE_SHIFT);
+  c->pinctrl = (c->pinctrl & ~J721E_PIO_SM_PINCTRL_IN_BASE_MASK) |
+               (in_base << J721E_PIO_SM_PINCTRL_IN_BASE_SHIFT);
 }
 
 /****************************************************************************
- * Name: rp2040_sm_config_set_sideset_pins
+ * Name: j721e_sm_config_set_sideset_pins
  *
  * Description:
  *   Set the 'sideset' pins in a state machine configuration
@@ -221,16 +221,16 @@ static inline void rp2040_sm_config_set_in_pins(rp2040_pio_sm_config *c,
  *
  ****************************************************************************/
 
-static inline void rp2040_sm_config_set_sideset_pins(rp2040_pio_sm_config *c,
+static inline void j721e_sm_config_set_sideset_pins(j721e_pio_sm_config *c,
                                                      uint32_t sideset_base)
 {
   valid_params_if(PIO, sideset_base < 32);
-  c->pinctrl = (c->pinctrl & ~RP2040_PIO_SM_PINCTRL_SIDESET_BASE_MASK) |
-               (sideset_base << RP2040_PIO_SM_PINCTRL_SIDESET_BASE_SHIFT);
+  c->pinctrl = (c->pinctrl & ~J721E_PIO_SM_PINCTRL_SIDESET_BASE_MASK) |
+               (sideset_base << J721E_PIO_SM_PINCTRL_SIDESET_BASE_SHIFT);
 }
 
 /****************************************************************************
- * Name: rp2040_sm_config_set_sideset
+ * Name: j721e_sm_config_set_sideset
  *
  * Description:
  *   Set the 'sideset' options in a state machine configuration
@@ -248,24 +248,24 @@ static inline void rp2040_sm_config_set_sideset_pins(rp2040_pio_sm_config *c,
  *
  ****************************************************************************/
 
-static inline void rp2040_sm_config_set_sideset(rp2040_pio_sm_config *c,
+static inline void j721e_sm_config_set_sideset(j721e_pio_sm_config *c,
                                                 uint32_t bit_count,
                                                 bool optional,
                                                 bool pindirs)
 {
   valid_params_if(PIO, bit_count <= 5);
   valid_params_if(PIO, !optional || bit_count >= 1);
-  c->pinctrl = (c->pinctrl & ~RP2040_PIO_SM_PINCTRL_SIDESET_COUNT_MASK) |
-               (bit_count << RP2040_PIO_SM_PINCTRL_SIDESET_COUNT_SHIFT);
+  c->pinctrl = (c->pinctrl & ~J721E_PIO_SM_PINCTRL_SIDESET_COUNT_MASK) |
+               (bit_count << J721E_PIO_SM_PINCTRL_SIDESET_COUNT_SHIFT);
 
-  c->execctrl = (c->execctrl & ~(RP2040_PIO_SM_EXECCTRL_SIDE_EN |
-                                 RP2040_PIO_SM_EXECCTRL_SIDE_PINDIR)) |
-                (optional ? RP2040_PIO_SM_EXECCTRL_SIDE_EN : 0) |
-                (pindirs ? RP2040_PIO_SM_EXECCTRL_SIDE_PINDIR : 0);
+  c->execctrl = (c->execctrl & ~(J721E_PIO_SM_EXECCTRL_SIDE_EN |
+                                 J721E_PIO_SM_EXECCTRL_SIDE_PINDIR)) |
+                (optional ? J721E_PIO_SM_EXECCTRL_SIDE_EN : 0) |
+                (pindirs ? J721E_PIO_SM_EXECCTRL_SIDE_PINDIR : 0);
 }
 
 /****************************************************************************
- * Name: rp2040_sm_config_set_clkdiv
+ * Name: j721e_sm_config_set_clkdiv
  *
  * Description:
  *   Set the state machine clock divider (from a floating point value)
@@ -290,17 +290,17 @@ static inline void rp2040_sm_config_set_sideset(rp2040_pio_sm_config *c,
  *
  ****************************************************************************/
 
-static inline void rp2040_sm_config_set_clkdiv(rp2040_pio_sm_config *c,
+static inline void j721e_sm_config_set_clkdiv(j721e_pio_sm_config *c,
                                                float div)
 {
   uint32_t div_int = (uint32_t)div;
   uint32_t div_frac = (uint32_t)((div - (float)div_int) * (1u << 8u));
-  c->clkdiv = (div_frac << RP2040_PIO_SM_CLKDIV_FRAC_SHIFT) |
-              (div_int << RP2040_PIO_SM_CLKDIV_INT_SHIFT);
+  c->clkdiv = (div_frac << J721E_PIO_SM_CLKDIV_FRAC_SHIFT) |
+              (div_int << J721E_PIO_SM_CLKDIV_INT_SHIFT);
 }
 
 /****************************************************************************
- * Name: rp2040_sm_config_set_clkdiv_int_frac
+ * Name: j721e_sm_config_set_clkdiv_int_frac
  *
  * Description:
  *   Set the state machine clock divider (from integer and fractional parts
@@ -318,24 +318,24 @@ static inline void rp2040_sm_config_set_clkdiv(rp2040_pio_sm_config *c,
  *   div_frac - Fractional part in 1/256ths
  *
  * See Also:
- *   rp2040_sm_config_set_clkdiv()
+ *   j721e_sm_config_set_clkdiv()
  *
  * Returned Value:
  *   None
  *
  ****************************************************************************/
 
-static inline void rp2040_sm_config_set_clkdiv_int_frac(
-                                            rp2040_pio_sm_config *c,
+static inline void j721e_sm_config_set_clkdiv_int_frac(
+                                            j721e_pio_sm_config *c,
                                             uint16_t div_int,
                                             uint8_t div_frac)
 {
-  c->clkdiv = (((uint32_t)div_frac) << RP2040_PIO_SM_CLKDIV_FRAC_SHIFT) |
-              (((uint32_t)div_int) << RP2040_PIO_SM_CLKDIV_INT_SHIFT);
+  c->clkdiv = (((uint32_t)div_frac) << J721E_PIO_SM_CLKDIV_FRAC_SHIFT) |
+              (((uint32_t)div_int) << J721E_PIO_SM_CLKDIV_INT_SHIFT);
 }
 
 /****************************************************************************
- * Name: rp2040_sm_config_set_wrap
+ * Name: j721e_sm_config_set_wrap
  *
  * Description:
  *   Set the wrap addresses in a state machine configuration
@@ -352,20 +352,20 @@ static inline void rp2040_sm_config_set_clkdiv_int_frac(
  *
  ****************************************************************************/
 
-static inline void rp2040_sm_config_set_wrap(rp2040_pio_sm_config *c,
+static inline void j721e_sm_config_set_wrap(j721e_pio_sm_config *c,
                                              uint32_t wrap_target,
                                              uint32_t wrap)
 {
   valid_params_if(PIO, wrap < PIO_INSTRUCTION_COUNT);
   valid_params_if(PIO, wrap_target < PIO_INSTRUCTION_COUNT);
-  c->execctrl = (c->execctrl & ~(RP2040_PIO_SM_EXECCTRL_WRAP_TOP_MASK |
-                                 RP2040_PIO_SM_EXECCTRL_WRAP_BOTTOM_MASK)) |
-                (wrap_target << RP2040_PIO_SM_EXECCTRL_WRAP_BOTTOM_SHIFT) |
-                (wrap << RP2040_PIO_SM_EXECCTRL_WRAP_TOP_SHIFT);
+  c->execctrl = (c->execctrl & ~(J721E_PIO_SM_EXECCTRL_WRAP_TOP_MASK |
+                                 J721E_PIO_SM_EXECCTRL_WRAP_BOTTOM_MASK)) |
+                (wrap_target << J721E_PIO_SM_EXECCTRL_WRAP_BOTTOM_SHIFT) |
+                (wrap << J721E_PIO_SM_EXECCTRL_WRAP_TOP_SHIFT);
 }
 
 /****************************************************************************
- * Name: rp2040_sm_config_set_jmp_pin
+ * Name: j721e_sm_config_set_jmp_pin
  *
  * Description:
  *   Set the 'jmp' pin in a state machine configuration
@@ -380,16 +380,16 @@ static inline void rp2040_sm_config_set_wrap(rp2040_pio_sm_config *c,
  *
  ****************************************************************************/
 
-static inline void rp2040_sm_config_set_jmp_pin(rp2040_pio_sm_config *c,
+static inline void j721e_sm_config_set_jmp_pin(j721e_pio_sm_config *c,
                                                 uint32_t pin)
 {
   valid_params_if(PIO, pin < 32);
-  c->execctrl = (c->execctrl & ~RP2040_PIO_SM_EXECCTRL_JMP_PIN_MASK) |
-                (pin << RP2040_PIO_SM_EXECCTRL_JMP_PIN_SHIFT);
+  c->execctrl = (c->execctrl & ~J721E_PIO_SM_EXECCTRL_JMP_PIN_MASK) |
+                (pin << J721E_PIO_SM_EXECCTRL_JMP_PIN_SHIFT);
 }
 
 /****************************************************************************
- * Name: rp2040_sm_config_set_in_shift
+ * Name: j721e_sm_config_set_in_shift
  *
  * Description:
  *   Setup 'in' shifting parameters in a state machine configuration
@@ -406,24 +406,24 @@ static inline void rp2040_sm_config_set_jmp_pin(rp2040_pio_sm_config *c,
  *
  ****************************************************************************/
 
-static inline void rp2040_sm_config_set_in_shift(rp2040_pio_sm_config *c,
+static inline void j721e_sm_config_set_in_shift(j721e_pio_sm_config *c,
                                                  bool shift_right,
                                                  bool autopush,
                                                  uint32_t push_threshold)
 {
   valid_params_if(PIO, push_threshold <= 32);
   c->shiftctrl = (c->shiftctrl &
-                  ~(RP2040_PIO_SM_SHIFTCTRL_IN_SHIFTDIR |
-                    RP2040_PIO_SM_SHIFTCTRL_AUTOPUSH |
-                    RP2040_PIO_SM_SHIFTCTRL_PUSH_THRESH_MASK)) |
-                 (shift_right ? RP2040_PIO_SM_SHIFTCTRL_IN_SHIFTDIR : 0) |
-                 (autopush ? RP2040_PIO_SM_SHIFTCTRL_AUTOPUSH : 0) |
+                  ~(J721E_PIO_SM_SHIFTCTRL_IN_SHIFTDIR |
+                    J721E_PIO_SM_SHIFTCTRL_AUTOPUSH |
+                    J721E_PIO_SM_SHIFTCTRL_PUSH_THRESH_MASK)) |
+                 (shift_right ? J721E_PIO_SM_SHIFTCTRL_IN_SHIFTDIR : 0) |
+                 (autopush ? J721E_PIO_SM_SHIFTCTRL_AUTOPUSH : 0) |
                  ((push_threshold & 0x1fu) <<
-                  RP2040_PIO_SM_SHIFTCTRL_PUSH_THRESH_SHIFT);
+                  J721E_PIO_SM_SHIFTCTRL_PUSH_THRESH_SHIFT);
 }
 
 /****************************************************************************
- * Name: rp2040_sm_config_set_out_shift
+ * Name: j721e_sm_config_set_out_shift
  *
  * Description:
  *   Setup 'out' shifting parameters in a state machine configuration
@@ -440,24 +440,24 @@ static inline void rp2040_sm_config_set_in_shift(rp2040_pio_sm_config *c,
  *
  ****************************************************************************/
 
-static inline void rp2040_sm_config_set_out_shift(rp2040_pio_sm_config *c,
+static inline void j721e_sm_config_set_out_shift(j721e_pio_sm_config *c,
                                                   bool shift_right,
                                                   bool autopull,
                                                   uint32_t pull_threshold)
 {
   valid_params_if(PIO, pull_threshold <= 32);
   c->shiftctrl = (c->shiftctrl &
-                  ~(RP2040_PIO_SM_SHIFTCTRL_OUT_SHIFTDIR |
-                    RP2040_PIO_SM_SHIFTCTRL_AUTOPULL |
-                    RP2040_PIO_SM_SHIFTCTRL_PULL_THRESH_MASK)) |
-                 (shift_right ? RP2040_PIO_SM_SHIFTCTRL_OUT_SHIFTDIR : 0) |
-                 (autopull ? RP2040_PIO_SM_SHIFTCTRL_AUTOPULL : 0) |
+                  ~(J721E_PIO_SM_SHIFTCTRL_OUT_SHIFTDIR |
+                    J721E_PIO_SM_SHIFTCTRL_AUTOPULL |
+                    J721E_PIO_SM_SHIFTCTRL_PULL_THRESH_MASK)) |
+                 (shift_right ? J721E_PIO_SM_SHIFTCTRL_OUT_SHIFTDIR : 0) |
+                 (autopull ? J721E_PIO_SM_SHIFTCTRL_AUTOPULL : 0) |
                  ((pull_threshold & 0x1fu) <<
-                  RP2040_PIO_SM_SHIFTCTRL_PULL_THRESH_SHIFT);
+                  J721E_PIO_SM_SHIFTCTRL_PULL_THRESH_SHIFT);
 }
 
 /****************************************************************************
- * Name: rp2040_sm_config_set_fifo_join
+ * Name: j721e_sm_config_set_fifo_join
  *
  * Description:
  *   Setup the FIFO joining in a state machine configuration
@@ -467,29 +467,29 @@ static inline void rp2040_sm_config_set_out_shift(rp2040_pio_sm_config *c,
  *   join - Specifies the join type.
  *
  * See Also:
- *   enum rp2040_pio_fifo_join
+ *   enum j721e_pio_fifo_join
  *
  * Returned Value:
  *   None
  *
  ****************************************************************************/
 
-static inline void rp2040_sm_config_set_fifo_join(rp2040_pio_sm_config *c,
-                                          enum rp2040_pio_fifo_join join)
+static inline void j721e_sm_config_set_fifo_join(j721e_pio_sm_config *c,
+                                          enum j721e_pio_fifo_join join)
 {
-  valid_params_if(PIO, join >= RP2040_PIO_FIFO_JOIN_NONE &&
-                       join <= RP2040_PIO_FIFO_JOIN_RX);
+  valid_params_if(PIO, join >= J721E_PIO_FIFO_JOIN_NONE &&
+                       join <= J721E_PIO_FIFO_JOIN_RX);
   c->shiftctrl = (c->shiftctrl &
-                  (uint32_t)~(RP2040_PIO_SM_SHIFTCTRL_FJOIN_TX |
-                              RP2040_PIO_SM_SHIFTCTRL_FJOIN_RX)) |
-                 ((join == RP2040_PIO_FIFO_JOIN_TX) ?
-                  RP2040_PIO_SM_SHIFTCTRL_FJOIN_TX : 0) |
-                 ((join == RP2040_PIO_FIFO_JOIN_RX) ?
-                  RP2040_PIO_SM_SHIFTCTRL_FJOIN_RX : 0);
+                  (uint32_t)~(J721E_PIO_SM_SHIFTCTRL_FJOIN_TX |
+                              J721E_PIO_SM_SHIFTCTRL_FJOIN_RX)) |
+                 ((join == J721E_PIO_FIFO_JOIN_TX) ?
+                  J721E_PIO_SM_SHIFTCTRL_FJOIN_TX : 0) |
+                 ((join == J721E_PIO_FIFO_JOIN_RX) ?
+                  J721E_PIO_SM_SHIFTCTRL_FJOIN_RX : 0);
 }
 
 /****************************************************************************
- * Name: rp2040_sm_config_set_out_special
+ * Name: j721e_sm_config_set_out_special
  *
  * Description:
  *   Set special 'out' operations in a state machine configuration
@@ -506,24 +506,24 @@ static inline void rp2040_sm_config_set_fifo_join(rp2040_pio_sm_config *c,
  *
  ****************************************************************************/
 
-static inline void rp2040_sm_config_set_out_special(rp2040_pio_sm_config *c,
+static inline void j721e_sm_config_set_out_special(j721e_pio_sm_config *c,
                                                 bool sticky,
                                                 bool has_enable_pin,
                                                 uint32_t enable_pin_index)
 {
   c->execctrl = (c->execctrl &
-                 (uint32_t)~(RP2040_PIO_SM_EXECCTRL_OUT_STICKY |
-                             RP2040_PIO_SM_EXECCTRL_INLINE_OUT_EN |
-                             RP2040_PIO_SM_EXECCTRL_OUT_EN_SEL_MASK)) |
-                (sticky ? RP2040_PIO_SM_EXECCTRL_OUT_STICKY : 0) |
-                (has_enable_pin ? RP2040_PIO_SM_EXECCTRL_INLINE_OUT_EN : 0) |
+                 (uint32_t)~(J721E_PIO_SM_EXECCTRL_OUT_STICKY |
+                             J721E_PIO_SM_EXECCTRL_INLINE_OUT_EN |
+                             J721E_PIO_SM_EXECCTRL_OUT_EN_SEL_MASK)) |
+                (sticky ? J721E_PIO_SM_EXECCTRL_OUT_STICKY : 0) |
+                (has_enable_pin ? J721E_PIO_SM_EXECCTRL_INLINE_OUT_EN : 0) |
                 ((enable_pin_index <<
-                  RP2040_PIO_SM_EXECCTRL_OUT_EN_SEL_SHIFT)
-                 & RP2040_PIO_SM_EXECCTRL_OUT_EN_SEL_MASK);
+                  J721E_PIO_SM_EXECCTRL_OUT_EN_SEL_SHIFT)
+                 & J721E_PIO_SM_EXECCTRL_OUT_EN_SEL_MASK);
 }
 
 /****************************************************************************
- * Name: rp2040_sm_config_set_mov_status
+ * Name: j721e_sm_config_set_mov_status
  *
  * Description:
  *   Set source for 'mov status' in a state machine configuration
@@ -535,29 +535,29 @@ static inline void rp2040_sm_config_set_out_special(rp2040_pio_sm_config *c,
  *              count)
  *
  * See Also:
- *   enum rp2040_pio_mov_status_type
+ *   enum j721e_pio_mov_status_type
  *
  * Returned Value:
  *   None
  *
  ****************************************************************************/
 
-static inline void rp2040_sm_config_set_mov_status(rp2040_pio_sm_config *c,
-                                  enum rp2040_pio_mov_status_type status_sel,
+static inline void j721e_sm_config_set_mov_status(j721e_pio_sm_config *c,
+                                  enum j721e_pio_mov_status_type status_sel,
                                   uint32_t status_n)
 {
-  valid_params_if(PIO, status_sel >= RP2040_STATUS_TX_LESSTHAN &&
-                       status_sel <= RP2040_STATUS_RX_LESSTHAN);
+  valid_params_if(PIO, status_sel >= J721E_STATUS_TX_LESSTHAN &&
+                       status_sel <= J721E_STATUS_RX_LESSTHAN);
   c->execctrl = (c->execctrl &
-                 ~(RP2040_PIO_SM_EXECCTRL_STATUS_SEL |
-                   RP2040_PIO_SM_EXECCTRL_STATUS_N_MASK)) |
-                ((status_sel == RP2040_STATUS_RX_LESSTHAN) ?
-                 RP2040_PIO_SM_EXECCTRL_STATUS_SEL : 0) |
-                (status_n & RP2040_PIO_SM_EXECCTRL_STATUS_N_MASK);
+                 ~(J721E_PIO_SM_EXECCTRL_STATUS_SEL |
+                   J721E_PIO_SM_EXECCTRL_STATUS_N_MASK)) |
+                ((status_sel == J721E_STATUS_RX_LESSTHAN) ?
+                 J721E_PIO_SM_EXECCTRL_STATUS_SEL : 0) |
+                (status_n & J721E_PIO_SM_EXECCTRL_STATUS_N_MASK);
 }
 
 /****************************************************************************
- * Name: rp2040_pio_get_default_sm_config
+ * Name: j721e_pio_get_default_sm_config
  *
  * Description:
  *   Get the default state machine configuration
@@ -581,21 +581,21 @@ static inline void rp2040_sm_config_set_mov_status(rp2040_pio_sm_config *c,
  *
  ****************************************************************************/
 
-static inline rp2040_pio_sm_config rp2040_pio_get_default_sm_config(void)
+static inline j721e_pio_sm_config j721e_pio_get_default_sm_config(void)
 {
-  rp2040_pio_sm_config c =
+  j721e_pio_sm_config c =
     {
       0, 0, 0, 0
     };
-  rp2040_sm_config_set_clkdiv_int_frac(&c, 1, 0);
-  rp2040_sm_config_set_wrap(&c, 0, 31);
-  rp2040_sm_config_set_in_shift(&c, true, false, 32);
-  rp2040_sm_config_set_out_shift(&c, true, false, 32);
+  j721e_sm_config_set_clkdiv_int_frac(&c, 1, 0);
+  j721e_sm_config_set_wrap(&c, 0, 31);
+  j721e_sm_config_set_in_shift(&c, true, false, 32);
+  j721e_sm_config_set_out_shift(&c, true, false, 32);
   return c;
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_set_config
+ * Name: j721e_pio_sm_set_config
  *
  * Description:
  *   Apply a state machine configuration to a state machine
@@ -610,20 +610,20 @@ static inline rp2040_pio_sm_config rp2040_pio_get_default_sm_config(void)
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_sm_set_config(uint32_t pio,
+static inline void j721e_pio_sm_set_config(uint32_t pio,
                                 uint32_t sm,
-                                const rp2040_pio_sm_config *config)
+                                const j721e_pio_sm_config *config)
 {
   check_pio_param(pio);
   check_sm_param(sm);
-  putreg32(config->clkdiv, RP2040_PIO_SM_CLKDIV(pio, sm));
-  putreg32(config->execctrl, RP2040_PIO_SM_EXECCTRL(pio, sm));
-  putreg32(config->shiftctrl, RP2040_PIO_SM_SHIFTCTRL(pio, sm));
-  putreg32(config->pinctrl, RP2040_PIO_SM_PINCTRL(pio, sm));
+  putreg32(config->clkdiv, J721E_PIO_SM_CLKDIV(pio, sm));
+  putreg32(config->execctrl, J721E_PIO_SM_EXECCTRL(pio, sm));
+  putreg32(config->shiftctrl, J721E_PIO_SM_SHIFTCTRL(pio, sm));
+  putreg32(config->pinctrl, J721E_PIO_SM_PINCTRL(pio, sm));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_get_index
+ * Name: j721e_pio_get_index
  *
  * Description:
  *   Return the instance number of a PIO instance
@@ -636,14 +636,14 @@ static inline void rp2040_pio_sm_set_config(uint32_t pio,
  *
  ****************************************************************************/
 
-static inline uint32_t rp2040_pio_get_index(uint32_t pio)
+static inline uint32_t j721e_pio_get_index(uint32_t pio)
 {
   check_pio_param(pio);
   return pio;
 }
 
 /****************************************************************************
- * Name: rp2040_pio_gpio_init
+ * Name: j721e_pio_gpio_init
  *
  * Description:
  *   Setup the function select for a GPIO to use output from the given
@@ -664,16 +664,16 @@ static inline uint32_t rp2040_pio_get_index(uint32_t pio)
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_gpio_init(uint32_t pio, uint32_t pin)
+static inline void j721e_pio_gpio_init(uint32_t pio, uint32_t pin)
 {
   check_pio_param(pio);
   valid_params_if(PIO, pin < 32);
-  rp2040_gpio_set_function(pin, pio == 0 ? RP2040_GPIO_FUNC_PIO0 :
-                                           RP2040_GPIO_FUNC_PIO1);
+  j721e_gpio_set_function(pin, pio == 0 ? J721E_GPIO_FUNC_PIO0 :
+                                           J721E_GPIO_FUNC_PIO1);
 }
 
 /****************************************************************************
- * Name: rp2040_pio_get_dreq
+ * Name: j721e_pio_get_dreq
  *
  * Description:
  *   Return the DREQ to use for pacing transfers to a particular state
@@ -690,18 +690,18 @@ static inline void rp2040_pio_gpio_init(uint32_t pio, uint32_t pin)
  *
  ****************************************************************************/
 
-static inline uint32_t rp2040_pio_get_dreq(uint32_t pio, uint32_t sm,
+static inline uint32_t j721e_pio_get_dreq(uint32_t pio, uint32_t sm,
                                            bool is_tx)
 {
   check_pio_param(pio);
   check_sm_param(sm);
-  return sm + (is_tx ? 0 : RP2040_PIO_SM_NUM) +
-              (pio == 0 ? RP2040_DMA_DREQ_PIO0_TX0 :
-                          RP2040_DMA_DREQ_PIO1_TX0);
+  return sm + (is_tx ? 0 : J721E_PIO_SM_NUM) +
+              (pio == 0 ? J721E_DMA_DREQ_PIO0_TX0 :
+                          J721E_DMA_DREQ_PIO1_TX0);
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_set_enabled
+ * Name: j721e_pio_sm_set_enabled
  *
  * Description:
  *   Enable or disable a PIO state machine
@@ -716,18 +716,18 @@ static inline uint32_t rp2040_pio_get_dreq(uint32_t pio, uint32_t sm,
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_sm_set_enabled(uint32_t pio,
+static inline void j721e_pio_sm_set_enabled(uint32_t pio,
                                              uint32_t sm,
                                              bool enabled)
 {
   check_pio_param(pio);
   check_sm_param(sm);
-  putreg32((getreg32(RP2040_PIO_CTRL(pio)) & ~(1u << sm)) |
-           (enabled ? (1u << sm) : 0), RP2040_PIO_CTRL(pio));
+  putreg32((getreg32(J721E_PIO_CTRL(pio)) & ~(1u << sm)) |
+           (enabled ? (1u << sm) : 0), J721E_PIO_CTRL(pio));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_set_sm_mask_enabled
+ * Name: j721e_pio_set_sm_mask_enabled
  *
  * Description:
  *   Enable or disable multiple PIO state machines
@@ -736,7 +736,7 @@ static inline void rp2040_pio_sm_set_enabled(uint32_t pio,
  *   if now enabled they continue exactly from where they left off.
  *
  * See Also:
- *   rp2040_pio_enable_sm_mask_in_sync() if you wish to enable multiple
+ *   j721e_pio_enable_sm_mask_in_sync() if you wish to enable multiple
  *   state machines and ensure their clock dividers are in sync.
  *
  * Input Parameters:
@@ -749,17 +749,17 @@ static inline void rp2040_pio_sm_set_enabled(uint32_t pio,
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_set_sm_mask_enabled(uint32_t pio,
+static inline void j721e_pio_set_sm_mask_enabled(uint32_t pio,
                                                   uint32_t mask,
                                                   bool enabled)
 {
   check_pio_param(pio);
-  putreg32((getreg32(RP2040_PIO_CTRL(pio)) & ~mask) |
-           (enabled ? mask : 0), RP2040_PIO_CTRL(pio));
+  putreg32((getreg32(J721E_PIO_CTRL(pio)) & ~mask) |
+           (enabled ? mask : 0), J721E_PIO_CTRL(pio));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_restart
+ * Name: j721e_pio_sm_restart
  *
  * Description:
  *   Restart a state machine with a known state
@@ -777,16 +777,16 @@ static inline void rp2040_pio_set_sm_mask_enabled(uint32_t pio,
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_sm_restart(uint32_t pio, uint32_t sm)
+static inline void j721e_pio_sm_restart(uint32_t pio, uint32_t sm)
 {
   check_pio_param(pio);
   check_sm_param(sm);
-  setbits_reg32(1u << (RP2040_PIO_CTRL_SM_RESTART_SHIFT + sm),
-                RP2040_PIO_CTRL(pio));
+  setbits_reg32(1u << (J721E_PIO_CTRL_SM_RESTART_SHIFT + sm),
+                J721E_PIO_CTRL(pio));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_restart_sm_mask
+ * Name: j721e_pio_restart_sm_mask
  *
  * Description:
  *   Restart multiple state machine with a known state
@@ -804,16 +804,16 @@ static inline void rp2040_pio_sm_restart(uint32_t pio, uint32_t sm)
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_restart_sm_mask(uint32_t pio, uint32_t mask)
+static inline void j721e_pio_restart_sm_mask(uint32_t pio, uint32_t mask)
 {
   check_pio_param(pio);
-  setbits_reg32((mask << RP2040_PIO_CTRL_SM_RESTART_SHIFT) &
-                RP2040_PIO_CTRL_SM_RESTART_MASK,
-                RP2040_PIO_CTRL(pio));
+  setbits_reg32((mask << J721E_PIO_CTRL_SM_RESTART_SHIFT) &
+                J721E_PIO_CTRL_SM_RESTART_MASK,
+                J721E_PIO_CTRL(pio));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_clkdiv_restart
+ * Name: j721e_pio_sm_clkdiv_restart
  *
  * Description:
  *   Restart a state machine's clock divider from a phase of 0
@@ -832,7 +832,7 @@ static inline void rp2040_pio_restart_sm_mask(uint32_t pio, uint32_t mask)
  *
  *   More commonly this hardware mechanism is used to synchronise the
  *   execution clocks of multiple state machines
- *   -- see rp2040_pio_clkdiv_restart_sm_mask().
+ *   -- see j721e_pio_clkdiv_restart_sm_mask().
  *
  * Input Parameters:
  *   pio - PIO index (0..1)
@@ -843,16 +843,16 @@ static inline void rp2040_pio_restart_sm_mask(uint32_t pio, uint32_t mask)
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_sm_clkdiv_restart(uint32_t pio, uint32_t sm)
+static inline void j721e_pio_sm_clkdiv_restart(uint32_t pio, uint32_t sm)
 {
   check_pio_param(pio);
   check_sm_param(sm);
-  setbits_reg32(1u << (RP2040_PIO_CTRL_CLKDIV_RESTART_SHIFT + sm),
-                RP2040_PIO_CTRL(pio));
+  setbits_reg32(1u << (J721E_PIO_CTRL_CLKDIV_RESTART_SHIFT + sm),
+                J721E_PIO_CTRL(pio));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_clkdiv_restart_sm_mask
+ * Name: j721e_pio_clkdiv_restart_sm_mask
  *
  * Description:
  *   Restart multiple state machines' clock dividers from a phase of 0.
@@ -889,17 +889,17 @@ static inline void rp2040_pio_sm_clkdiv_restart(uint32_t pio, uint32_t sm)
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_clkdiv_restart_sm_mask(uint32_t pio,
+static inline void j721e_pio_clkdiv_restart_sm_mask(uint32_t pio,
                                                      uint32_t mask)
 {
   check_pio_param(pio);
-  setbits_reg32((mask << RP2040_PIO_CTRL_CLKDIV_RESTART_SHIFT) &
-                RP2040_PIO_CTRL_CLKDIV_RESTART_MASK,
-                RP2040_PIO_CTRL(pio));
+  setbits_reg32((mask << J721E_PIO_CTRL_CLKDIV_RESTART_SHIFT) &
+                J721E_PIO_CTRL_CLKDIV_RESTART_MASK,
+                J721E_PIO_CTRL(pio));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_enable_sm_mask_in_sync
+ * Name: j721e_pio_enable_sm_mask_in_sync
  *
  * Description:
  *   Enable multiple PIO state machines synchronizing their clock dividers
@@ -919,18 +919,18 @@ static inline void rp2040_pio_clkdiv_restart_sm_mask(uint32_t pio,
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_enable_sm_mask_in_sync(uint32_t pio,
+static inline void j721e_pio_enable_sm_mask_in_sync(uint32_t pio,
                                                      uint32_t mask)
 {
   check_pio_param(pio);
-  setbits_reg32((mask << (RP2040_PIO_CTRL_CLKDIV_RESTART_SHIFT) &
-                 RP2040_PIO_CTRL_CLKDIV_RESTART_MASK) |
-                (mask & RP2040_PIO_CTRL_SM_ENABLE_MASK),
-                RP2040_PIO_CTRL(pio));
+  setbits_reg32((mask << (J721E_PIO_CTRL_CLKDIV_RESTART_SHIFT) &
+                 J721E_PIO_CTRL_CLKDIV_RESTART_MASK) |
+                (mask & J721E_PIO_CTRL_SM_ENABLE_MASK),
+                J721E_PIO_CTRL(pio));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_get_pc
+ * Name: j721e_pio_sm_get_pc
  *
  * Description:
  *   Return the current program counter for a state machine
@@ -944,15 +944,15 @@ static inline void rp2040_pio_enable_sm_mask_in_sync(uint32_t pio,
  *
  ****************************************************************************/
 
-static inline uint8_t rp2040_pio_sm_get_pc(uint32_t pio, uint32_t sm)
+static inline uint8_t j721e_pio_sm_get_pc(uint32_t pio, uint32_t sm)
 {
   check_pio_param(pio);
   check_sm_param(sm);
-  return (uint8_t)getreg32(RP2040_PIO_SM_ADDR(pio, sm));
+  return (uint8_t)getreg32(J721E_PIO_SM_ADDR(pio, sm));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_exec
+ * Name: j721e_pio_sm_exec
  *
  * Description:
  *   Immediately execute an instruction on a state machine
@@ -963,7 +963,7 @@ static inline uint8_t rp2040_pio_sm_get_pc(uint32_t pio, uint32_t sm)
  *   running.
  *
  * See Also:
- *   rp2040_pio_sm_is_exec_stalled() to see if an executed instruction
+ *   j721e_pio_sm_is_exec_stalled() to see if an executed instruction
  *   is still running (i.e. it is stalled on some condition)
  *
  * Input Parameters:
@@ -976,16 +976,16 @@ static inline uint8_t rp2040_pio_sm_get_pc(uint32_t pio, uint32_t sm)
  *
  ****************************************************************************/
 
-inline static void rp2040_pio_sm_exec(uint32_t pio, uint32_t sm,
+inline static void j721e_pio_sm_exec(uint32_t pio, uint32_t sm,
                                       uint32_t instr)
 {
   check_pio_param(pio);
   check_sm_param(sm);
-  putreg32(instr, RP2040_PIO_SM_INSTR(pio, sm));
+  putreg32(instr, J721E_PIO_SM_INSTR(pio, sm));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_is_exec_stalled
+ * Name: j721e_pio_sm_is_exec_stalled
  *
  * Description:
  *   Determine if an instruction set by pio_sm_exec() is stalled executing
@@ -999,16 +999,16 @@ inline static void rp2040_pio_sm_exec(uint32_t pio, uint32_t sm,
  *
  ****************************************************************************/
 
-static inline bool rp2040_pio_sm_is_exec_stalled(uint32_t pio, uint32_t sm)
+static inline bool j721e_pio_sm_is_exec_stalled(uint32_t pio, uint32_t sm)
 {
   check_pio_param(pio);
   check_sm_param(sm);
-  return getreg32(RP2040_PIO_SM_EXECCTRL(pio, sm)) &
-         RP2040_PIO_SM_EXECCTRL_EXEC_STALLED ? true : false;
+  return getreg32(J721E_PIO_SM_EXECCTRL(pio, sm)) &
+         J721E_PIO_SM_EXECCTRL_EXEC_STALLED ? true : false;
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_exec_wait_blocking
+ * Name: j721e_pio_sm_exec_wait_blocking
  *
  * Description:
  *   Immediately execute an instruction on a state machine and wait for it
@@ -1020,7 +1020,7 @@ static inline bool rp2040_pio_sm_is_exec_stalled(uint32_t pio, uint32_t sm)
  *   running.
  *
  * See Also:
- *   rp2040_pio_sm_is_exec_stalled() to see if an executed instruction
+ *   j721e_pio_sm_is_exec_stalled() to see if an executed instruction
  *   is still running (i.e. it is stalled on some condition)
  *
  * Input Parameters:
@@ -1033,19 +1033,19 @@ static inline bool rp2040_pio_sm_is_exec_stalled(uint32_t pio, uint32_t sm)
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_sm_exec_wait_blocking(uint32_t pio,
+static inline void j721e_pio_sm_exec_wait_blocking(uint32_t pio,
                                                     uint32_t sm,
                                                     uint32_t instr)
 {
   check_pio_param(pio);
   check_sm_param(sm);
-  rp2040_pio_sm_exec(pio, sm, instr);
-  while (rp2040_pio_sm_is_exec_stalled(pio, sm))
+  j721e_pio_sm_exec(pio, sm, instr);
+  while (j721e_pio_sm_is_exec_stalled(pio, sm))
     ;
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_set_wrap
+ * Name: j721e_pio_sm_set_wrap
  *
  * Description:
  *   Set the current wrap configuration for a state machine
@@ -1063,7 +1063,7 @@ static inline void rp2040_pio_sm_exec_wait_blocking(uint32_t pio,
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_sm_set_wrap(uint32_t pio,
+static inline void j721e_pio_sm_set_wrap(uint32_t pio,
                                           uint32_t sm,
                                           uint32_t wrap_target,
                                           uint32_t wrap)
@@ -1073,16 +1073,16 @@ static inline void rp2040_pio_sm_set_wrap(uint32_t pio,
   valid_params_if(PIO, wrap < PIO_INSTRUCTION_COUNT);
   valid_params_if(PIO, wrap_target < PIO_INSTRUCTION_COUNT);
 
-  putreg32((getreg32(RP2040_PIO_SM_EXECCTRL(pio, sm)) &
-            ~(RP2040_PIO_SM_EXECCTRL_WRAP_TOP_MASK |
-              RP2040_PIO_SM_EXECCTRL_WRAP_BOTTOM_MASK)) |
-           (wrap_target << RP2040_PIO_SM_EXECCTRL_WRAP_BOTTOM_SHIFT) |
-           (wrap << RP2040_PIO_SM_EXECCTRL_WRAP_TOP_SHIFT),
-           RP2040_PIO_SM_EXECCTRL(pio, sm));
+  putreg32((getreg32(J721E_PIO_SM_EXECCTRL(pio, sm)) &
+            ~(J721E_PIO_SM_EXECCTRL_WRAP_TOP_MASK |
+              J721E_PIO_SM_EXECCTRL_WRAP_BOTTOM_MASK)) |
+           (wrap_target << J721E_PIO_SM_EXECCTRL_WRAP_BOTTOM_SHIFT) |
+           (wrap << J721E_PIO_SM_EXECCTRL_WRAP_TOP_SHIFT),
+           J721E_PIO_SM_EXECCTRL(pio, sm));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_set_out_pins
+ * Name: j721e_pio_sm_set_out_pins
  *
  * Description:
  *   Set the current 'out' pins for a state machine
@@ -1099,7 +1099,7 @@ static inline void rp2040_pio_sm_set_wrap(uint32_t pio,
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_sm_set_out_pins(uint32_t pio,
+static inline void j721e_pio_sm_set_out_pins(uint32_t pio,
                                               uint32_t sm,
                                               uint32_t out_base,
                                               uint32_t out_count)
@@ -1109,16 +1109,16 @@ static inline void rp2040_pio_sm_set_out_pins(uint32_t pio,
   valid_params_if(PIO, out_base < 32);
   valid_params_if(PIO, out_count <= 32);
 
-  putreg32((getreg32(RP2040_PIO_SM_PINCTRL(pio, sm)) &
-            ~(RP2040_PIO_SM_PINCTRL_OUT_BASE_MASK |
-              RP2040_PIO_SM_PINCTRL_OUT_COUNT_MASK)) |
-           (out_base << RP2040_PIO_SM_PINCTRL_OUT_BASE_SHIFT) |
-           (out_count << RP2040_PIO_SM_PINCTRL_OUT_COUNT_SHIFT),
-           RP2040_PIO_SM_PINCTRL(pio, sm));
+  putreg32((getreg32(J721E_PIO_SM_PINCTRL(pio, sm)) &
+            ~(J721E_PIO_SM_PINCTRL_OUT_BASE_MASK |
+              J721E_PIO_SM_PINCTRL_OUT_COUNT_MASK)) |
+           (out_base << J721E_PIO_SM_PINCTRL_OUT_BASE_SHIFT) |
+           (out_count << J721E_PIO_SM_PINCTRL_OUT_COUNT_SHIFT),
+           J721E_PIO_SM_PINCTRL(pio, sm));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_set_set_pins
+ * Name: j721e_pio_sm_set_set_pins
  *
  * Description:
  *   Set the current 'set' pins for a state machine
@@ -1135,7 +1135,7 @@ static inline void rp2040_pio_sm_set_out_pins(uint32_t pio,
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_sm_set_set_pins(uint32_t pio,
+static inline void j721e_pio_sm_set_set_pins(uint32_t pio,
                                               uint32_t sm,
                                               uint32_t set_base,
                                               uint32_t set_count)
@@ -1145,16 +1145,16 @@ static inline void rp2040_pio_sm_set_set_pins(uint32_t pio,
   valid_params_if(PIO, set_base < 32);
   valid_params_if(PIO, set_count <= 5);
 
-  putreg32((getreg32(RP2040_PIO_SM_PINCTRL(pio, sm)) &
-            ~(RP2040_PIO_SM_PINCTRL_SET_BASE_MASK |
-              RP2040_PIO_SM_PINCTRL_SET_COUNT_MASK)) |
-           (set_base << RP2040_PIO_SM_PINCTRL_SET_BASE_SHIFT) |
-           (set_count << RP2040_PIO_SM_PINCTRL_SET_COUNT_SHIFT),
-           RP2040_PIO_SM_PINCTRL(pio, sm));
+  putreg32((getreg32(J721E_PIO_SM_PINCTRL(pio, sm)) &
+            ~(J721E_PIO_SM_PINCTRL_SET_BASE_MASK |
+              J721E_PIO_SM_PINCTRL_SET_COUNT_MASK)) |
+           (set_base << J721E_PIO_SM_PINCTRL_SET_BASE_SHIFT) |
+           (set_count << J721E_PIO_SM_PINCTRL_SET_COUNT_SHIFT),
+           J721E_PIO_SM_PINCTRL(pio, sm));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_set_in_pins
+ * Name: j721e_pio_sm_set_in_pins
  *
  * Description:
  *   Set the current 'in' pins for a state machine
@@ -1170,7 +1170,7 @@ static inline void rp2040_pio_sm_set_set_pins(uint32_t pio,
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_sm_set_in_pins(uint32_t pio,
+static inline void j721e_pio_sm_set_in_pins(uint32_t pio,
                                              uint32_t sm,
                                              uint32_t in_base)
 {
@@ -1178,14 +1178,14 @@ static inline void rp2040_pio_sm_set_in_pins(uint32_t pio,
   check_sm_param(sm);
   valid_params_if(PIO, in_base < 32);
 
-  putreg32((getreg32(RP2040_PIO_SM_PINCTRL(pio, sm)) &
-            ~RP2040_PIO_SM_PINCTRL_IN_BASE_MASK) |
-           (in_base << RP2040_PIO_SM_PINCTRL_IN_BASE_SHIFT),
-           RP2040_PIO_SM_PINCTRL(pio, sm));
+  putreg32((getreg32(J721E_PIO_SM_PINCTRL(pio, sm)) &
+            ~J721E_PIO_SM_PINCTRL_IN_BASE_MASK) |
+           (in_base << J721E_PIO_SM_PINCTRL_IN_BASE_SHIFT),
+           J721E_PIO_SM_PINCTRL(pio, sm));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_set_sideset_pins
+ * Name: j721e_pio_sm_set_sideset_pins
  *
  * Description:
  *   Set the current 'sideset' pins for a state machine
@@ -1201,7 +1201,7 @@ static inline void rp2040_pio_sm_set_in_pins(uint32_t pio,
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_sm_set_sideset_pins(uint32_t pio,
+static inline void j721e_pio_sm_set_sideset_pins(uint32_t pio,
                                                   uint32_t sm,
                                                   uint32_t sideset_base)
 {
@@ -1209,14 +1209,14 @@ static inline void rp2040_pio_sm_set_sideset_pins(uint32_t pio,
   check_sm_param(sm);
   valid_params_if(PIO, sideset_base < 32);
 
-  putreg32((getreg32(RP2040_PIO_SM_PINCTRL(pio, sm)) &
-            ~RP2040_PIO_SM_PINCTRL_SIDESET_BASE_MASK) |
-           (sideset_base << RP2040_PIO_SM_PINCTRL_SIDESET_BASE_SHIFT),
-           RP2040_PIO_SM_PINCTRL(pio, sm));
+  putreg32((getreg32(J721E_PIO_SM_PINCTRL(pio, sm)) &
+            ~J721E_PIO_SM_PINCTRL_SIDESET_BASE_MASK) |
+           (sideset_base << J721E_PIO_SM_PINCTRL_SIDESET_BASE_SHIFT),
+           J721E_PIO_SM_PINCTRL(pio, sm));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_put
+ * Name: j721e_pio_sm_put
  *
  * Description:
  *   Write a word of data to a state machine's TX FIFO
@@ -1232,24 +1232,24 @@ static inline void rp2040_pio_sm_set_sideset_pins(uint32_t pio,
  *   data - the 32 bit data value
  *
  * See Also:
- *   rp2040_pio_sm_put_blocking()
+ *   j721e_pio_sm_put_blocking()
  *
  * Returned Value:
  *   None
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_sm_put(uint32_t pio, uint32_t sm,
+static inline void j721e_pio_sm_put(uint32_t pio, uint32_t sm,
                                      uint32_t data)
 {
   check_pio_param(pio);
   check_sm_param(sm);
 
-  putreg32(data, RP2040_PIO_TXF(pio, sm));
+  putreg32(data, J721E_PIO_TXF(pio, sm));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_get
+ * Name: j721e_pio_sm_get
  *
  * Description:
  *   Read a word of data from a state machine's RX FIFO
@@ -1266,23 +1266,23 @@ static inline void rp2040_pio_sm_put(uint32_t pio, uint32_t sm,
  *   sm - State machine index (0..3)
  *
  * See Also:
- *   rp2040_pio_sm_get_blocking()
+ *   j721e_pio_sm_get_blocking()
  *
  * Returned Value:
  *   None
  *
  ****************************************************************************/
 
-static inline uint32_t rp2040_pio_sm_get(uint32_t pio, uint32_t sm)
+static inline uint32_t j721e_pio_sm_get(uint32_t pio, uint32_t sm)
 {
   check_pio_param(pio);
   check_sm_param(sm);
 
-  return getreg32(RP2040_PIO_RXF(pio, sm));
+  return getreg32(J721E_PIO_RXF(pio, sm));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_is_rx_fifo_full
+ * Name: j721e_pio_sm_is_rx_fifo_full
  *
  * Description:
  *   Determine if a state machine's RX FIFO is full
@@ -1296,17 +1296,17 @@ static inline uint32_t rp2040_pio_sm_get(uint32_t pio, uint32_t sm)
  *
  ****************************************************************************/
 
-static inline bool rp2040_pio_sm_is_rx_fifo_full(uint32_t pio, uint32_t sm)
+static inline bool j721e_pio_sm_is_rx_fifo_full(uint32_t pio, uint32_t sm)
 {
   check_pio_param(pio);
   check_sm_param(sm);
 
-  return (getreg32(RP2040_PIO_FSTAT(pio)) &
-          (1u << (RP2040_PIO_FSTAT_RXFULL_SHIFT + sm))) != 0;
+  return (getreg32(J721E_PIO_FSTAT(pio)) &
+          (1u << (J721E_PIO_FSTAT_RXFULL_SHIFT + sm))) != 0;
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_is_rx_fifo_empty
+ * Name: j721e_pio_sm_is_rx_fifo_empty
  *
  * Description:
  *   Determine if a state machine's RX FIFO is empty
@@ -1320,17 +1320,17 @@ static inline bool rp2040_pio_sm_is_rx_fifo_full(uint32_t pio, uint32_t sm)
  *
  ****************************************************************************/
 
-static inline bool rp2040_pio_sm_is_rx_fifo_empty(uint32_t pio, uint32_t sm)
+static inline bool j721e_pio_sm_is_rx_fifo_empty(uint32_t pio, uint32_t sm)
 {
   check_pio_param(pio);
   check_sm_param(sm);
 
-  return (getreg32(RP2040_PIO_FSTAT(pio)) &
-          (1u << (RP2040_PIO_FSTAT_RXEMPTY_SHIFT + sm))) != 0;
+  return (getreg32(J721E_PIO_FSTAT(pio)) &
+          (1u << (J721E_PIO_FSTAT_RXEMPTY_SHIFT + sm))) != 0;
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_get_rx_fifo_level
+ * Name: j721e_pio_sm_get_rx_fifo_level
  *
  * Description:
  *   Return the number of elements currently in a state machine's RX FIFO
@@ -1344,22 +1344,22 @@ static inline bool rp2040_pio_sm_is_rx_fifo_empty(uint32_t pio, uint32_t sm)
  *
  ****************************************************************************/
 
-static inline uint32_t rp2040_pio_sm_get_rx_fifo_level(uint32_t pio,
+static inline uint32_t j721e_pio_sm_get_rx_fifo_level(uint32_t pio,
                                                        uint32_t sm)
 {
   check_pio_param(pio);
   check_sm_param(sm);
 
-  uint32_t bitoffs = RP2040_PIO_FLEVEL_RX0_SHIFT +
-                     sm * (RP2040_PIO_FLEVEL_RX1_SHIFT -
-                           RP2040_PIO_FLEVEL_RX0_SHIFT);
-  const uint32_t mask = RP2040_PIO_FLEVEL_RX0_MASK >>
-                        RP2040_PIO_FLEVEL_RX0_SHIFT;
-  return (getreg32(RP2040_PIO_FLEVEL(pio)) >> bitoffs) & mask;
+  uint32_t bitoffs = J721E_PIO_FLEVEL_RX0_SHIFT +
+                     sm * (J721E_PIO_FLEVEL_RX1_SHIFT -
+                           J721E_PIO_FLEVEL_RX0_SHIFT);
+  const uint32_t mask = J721E_PIO_FLEVEL_RX0_MASK >>
+                        J721E_PIO_FLEVEL_RX0_SHIFT;
+  return (getreg32(J721E_PIO_FLEVEL(pio)) >> bitoffs) & mask;
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_is_tx_fifo_full
+ * Name: j721e_pio_sm_is_tx_fifo_full
  *
  * Description:
  *   Determine if a state machine's TX FIFO is full
@@ -1373,17 +1373,17 @@ static inline uint32_t rp2040_pio_sm_get_rx_fifo_level(uint32_t pio,
  *
  ****************************************************************************/
 
-static inline bool rp2040_pio_sm_is_tx_fifo_full(uint32_t pio, uint32_t sm)
+static inline bool j721e_pio_sm_is_tx_fifo_full(uint32_t pio, uint32_t sm)
 {
   check_pio_param(pio);
   check_sm_param(sm);
 
-  return (getreg32(RP2040_PIO_FSTAT(pio)) &
-          (1u << (RP2040_PIO_FSTAT_TXFULL_SHIFT + sm))) != 0;
+  return (getreg32(J721E_PIO_FSTAT(pio)) &
+          (1u << (J721E_PIO_FSTAT_TXFULL_SHIFT + sm))) != 0;
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_is_tx_fifo_empty
+ * Name: j721e_pio_sm_is_tx_fifo_empty
  *
  * Description:
  *   Determine if a state machine's TX FIFO is empty
@@ -1397,17 +1397,17 @@ static inline bool rp2040_pio_sm_is_tx_fifo_full(uint32_t pio, uint32_t sm)
  *
  ****************************************************************************/
 
-static inline bool rp2040_pio_sm_is_tx_fifo_empty(uint32_t pio, uint32_t sm)
+static inline bool j721e_pio_sm_is_tx_fifo_empty(uint32_t pio, uint32_t sm)
 {
   check_pio_param(pio);
   check_sm_param(sm);
 
-  return (getreg32(RP2040_PIO_FSTAT(pio)) &
-          (1u << (RP2040_PIO_FSTAT_TXEMPTY_SHIFT + sm))) != 0;
+  return (getreg32(J721E_PIO_FSTAT(pio)) &
+          (1u << (J721E_PIO_FSTAT_TXEMPTY_SHIFT + sm))) != 0;
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_get_tx_fifo_level
+ * Name: j721e_pio_sm_get_tx_fifo_level
  *
  * Description:
  *   Return the number of elements currently in a state machine's TX FIFO
@@ -1421,22 +1421,22 @@ static inline bool rp2040_pio_sm_is_tx_fifo_empty(uint32_t pio, uint32_t sm)
  *
  ****************************************************************************/
 
-static inline uint32_t rp2040_pio_sm_get_tx_fifo_level(uint32_t pio,
+static inline uint32_t j721e_pio_sm_get_tx_fifo_level(uint32_t pio,
                                                        uint32_t sm)
 {
   check_pio_param(pio);
   check_sm_param(sm);
 
-  uint32_t bitoffs = RP2040_PIO_FLEVEL_TX0_SHIFT +
-                     sm * (RP2040_PIO_FLEVEL_TX1_SHIFT -
-                           RP2040_PIO_FLEVEL_TX0_SHIFT);
-  const uint32_t mask = RP2040_PIO_FLEVEL_TX0_MASK >>
-                        RP2040_PIO_FLEVEL_TX0_SHIFT;
-  return (getreg32(RP2040_PIO_FLEVEL(pio)) >> bitoffs) & mask;
+  uint32_t bitoffs = J721E_PIO_FLEVEL_TX0_SHIFT +
+                     sm * (J721E_PIO_FLEVEL_TX1_SHIFT -
+                           J721E_PIO_FLEVEL_TX0_SHIFT);
+  const uint32_t mask = J721E_PIO_FLEVEL_TX0_MASK >>
+                        J721E_PIO_FLEVEL_TX0_SHIFT;
+  return (getreg32(J721E_PIO_FLEVEL(pio)) >> bitoffs) & mask;
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_put_blocking
+ * Name: j721e_pio_sm_put_blocking
  *
  * Description:
  *   Write a word of data to a state machine's TX FIFO, blocking if the FIFO
@@ -1452,20 +1452,20 @@ static inline uint32_t rp2040_pio_sm_get_tx_fifo_level(uint32_t pio,
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_sm_put_blocking(uint32_t pio,
+static inline void j721e_pio_sm_put_blocking(uint32_t pio,
                                               uint32_t sm,
                                               uint32_t data)
 {
   check_pio_param(pio);
   check_sm_param(sm);
 
-  while (rp2040_pio_sm_is_tx_fifo_full(pio, sm))
+  while (j721e_pio_sm_is_tx_fifo_full(pio, sm))
     ;
-  rp2040_pio_sm_put(pio, sm, data);
+  j721e_pio_sm_put(pio, sm, data);
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_get_blocking
+ * Name: j721e_pio_sm_get_blocking
  *
  * Description:
  *   Read a word of data from a state machine's RX FIFO, blocking if the FIFO
@@ -1480,18 +1480,18 @@ static inline void rp2040_pio_sm_put_blocking(uint32_t pio,
  *
  ****************************************************************************/
 
-static inline uint32_t rp2040_pio_sm_get_blocking(uint32_t pio, uint32_t sm)
+static inline uint32_t j721e_pio_sm_get_blocking(uint32_t pio, uint32_t sm)
 {
   check_pio_param(pio);
   check_sm_param(sm);
 
-  while (rp2040_pio_sm_is_rx_fifo_empty(pio, sm))
+  while (j721e_pio_sm_is_rx_fifo_empty(pio, sm))
     ;
-  return rp2040_pio_sm_get(pio, sm);
+  return j721e_pio_sm_get(pio, sm);
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_set_clkdiv
+ * Name: j721e_pio_sm_set_clkdiv
  *
  * Description:
  *   set the current clock divider for a state machine
@@ -1506,7 +1506,7 @@ static inline uint32_t rp2040_pio_sm_get_blocking(uint32_t pio, uint32_t sm)
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_sm_set_clkdiv(uint32_t pio, uint32_t sm,
+static inline void j721e_pio_sm_set_clkdiv(uint32_t pio, uint32_t sm,
                                             float div)
 {
   check_pio_param(pio);
@@ -1514,13 +1514,13 @@ static inline void rp2040_pio_sm_set_clkdiv(uint32_t pio, uint32_t sm,
 
   uint32_t div_int = (uint16_t) div;
   uint32_t div_frac = (uint8_t) ((div - (float)div_int) * (1u << 8u));
-  putreg32((div_frac << RP2040_PIO_SM_CLKDIV_FRAC_SHIFT) |
-           (div_int << RP2040_PIO_SM_CLKDIV_INT_SHIFT),
-           RP2040_PIO_SM_CLKDIV(pio, sm));
+  putreg32((div_frac << J721E_PIO_SM_CLKDIV_FRAC_SHIFT) |
+           (div_int << J721E_PIO_SM_CLKDIV_INT_SHIFT),
+           J721E_PIO_SM_CLKDIV(pio, sm));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_set_clkdiv_int_frac
+ * Name: j721e_pio_sm_set_clkdiv_int_frac
  *
  * Description:
  *   set the current clock divider for a state machine using a 16:8 fraction
@@ -1536,7 +1536,7 @@ static inline void rp2040_pio_sm_set_clkdiv(uint32_t pio, uint32_t sm,
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_sm_set_clkdiv_int_frac(uint32_t pio,
+static inline void j721e_pio_sm_set_clkdiv_int_frac(uint32_t pio,
                                                      uint32_t sm,
                                                      uint16_t div_int,
                                                      uint8_t div_frac)
@@ -1544,13 +1544,13 @@ static inline void rp2040_pio_sm_set_clkdiv_int_frac(uint32_t pio,
   check_pio_param(pio);
   check_sm_param(sm);
 
-  putreg32((((uint32_t)div_frac) << RP2040_PIO_SM_CLKDIV_FRAC_SHIFT) |
-           (((uint32_t)div_int) << RP2040_PIO_SM_CLKDIV_INT_SHIFT),
-           RP2040_PIO_SM_CLKDIV(pio, sm));
+  putreg32((((uint32_t)div_frac) << J721E_PIO_SM_CLKDIV_FRAC_SHIFT) |
+           (((uint32_t)div_int) << J721E_PIO_SM_CLKDIV_INT_SHIFT),
+           J721E_PIO_SM_CLKDIV(pio, sm));
 }
 
 /****************************************************************************
- * Name: rp2040_pio_sm_clear_fifos
+ * Name: j721e_pio_sm_clear_fifos
  *
  * Description:
  *   Clear a state machine's TX and RX FIFOs
@@ -1564,17 +1564,17 @@ static inline void rp2040_pio_sm_set_clkdiv_int_frac(uint32_t pio,
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_sm_clear_fifos(uint32_t pio, uint32_t sm)
+static inline void j721e_pio_sm_clear_fifos(uint32_t pio, uint32_t sm)
 {
   /* changing the FIFO join state clears the fifo */
 
   check_pio_param(pio);
   check_sm_param(sm);
 
-  xorbits_reg32(RP2040_PIO_SM_SHIFTCTRL_FJOIN_RX,
-                RP2040_PIO_SM_SHIFTCTRL(pio, sm));
-  xorbits_reg32(RP2040_PIO_SM_SHIFTCTRL_FJOIN_RX,
-                RP2040_PIO_SM_SHIFTCTRL(pio, sm));
+  xorbits_reg32(J721E_PIO_SM_SHIFTCTRL_FJOIN_RX,
+                J721E_PIO_SM_SHIFTCTRL(pio, sm));
+  xorbits_reg32(J721E_PIO_SM_SHIFTCTRL_FJOIN_RX,
+                J721E_PIO_SM_SHIFTCTRL(pio, sm));
 }
 
 /****************************************************************************
@@ -1582,7 +1582,7 @@ static inline void rp2040_pio_sm_clear_fifos(uint32_t pio, uint32_t sm)
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_pio_can_add_program
+ * Name: j721e_pio_can_add_program
  *
  * Description:
  *   Determine whether the given program can (at the time of the call) be
@@ -1598,11 +1598,11 @@ static inline void rp2040_pio_sm_clear_fifos(uint32_t pio, uint32_t sm)
  *
  ****************************************************************************/
 
-bool rp2040_pio_can_add_program(uint32_t pio,
-                                const rp2040_pio_program_t *program);
+bool j721e_pio_can_add_program(uint32_t pio,
+                                const j721e_pio_program_t *program);
 
 /****************************************************************************
- * Name: rp2040_pio_can_add_program_at_offset
+ * Name: j721e_pio_can_add_program_at_offset
  *
  * Description:
  *   Determine whether the given program can (at the time of the call) be
@@ -1620,18 +1620,18 @@ bool rp2040_pio_can_add_program(uint32_t pio,
  *
  ****************************************************************************/
 
-bool rp2040_pio_can_add_program_at_offset(uint32_t pio,
-                                        const rp2040_pio_program_t *program,
+bool j721e_pio_can_add_program_at_offset(uint32_t pio,
+                                        const j721e_pio_program_t *program,
                                         uint32_t offset);
 
 /****************************************************************************
- * Name: rp2040_pio_add_program
+ * Name: j721e_pio_add_program
  *
  * Description:
  *   Attempt to load the program, panicking if not possible
  *
  * See Also:
- *   rp2040_pio_can_add_program() if you need to check whether the program
+ *   j721e_pio_can_add_program() if you need to check whether the program
  *   can be loaded
  *
  * Input Parameters:
@@ -1643,18 +1643,18 @@ bool rp2040_pio_can_add_program_at_offset(uint32_t pio,
  *
  ****************************************************************************/
 
-uint32_t rp2040_pio_add_program(uint32_t pio,
-                                const rp2040_pio_program_t *program);
+uint32_t j721e_pio_add_program(uint32_t pio,
+                                const j721e_pio_program_t *program);
 
 /****************************************************************************
- * Name: rp2040_pio_add_program_at_offset
+ * Name: j721e_pio_add_program_at_offset
  *
  * Description:
  *   Attempt to load the program at the specified instruction memory offset,
  *   panicking if not possible
  *
  * See Also:
- *   rp2040_pio_can_add_program_at_offset() if you need to check whether the
+ *   j721e_pio_can_add_program_at_offset() if you need to check whether the
  *   program can be loaded
  *
  * Input Parameters:
@@ -1668,12 +1668,12 @@ uint32_t rp2040_pio_add_program(uint32_t pio,
  *
  ****************************************************************************/
 
-void rp2040_pio_add_program_at_offset(uint32_t pio,
-                                      const rp2040_pio_program_t *program,
+void j721e_pio_add_program_at_offset(uint32_t pio,
+                                      const j721e_pio_program_t *program,
                                       uint32_t offset);
 
 /****************************************************************************
- * Name: rp2040_pio_remove_program
+ * Name: j721e_pio_remove_program
  *
  * Description:
  *   Remove a program from a PIO instance's instruction memory
@@ -1688,12 +1688,12 @@ void rp2040_pio_add_program_at_offset(uint32_t pio,
  *
  ****************************************************************************/
 
-void rp2040_pio_remove_program(uint32_t pio,
-                               const rp2040_pio_program_t *program,
+void j721e_pio_remove_program(uint32_t pio,
+                               const j721e_pio_program_t *program,
                                uint32_t loaded_offset);
 
 /****************************************************************************
- * Name: rp2040_pio_clear_instruction_memory
+ * Name: j721e_pio_clear_instruction_memory
  *
  * Description:
  *   Clears all of a PIO instance's instruction memory
@@ -1706,10 +1706,10 @@ void rp2040_pio_remove_program(uint32_t pio,
  *
  ****************************************************************************/
 
-void rp2040_pio_clear_instruction_memory(uint32_t pio);
+void j721e_pio_clear_instruction_memory(uint32_t pio);
 
 /****************************************************************************
- * Name: rp2040_pio_sm_init
+ * Name: j721e_pio_sm_init
  *
  * Description:
  *   Resets the state machine to a consistent state, and configures it
@@ -1734,11 +1734,11 @@ void rp2040_pio_clear_instruction_memory(uint32_t pio);
  *
  ****************************************************************************/
 
-void rp2040_pio_sm_init(uint32_t pio, uint32_t sm, uint32_t initial_pc,
-                        const rp2040_pio_sm_config *config);
+void j721e_pio_sm_init(uint32_t pio, uint32_t sm, uint32_t initial_pc,
+                        const j721e_pio_sm_config *config);
 
 /****************************************************************************
- * Name: rp2040_pio_sm_drain_tx_fifo
+ * Name: j721e_pio_sm_drain_tx_fifo
  *
  * Description:
  *   Empty out a state machine's TX FIFO
@@ -1753,17 +1753,17 @@ void rp2040_pio_sm_init(uint32_t pio, uint32_t sm, uint32_t initial_pc,
  *   sm - State machine index (0..3)
  *
  * See Also:
- *   rp2040_pio_sm_clear_fifos()
+ *   j721e_pio_sm_clear_fifos()
  *
  * Returned Value:
  *   None
  *
  ****************************************************************************/
 
-void rp2040_pio_sm_drain_tx_fifo(uint32_t pio, uint32_t sm);
+void j721e_pio_sm_drain_tx_fifo(uint32_t pio, uint32_t sm);
 
 /****************************************************************************
- * Name: rp2040_pio_sm_set_pins
+ * Name: j721e_pio_sm_set_pins
  *
  * Description:
  *   Use a state machine to set a value on all pins for the PIO instance
@@ -1786,10 +1786,10 @@ void rp2040_pio_sm_drain_tx_fifo(uint32_t pio, uint32_t sm);
  *
  ****************************************************************************/
 
-void rp2040_pio_sm_set_pins(uint32_t pio, uint32_t sm, uint32_t pin_values);
+void j721e_pio_sm_set_pins(uint32_t pio, uint32_t sm, uint32_t pin_values);
 
 /****************************************************************************
- * Name: rp2040_pio_sm_set_pins_with_mask
+ * Name: j721e_pio_sm_set_pins_with_mask
  *
  * Description:
  *   Use a state machine to set a value on multiple pins for the PIO instance
@@ -1815,11 +1815,11 @@ void rp2040_pio_sm_set_pins(uint32_t pio, uint32_t sm, uint32_t pin_values);
  *
  ****************************************************************************/
 
-void rp2040_pio_sm_set_pins_with_mask(uint32_t pio, uint32_t sm,
+void j721e_pio_sm_set_pins_with_mask(uint32_t pio, uint32_t sm,
                                     uint32_t pin_values, uint32_t pin_mask);
 
 /****************************************************************************
- * Name: rp2040_pio_sm_set_pindirs_with_mask
+ * Name: j721e_pio_sm_set_pindirs_with_mask
  *
  * Description:
  *   Use a state machine to set the pin directions for multiple pins for the
@@ -1846,12 +1846,12 @@ void rp2040_pio_sm_set_pins_with_mask(uint32_t pio, uint32_t sm,
  *
  ****************************************************************************/
 
-void rp2040_pio_sm_set_pindirs_with_mask(uint32_t pio, uint32_t sm,
+void j721e_pio_sm_set_pindirs_with_mask(uint32_t pio, uint32_t sm,
                                          uint32_t pin_dirs,
                                          uint32_t pin_mask);
 
 /****************************************************************************
- * Name: rp2040_pio_sm_set_consecutive_pindirs
+ * Name: j721e_pio_sm_set_consecutive_pindirs
  *
  * Description:
  *   Use a state machine to set the same pin direction for multiple
@@ -1877,12 +1877,12 @@ void rp2040_pio_sm_set_pindirs_with_mask(uint32_t pio, uint32_t sm,
  *
  ****************************************************************************/
 
-void rp2040_pio_sm_set_consecutive_pindirs(uint32_t pio, uint32_t sm,
+void j721e_pio_sm_set_consecutive_pindirs(uint32_t pio, uint32_t sm,
                                            uint32_t pin_base,
                                            uint32_t pin_count, bool is_out);
 
 /****************************************************************************
- * Name: rp2040_pio_sm_claim
+ * Name: j721e_pio_sm_claim
  *
  * Description:
  *   Mark a state machine as used
@@ -1900,10 +1900,10 @@ void rp2040_pio_sm_set_consecutive_pindirs(uint32_t pio, uint32_t sm,
  *
  ****************************************************************************/
 
-void rp2040_pio_sm_claim(uint32_t pio, uint32_t sm);
+void j721e_pio_sm_claim(uint32_t pio, uint32_t sm);
 
 /****************************************************************************
- * Name: rp2040_pio_claim_sm_mask
+ * Name: j721e_pio_claim_sm_mask
  *
  * Description:
  *   Mark multiple state machines as used
@@ -1922,10 +1922,10 @@ void rp2040_pio_sm_claim(uint32_t pio, uint32_t sm);
  *
  ****************************************************************************/
 
-void rp2040_pio_claim_sm_mask(uint32_t pio, uint32_t sm_mask);
+void j721e_pio_claim_sm_mask(uint32_t pio, uint32_t sm_mask);
 
 /****************************************************************************
- * Name: rp2040_pio_sm_unclaim
+ * Name: j721e_pio_sm_unclaim
  *
  * Description:
  *   Mark a state machine as no longer used
@@ -1941,10 +1941,10 @@ void rp2040_pio_claim_sm_mask(uint32_t pio, uint32_t sm_mask);
  *
  ****************************************************************************/
 
-void rp2040_pio_sm_unclaim(uint32_t pio, uint32_t sm);
+void j721e_pio_sm_unclaim(uint32_t pio, uint32_t sm);
 
 /****************************************************************************
- * Name: rp2040_pio_claim_unused_sm
+ * Name: j721e_pio_claim_unused_sm
  *
  * Description:
  *   Claim a free state machine on a PIO instance
@@ -1958,10 +1958,10 @@ void rp2040_pio_sm_unclaim(uint32_t pio, uint32_t sm);
  *
  ****************************************************************************/
 
-int rp2040_pio_claim_unused_sm(uint32_t pio, bool required);
+int j721e_pio_claim_unused_sm(uint32_t pio, bool required);
 
 /****************************************************************************
- * Name: rp2040_pio_set_input_sync_bypass
+ * Name: j721e_pio_set_input_sync_bypass
  *
  * Description:
  *   Set the input synchronizer bypess bit for a GPIO pin
@@ -1973,15 +1973,15 @@ int rp2040_pio_claim_unused_sm(uint32_t pio, bool required);
  *
  ****************************************************************************/
 
-static inline void rp2040_pio_set_input_sync_bypass(uint32_t pio,
+static inline void j721e_pio_set_input_sync_bypass(uint32_t pio,
                                                     uint32_t pin,
                                                     bool bypass)
 {
-  DEBUGASSERT(pin < RP2040_GPIO_NUM);
+  DEBUGASSERT(pin < J721E_GPIO_NUM);
 
   modbits_reg32(bypass ? (1 << pin) : 0,
                 (1 << pin),
-                RP2040_PIO_INPUT_SYNC_BYPASS(pio));
+                J721E_PIO_INPUT_SYNC_BYPASS(pio));
 }
 
 #undef EXTERN
@@ -1989,4 +1989,4 @@ static inline void rp2040_pio_set_input_sync_bypass(uint32_t pio,
 }
 #endif
 #endif /* __ASSEMBLY__ */
-#endif /* __ARCH_ARM_SRC_RP2040_RP2040_PIO_H */
+#endif /* __ARCH_ARM_SRC_J721E_J721E_PIO_H */

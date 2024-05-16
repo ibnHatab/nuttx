@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_clock.h
+ * arch/arm/src/j721e/j721e_clock.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_RP2040_CLOCK_H
-#define __ARCH_ARM_SRC_RP2040_RP2040_CLOCK_H
+#ifndef __ARCH_ARM_SRC_J721E_J721E_CLOCK_H
+#define __ARCH_ARM_SRC_J721E_J721E_CLOCK_H
 
 /****************************************************************************
  * Included Files
@@ -54,11 +54,11 @@ extern "C"
  * Public Function Prototypes
  ****************************************************************************/
 
-void rp2040_clockconfig(void);
+void j721e_clockconfig(void);
 
 #undef EXTERN
 #if defined(__cplusplus)
 }
 #endif
 #endif /* __ASSEMBLY__ */
-#endif /* __ARCH_ARM_SRC_RP2040_RP2040_CLOCK_H */
+#endif /* __ARCH_ARM_SRC_J721E_J721E_CLOCK_H */

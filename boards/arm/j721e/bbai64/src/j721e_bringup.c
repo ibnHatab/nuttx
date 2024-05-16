@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/rp2040/raspberrypi-pico/src/rp2040_bringup.c
+ * boards/arm/j721e/bbai64/src/j721e_bringup.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -31,10 +31,10 @@
 
 #include <arch/board/board.h>
 
-#include "rp2040_pico.h"
+#include "j721e_pico.h"
 
 #ifdef CONFIG_ARCH_BOARD_COMMON
-#include "rp2040_common_bringup.h"
+#include "j721e_common_bringup.h"
 #endif /* CONFIG_ARCH_BOARD_COMMON */
 
 #ifdef CONFIG_USERLED
@@ -46,14 +46,14 @@
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_bringup
+ * Name: j721e_bringup
  ****************************************************************************/
 
-int rp2040_bringup(void)
+int j721e_bringup(void)
 {
 #ifdef CONFIG_ARCH_BOARD_COMMON
 
-  int ret = rp2040_common_bringup();
+  int ret = j721e_common_bringup();
   if (ret < 0)
     {
       return ret;

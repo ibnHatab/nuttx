@@ -1,7 +1,7 @@
 /****************************************************************************
- * arch/arm/src/rp2040/hardware/rp2040_pads_bank0.h
+ * arch/arm/src/j721e/hardware/j721e_psm.h
  *
- * Generated from rp2040.svd originally provided by
+ * Generated from j721e.svd originally provided by
  *   Raspberry Pi (Trading) Ltd.
  *
  * Copyright 2020 (c) 2020 Raspberry Pi (Trading) Ltd.
@@ -35,14 +35,14 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_HARDWARE_RP2040_PADS_BANK0_H
-#define __ARCH_ARM_SRC_RP2040_HARDWARE_RP2040_PADS_BANK0_H
+#ifndef __ARCH_ARM_SRC_J721E_HARDWARE_J721E_PSM_H
+#define __ARCH_ARM_SRC_J721E_HARDWARE_J721E_PSM_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include "hardware/rp2040_memorymap.h"
+#include "hardware/j721e_memorymap.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -50,33 +50,36 @@
 
 /* Register offsets *********************************************************/
 
-#define RP2040_PADS_BANK0_VOLTAGE_SELECT_OFFSET  0x000000               /* Voltage select. Per bank control */
-#define RP2040_PADS_BANK0_GPIO_OFFSET(n)         ((n) * 4 + 0x000004)   /* Pad control register */
-#define RP2040_PADS_BANK0_SWCLK_OFFSET           0x00007c               /* Pad control register */
-#define RP2040_PADS_BANK0_SWD_OFFSET             0x000080               /* Pad control register */
+#define J721E_PSM_FRCE_ON_OFFSET   0x000000  /* Force block out of reset (i.e. power it on) */
+#define J721E_PSM_FRCE_OFF_OFFSET  0x000004  /* Force into reset (i.e. power it off) */
+#define J721E_PSM_WDSEL_OFFSET     0x000008  /* Set to 1 if this peripheral should be reset when the watchdog fires. */
+#define J721E_PSM_DONE_OFFSET      0x00000c  /* Indicates the peripheral's registers are ready to access. */
 
 /* Register definitions *****************************************************/
 
-#define RP2040_PADS_BANK0_VOLTAGE_SELECT  (RP2040_PADS_BANK0_BASE + RP2040_PADS_BANK0_VOLTAGE_SELECT_OFFSET)
-#define RP2040_PADS_BANK0_GPIO(n)         (RP2040_PADS_BANK0_BASE + RP2040_PADS_BANK0_GPIO_OFFSET(n))
-#define RP2040_PADS_BANK0_SWCLK           (RP2040_PADS_BANK0_BASE + RP2040_PADS_BANK0_SWCLK_OFFSET)
-#define RP2040_PADS_BANK0_SWD             (RP2040_PADS_BANK0_BASE + RP2040_PADS_BANK0_SWD_OFFSET)
+#define J721E_PSM_FRCE_ON   (J721E_PSM_BASE + J721E_PSM_FRCE_ON_OFFSET)
+#define J721E_PSM_FRCE_OFF  (J721E_PSM_BASE + J721E_PSM_FRCE_OFF_OFFSET)
+#define J721E_PSM_WDSEL     (J721E_PSM_BASE + J721E_PSM_WDSEL_OFFSET)
+#define J721E_PSM_DONE      (J721E_PSM_BASE + J721E_PSM_DONE_OFFSET)
 
 /* Register bit definitions *************************************************/
 
-#define RP2040_PADS_BANK0_VOLTAGE_SELECT_1_8V (1 << 0)  /* Set voltage to 1.8V (DVDD <= 1V8) */
+#define J721E_PSM_PROC1                 (1 << 16)
+#define J721E_PSM_PROC0                 (1 << 15)
+#define J721E_PSM_SIO                   (1 << 14)
+#define J721E_PSM_VREG_AND_CHIP_RESET   (1 << 13)
+#define J721E_PSM_XIP                   (1 << 12)
+#define J721E_PSM_SRAM5                 (1 << 11)
+#define J721E_PSM_SRAM4                 (1 << 10)
+#define J721E_PSM_SRAM3                 (1 << 9)
+#define J721E_PSM_SRAM2                 (1 << 8)
+#define J721E_PSM_SRAM1                 (1 << 7)
+#define J721E_PSM_SRAM0                 (1 << 6)
+#define J721E_PSM_ROM                   (1 << 5)
+#define J721E_PSM_BUSFABRIC             (1 << 4)
+#define J721E_PSM_RESETS                (1 << 3)
+#define J721E_PSM_CLOCKS                (1 << 2)
+#define J721E_PSM_XOSC                  (1 << 1)
+#define J721E_PSM_ROSC                  (1 << 0)
 
-#define RP2040_PADS_BANK0_GPIO_OD             (1 << 7)  /* Output disable. Has priority over output enable from peripherals */
-#define RP2040_PADS_BANK0_GPIO_IE             (1 << 6)  /* Input enable */
-#define RP2040_PADS_BANK0_GPIO_DRIVE_SHIFT    (4)       /* Drive strength. */
-#define RP2040_PADS_BANK0_GPIO_DRIVE_MASK     (0x03 << RP2040_PADS_BANK0_GPIO_DRIVE_SHIFT)
-#define RP2040_PADS_BANK0_GPIO_DRIVE_2MA      (0x0 << RP2040_PADS_BANK0_GPIO_DRIVE_SHIFT)
-#define RP2040_PADS_BANK0_GPIO_DRIVE_4MA      (0x1 << RP2040_PADS_BANK0_GPIO_DRIVE_SHIFT)
-#define RP2040_PADS_BANK0_GPIO_DRIVE_8MA      (0x2 << RP2040_PADS_BANK0_GPIO_DRIVE_SHIFT)
-#define RP2040_PADS_BANK0_GPIO_DRIVE_12MA     (0x3 << RP2040_PADS_BANK0_GPIO_DRIVE_SHIFT)
-#define RP2040_PADS_BANK0_GPIO_PUE            (1 << 3)  /* Pull up enable */
-#define RP2040_PADS_BANK0_GPIO_PDE            (1 << 2)  /* Pull down enable */
-#define RP2040_PADS_BANK0_GPIO_SCHMITT        (1 << 1)  /* Enable schmitt trigger */
-#define RP2040_PADS_BANK0_GPIO_SLEWFAST       (1 << 0)  /* Slew rate control. 1 = Fast, 0 = Slow */
-
-#endif /* __ARCH_ARM_SRC_RP2040_HARDWARE_RP2040_PADS_BANK0_H */
+#endif /* __ARCH_ARM_SRC_J721E_HARDWARE_J721E_PSM_H */

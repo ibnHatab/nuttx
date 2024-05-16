@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_start.c
+ * arch/arm/src/j721e/j721e_start.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -32,10 +32,10 @@
 #include <arch/board/board.h>
 
 #include "arm_internal.h"
-#include "rp2040_config.h"
-#include "rp2040_clock.h"
-#include "rp2040_uart.h"
-#include "hardware/rp2040_sio.h"
+#include "j721e_config.h"
+#include "j721e_clock.h"
+#include "j721e_uart.h"
+#include "hardware/j721e_sio.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -81,7 +81,7 @@ const uintptr_t g_idle_topstack = IDLE_STACK;
 
 void __start(void)
 {
-#ifdef CONFIG_RP2040_FLASH_BOOT
+#ifdef CONFIG_J721E_FLASH_BOOT
   const uint32_t *src;
 #endif
   uint32_t *dest;
@@ -110,19 +110,19 @@ void __start(void)
 
   /* Set up clock */
 
-  rp2040_clockconfig();
-  rp2040_boardearlyinitialize();
+  j721e_clockconfig();
+  j721e_boardearlyinitialize();
 
   /* Initialize all spinlock states */
 
   for (i = 0; i < 32; i++)
     {
-      putreg32(0, RP2040_SIO_SPINLOCK(i));
+      putreg32(0, J721E_SIO_SPINLOCK(i));
     }
 
   /* Configure the uart so that we can get debug output as soon as possible */
 
-  rp2040_lowsetup();
+  j721e_lowsetup();
   showprogress('A');
 
   /* Move the initialized data section from his temporary holding spot in
@@ -131,7 +131,7 @@ void __start(void)
    * end of all of the other read-only data (.text, .rodata) at _eronly.
    */
 
-#ifdef CONFIG_RP2040_FLASH_BOOT
+#ifdef CONFIG_J721E_FLASH_BOOT
   for (src = (const uint32_t *)_eronly,
        dest = (uint32_t *)_sdata; dest < (uint32_t *)_edata;
       )
@@ -156,13 +156,13 @@ void __start(void)
    */
 
 #ifdef CONFIG_BUILD_PROTECTED
-  rp2040_userspace();
+  j721e_userspace();
   showprogress('D');
 #endif
 
   /* Initialize onboard resources */
 
-  rp2040_boardinitialize();
+  j721e_boardinitialize();
   showprogress('E');
 
   /* Then start NuttX */

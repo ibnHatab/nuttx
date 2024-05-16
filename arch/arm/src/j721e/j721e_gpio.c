@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_gpio.c
+ * arch/arm/src/j721e/j721e_gpio.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -34,7 +34,7 @@
 
 #include "arm_internal.h"
 #include "chip.h"
-#include "rp2040_gpio.h"
+#include "j721e_gpio.h"
 
 /****************************************************************************
  * Private Data
@@ -46,13 +46,13 @@ static bool g_gpio_irq_init = false;
 
 /* GPIO interrupt handlers information */
 
-static xcpt_t g_gpio_irq_handlers[RP2040_GPIO_NUM];
-static void *g_gpio_irq_args[RP2040_GPIO_NUM];
-static int g_gpio_irq_modes[RP2040_GPIO_NUM];
+static xcpt_t g_gpio_irq_handlers[J721E_GPIO_NUM];
+static void *g_gpio_irq_args[J721E_GPIO_NUM];
+static int g_gpio_irq_modes[J721E_GPIO_NUM];
 
 /* GPIO pins function assignment */
 
-static int g_gpio_function[RP2040_GPIO_NUM];
+static int g_gpio_function[J721E_GPIO_NUM];
 
 /* GPIO pins function mapping table */
 
@@ -91,14 +91,14 @@ static const int g_gpio_function_mapping_pwm[8][3] =
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_gpio_interrupt
+ * Name: j721e_gpio_interrupt
  *
  * Description:
  *  GPIO interrupt handler
  *
  ****************************************************************************/
 
-static int rp2040_gpio_interrupt(int irq, void *context, void *arg)
+static int j721e_gpio_interrupt(int irq, void *context, void *arg)
 {
   int i;
   int j;
@@ -112,13 +112,13 @@ static int rp2040_gpio_interrupt(int irq, void *context, void *arg)
     {
       /* Get and clear pending GPIO interrupt status */
 
-      stat = getreg32(RP2040_IO_BANK0_PROC_INTS(i * 8, 0));
+      stat = getreg32(J721E_IO_BANK0_PROC_INTS(i * 8, 0));
       if (i == 3)
         {
           stat &= 0x00ffffff;     /* Clear reserved bits */
         }
 
-      putreg32(stat, RP2040_IO_BANK0_INTR(i * 8));
+      putreg32(stat, J721E_IO_BANK0_INTR(i * 8));
 
       while (stat != 0)
         {
@@ -159,7 +159,7 @@ static int rp2040_gpio_interrupt(int irq, void *context, void *arg)
  *
  ****************************************************************************/
 
-int rp2040_gpio_get_function_pin(uint32_t func, uint32_t port)
+int j721e_gpio_get_function_pin(uint32_t func, uint32_t port)
 {
   int i;
   const int *mapping;
@@ -168,7 +168,7 @@ int rp2040_gpio_get_function_pin(uint32_t func, uint32_t port)
 
   switch (func)
     {
-      case RP2040_GPIO_FUNC_SPI:
+      case J721E_GPIO_FUNC_SPI:
         if (port >= 2)
           {
             return -1;
@@ -177,7 +177,7 @@ int rp2040_gpio_get_function_pin(uint32_t func, uint32_t port)
         mapping = g_gpio_function_mapping_spi[port];
         break;
 
-      case RP2040_GPIO_FUNC_UART:
+      case J721E_GPIO_FUNC_UART:
         if (port >= 2)
           {
             return -1;
@@ -186,7 +186,7 @@ int rp2040_gpio_get_function_pin(uint32_t func, uint32_t port)
         mapping = g_gpio_function_mapping_uart[port];
         break;
 
-      case RP2040_GPIO_FUNC_I2C:
+      case J721E_GPIO_FUNC_I2C:
         if (port >= 2)
           {
             return -1;
@@ -195,7 +195,7 @@ int rp2040_gpio_get_function_pin(uint32_t func, uint32_t port)
         mapping = g_gpio_function_mapping_i2c[port];
         break;
 
-      case RP2040_GPIO_FUNC_PWM:
+      case J721E_GPIO_FUNC_PWM:
         if (port >= 8)
           {
             return -1;
@@ -229,16 +229,16 @@ int rp2040_gpio_get_function_pin(uint32_t func, uint32_t port)
  *
  ****************************************************************************/
 
-void rp2040_gpio_set_function(uint32_t gpio, uint32_t func)
+void j721e_gpio_set_function(uint32_t gpio, uint32_t func)
 {
-  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
+  DEBUGASSERT(gpio < J721E_GPIO_NUM);
 
-  modbits_reg32(RP2040_PADS_BANK0_GPIO_IE,
-                RP2040_PADS_BANK0_GPIO_IE | RP2040_PADS_BANK0_GPIO_OD,
-                RP2040_PADS_BANK0_GPIO(gpio));
+  modbits_reg32(J721E_PADS_BANK0_GPIO_IE,
+                J721E_PADS_BANK0_GPIO_IE | J721E_PADS_BANK0_GPIO_OD,
+                J721E_PADS_BANK0_GPIO(gpio));
 
-  putreg32(func & RP2040_IO_BANK0_GPIO_CTRL_FUNCSEL_MASK,
-           RP2040_IO_BANK0_GPIO_CTRL(gpio));
+  putreg32(func & J721E_IO_BANK0_GPIO_CTRL_FUNCSEL_MASK,
+           J721E_IO_BANK0_GPIO_CTRL(gpio));
 
   g_gpio_function[gpio] = func;
 }
@@ -251,14 +251,14 @@ void rp2040_gpio_set_function(uint32_t gpio, uint32_t func)
  *
  ****************************************************************************/
 
-void rp2040_gpio_set_pulls(uint32_t gpio, int up, int down)
+void j721e_gpio_set_pulls(uint32_t gpio, int up, int down)
 {
-  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
+  DEBUGASSERT(gpio < J721E_GPIO_NUM);
 
-  modbits_reg32((up   ? RP2040_PADS_BANK0_GPIO_PUE : 0) |
-                (down ? RP2040_PADS_BANK0_GPIO_PDE : 0),
-                RP2040_PADS_BANK0_GPIO_PUE | RP2040_PADS_BANK0_GPIO_PDE,
-                RP2040_PADS_BANK0_GPIO(gpio));
+  modbits_reg32((up   ? J721E_PADS_BANK0_GPIO_PUE : 0) |
+                (down ? J721E_PADS_BANK0_GPIO_PDE : 0),
+                J721E_PADS_BANK0_GPIO_PUE | J721E_PADS_BANK0_GPIO_PDE,
+                J721E_PADS_BANK0_GPIO(gpio));
 }
 
 /****************************************************************************
@@ -269,13 +269,13 @@ void rp2040_gpio_set_pulls(uint32_t gpio, int up, int down)
  *
  ****************************************************************************/
 
-void rp2040_gpio_init(uint32_t gpio)
+void j721e_gpio_init(uint32_t gpio)
 {
-  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
+  DEBUGASSERT(gpio < J721E_GPIO_NUM);
 
-  rp2040_gpio_setdir(gpio, false);
-  rp2040_gpio_put(gpio, false);
-  rp2040_gpio_set_function(gpio, RP2040_GPIO_FUNC_SIO);
+  j721e_gpio_setdir(gpio, false);
+  j721e_gpio_put(gpio, false);
+  j721e_gpio_set_function(gpio, J721E_GPIO_FUNC_SIO);
 }
 
 /****************************************************************************
@@ -286,7 +286,7 @@ void rp2040_gpio_init(uint32_t gpio)
  *
  ****************************************************************************/
 
-int rp2040_gpio_irq_attach(uint32_t gpio, uint32_t intrmode,
+int j721e_gpio_irq_attach(uint32_t gpio, uint32_t intrmode,
                            xcpt_t isr, void *arg)
 {
   if (!g_gpio_irq_init)
@@ -294,12 +294,12 @@ int rp2040_gpio_irq_attach(uint32_t gpio, uint32_t intrmode,
       /* Initialize - register GPIO interrupt handler */
 
       g_gpio_irq_init = true;
-      irq_attach(RP2040_IO_IRQ_BANK0, rp2040_gpio_interrupt, NULL);
-      up_enable_irq(RP2040_IO_IRQ_BANK0);
+      irq_attach(J721E_IO_IRQ_BANK0, j721e_gpio_interrupt, NULL);
+      up_enable_irq(J721E_IO_IRQ_BANK0);
     }
 
-  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
-  DEBUGASSERT(intrmode <= RP2040_GPIO_INTR_EDGE_HIGH);
+  DEBUGASSERT(gpio < J721E_GPIO_NUM);
+  DEBUGASSERT(intrmode <= J721E_GPIO_INTR_EDGE_HIGH);
 
   /* Save handler information */
 
@@ -309,76 +309,76 @@ int rp2040_gpio_irq_attach(uint32_t gpio, uint32_t intrmode,
 
   /* Clear pending interrupts */
 
-  setbits_reg32(0xf << ((gpio % 8) * 4), RP2040_IO_BANK0_INTR(gpio));
+  setbits_reg32(0xf << ((gpio % 8) * 4), J721E_IO_BANK0_INTR(gpio));
 
   return OK;
 }
 
 /****************************************************************************
- * Name: rp2040_gpio_enable_irq
+ * Name: j721e_gpio_enable_irq
  *
  * Description:
  *   Enable the GPIO IRQ specified by 'gpio'
  *
  ****************************************************************************/
 
-void rp2040_gpio_enable_irq(uint32_t gpio)
+void j721e_gpio_enable_irq(uint32_t gpio)
 {
   uint32_t reg;
 
-  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
+  DEBUGASSERT(gpio < J721E_GPIO_NUM);
 
   if (g_gpio_irq_handlers[gpio] != NULL)
     {
       /* Set interrupt enable bit */
 
-      reg = RP2040_IO_BANK0_PROC_INTE(gpio, 0);
+      reg = J721E_IO_BANK0_PROC_INTE(gpio, 0);
       clrbits_reg32(0xf << ((gpio % 8) * 4), reg);
       setbits_reg32(0x1 << ((gpio % 8) * 4 + g_gpio_irq_modes[gpio]), reg);
     }
 }
 
 /****************************************************************************
- * Name: rp2040_gpio_disable_irq
+ * Name: j721e_gpio_disable_irq
  *
  * Description:
  *   Disable the GPIO IRQ specified by 'gpio'
  *
  ****************************************************************************/
 
-void rp2040_gpio_disable_irq(uint32_t gpio)
+void j721e_gpio_disable_irq(uint32_t gpio)
 {
   uint32_t reg;
 
-  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
+  DEBUGASSERT(gpio < J721E_GPIO_NUM);
 
   if (g_gpio_irq_handlers[gpio] != NULL)
     {
       /* Clear interrupt enable bit */
 
-      reg = RP2040_IO_BANK0_PROC_INTE(gpio, 0);
+      reg = J721E_IO_BANK0_PROC_INTE(gpio, 0);
       clrbits_reg32(0xf << ((gpio % 8) * 4), reg);
     }
 }
 
 /****************************************************************************
- * Name: rp2040_gpio_clear_interrupt
+ * Name: j721e_gpio_clear_interrupt
  *
  * Description:
  *   Clear the interrupt flags for a gpio pin.
  *
  ****************************************************************************/
 
-void rp2040_gpio_clear_interrupt(uint32_t gpio,
+void j721e_gpio_clear_interrupt(uint32_t gpio,
                                  bool     edge_low,
                                  bool     edge_high)
 {
   uint32_t reg;
   uint32_t bits = 0;
 
-  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
+  DEBUGASSERT(gpio < J721E_GPIO_NUM);
 
-  reg = RP2040_IO_BANK0_INTR(gpio);
+  reg = J721E_IO_BANK0_INTR(gpio);
 
   if (edge_low)  bits |= 0x04 << (gpio % 8);
   if (edge_high) bits |= 0x08 << (gpio % 8);
@@ -394,12 +394,12 @@ void rp2040_gpio_clear_interrupt(uint32_t gpio,
  *
  ****************************************************************************/
 
-void rp2040_gpio_initialize(void)
+void j721e_gpio_initialize(void)
 {
   int i;
 
-  for (i = 0; i < RP2040_GPIO_NUM; i++)
+  for (i = 0; i < J721E_GPIO_NUM; i++)
     {
-      g_gpio_function[i] = RP2040_GPIO_FUNC_NULL;
+      g_gpio_function[i] = J721E_GPIO_FUNC_NULL;
     }
 }

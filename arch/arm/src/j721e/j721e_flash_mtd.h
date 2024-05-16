@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_flash_mtd.h
+ * arch/arm/src/j721e/j721e_flash_mtd.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_flash_mtd_initialize
+ * Name: j721e_flash_mtd_initialize
  ****************************************************************************/
 
-struct mtd_dev_s *rp2040_flash_mtd_initialize(void);
+struct mtd_dev_s *j721e_flash_mtd_initialize(void);

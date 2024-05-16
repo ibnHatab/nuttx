@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_i2s.h
+ * arch/arm/src/j721e/j721e_i2s.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_RP2040_I2S_H
-#define __ARCH_ARM_SRC_RP2040_RP2040_I2S_H
+#ifndef __ARCH_ARM_SRC_J721E_J721E_I2S_H
+#define __ARCH_ARM_SRC_J721E_J721E_I2S_H
 
 /****************************************************************************
  * Included Files
@@ -50,7 +50,7 @@ extern "C"
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_i2sbus_initialize
+ * Name: j721e_i2sbus_initialize
  *
  * Description:
  *   Initialize the selected I2S port
@@ -63,7 +63,7 @@ extern "C"
  *
  ****************************************************************************/
 
-struct i2s_dev_s *rp2040_i2sbus_initialize(int port);
+struct i2s_dev_s *j721e_i2sbus_initialize(int port);
 
 #undef EXTERN
 #if defined(__cplusplus)
@@ -71,4 +71,4 @@ struct i2s_dev_s *rp2040_i2sbus_initialize(int port);
 #endif
 
 #endif /* __ASSEMBLY__ */
-#endif /* __ARCH_ARM_SRC_RP2040_RP2040_I2S_H */
+#endif /* __ARCH_ARM_SRC_J721E_J721E_I2S_H */

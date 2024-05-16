@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/rp2040/raspberrypi-pico/include/rp2040_spisd.h
+ * boards/arm/j721e/bbai64/include/j721e_spisd.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __BOARDS_ARM_RP2040_RASPBERRYPI_PICO_INCLUDE_RP2040_SPISD_H
-#define __BOARDS_ARM_RP2040_RASPBERRYPI_PICO_INCLUDE_RP2040_SPISD_H
+#ifndef __BOARDS_ARM_J721E_BBAI64_INCLUDE_J721E_SPISD_H
+#define __BOARDS_ARM_J721E_BBAI64_INCLUDE_J721E_SPISD_H
 
 /****************************************************************************
  * Included Files
@@ -58,7 +58,7 @@ extern "C"
  *
  ****************************************************************************/
 
-#ifdef CONFIG_RP2040_SPISD
+#ifdef CONFIG_J721E_SPISD
 int board_spisd_initialize(int minor, int bus);
 #endif
 
@@ -70,7 +70,7 @@ int board_spisd_initialize(int minor, int bus);
  *
  ****************************************************************************/
 
-#ifdef CONFIG_RP2040_SPISD
+#ifdef CONFIG_J721E_SPISD
 uint8_t board_spisd_status(struct spi_dev_s *dev, uint32_t devid);
 #endif
 
@@ -80,4 +80,4 @@ uint8_t board_spisd_status(struct spi_dev_s *dev, uint32_t devid);
 #endif
 
 #endif /* __ASSEMBLY__ */
-#endif /* __BOARDS_ARM_RP2040_RASPBERRYPI_PICO_INCLUDE_RP2040_SPISD_H */
+#endif /* __BOARDS_ARM_J721E_BBAI64_INCLUDE_J721E_SPISD_H */

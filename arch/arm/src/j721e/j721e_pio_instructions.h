@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_pio_instructions.h
+ * arch/arm/src/j721e/j721e_pio_instructions.h
  *
  * Based upon the software originally developed by
  *   Raspberry Pi (Trading) Ltd.
@@ -35,8 +35,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_RP2040_PIO_INSTRUCTIONS_H
-#define __ARCH_ARM_SRC_RP2040_RP2040_PIO_INSTRUCTIONS_H
+#ifndef __ARCH_ARM_SRC_J721E_J721E_PIO_INSTRUCTIONS_H
+#define __ARCH_ARM_SRC_J721E_J721E_PIO_INSTRUCTIONS_H
 
 /****************************************************************************
  * Included Files
@@ -48,7 +48,7 @@
 #include <assert.h>
 #include <debug.h>
 
-#include "rp2040_pio.h"
+#include "j721e_pio.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -298,4 +298,4 @@ inline static uint32_t pio_encode_nop(void)
 }
 #endif
 #endif /* __ASSEMBLY__ */
-#endif /* __ARCH_ARM_SRC_RP2040_RP2040_PIO_INSTRUNCTIONS_H */
+#endif /* __ARCH_ARM_SRC_J721E_J721E_PIO_INSTRUNCTIONS_H */

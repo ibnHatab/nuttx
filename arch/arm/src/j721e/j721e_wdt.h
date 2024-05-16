@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_wdt.h
+ * arch/arm/src/j721e/j721e_wdt.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_RP2040_WDT_H
-#define __ARCH_ARM_SRC_RP2040_RP2040_WDT_H
+#ifndef __ARCH_ARM_SRC_J721E_J721E_WDT_H
+#define __ARCH_ARM_SRC_J721E_J721E_WDT_H
 
 /****************************************************************************
  * Included Files
@@ -42,10 +42,10 @@ extern "C"
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_wdt_init
+ * Name: j721e_wdt_init
  ****************************************************************************/
 
-int rp2040_wdt_init(void);
+int j721e_wdt_init(void);
 
 #undef EXTERN
 
@@ -55,4 +55,4 @@ int rp2040_wdt_init(void);
 
 #endif /* __ASSEMBLY__ */
 
-#endif /* __ARCH_ARM_SRC_RP2040_RP2040_WDT_H */
+#endif /* __ARCH_ARM_SRC_J721E_J721E_WDT_H */

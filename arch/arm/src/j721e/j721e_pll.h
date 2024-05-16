@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_pll.h
+ * arch/arm/src/j721e/j721e_pll.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_RP2040_PLL_H
-#define __ARCH_ARM_SRC_RP2040_RP2040_PLL_H
+#ifndef __ARCH_ARM_SRC_J721E_J721E_PLL_H
+#define __ARCH_ARM_SRC_J721E_J721E_PLL_H
 
 /****************************************************************************
  * Included Files
@@ -55,14 +55,14 @@ extern "C"
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_pll_init
+ * Name: j721e_pll_init
  *
  * Description:
  *   Initialize PLL.
  *
  ****************************************************************************/
 
-void rp2040_pll_init(uint32_t base, uint32_t refdiv, uint32_t vco_freq,
+void j721e_pll_init(uint32_t base, uint32_t refdiv, uint32_t vco_freq,
                      uint32_t post_div1, uint8_t post_div2);
 
 #undef EXTERN
@@ -70,4 +70,4 @@ void rp2040_pll_init(uint32_t base, uint32_t refdiv, uint32_t vco_freq,
 }
 #endif
 #endif /* __ASSEMBLY__ */
-#endif /* __ARCH_ARM_SRC_RP2040_RP2040_PLL_H */
+#endif /* __ARCH_ARM_SRC_J721E_J721E_PLL_H */

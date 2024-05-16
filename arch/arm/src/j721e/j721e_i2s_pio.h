@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_i2s_pio.h
+ * arch/arm/src/j721e/j721e_i2s_pio.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_RP2040_I2S_PIO_H
-#define __ARCH_ARM_SRC_RP2040_RP2040_I2S_PIO_H
+#ifndef __ARCH_ARM_SRC_J721E_J721E_I2S_PIO_H
+#define __ARCH_ARM_SRC_J721E_J721E_I2S_PIO_H
 
 /****************************************************************************
  * Included Files
@@ -31,11 +31,11 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define RP2040_I2S_PIO_16BIT_STEREO         0
-#define RP2040_I2S_PIO_16BIT_MONO           1
-#define RP2040_I2S_PIO_8BIT_STEREO          2
-#define RP2040_I2S_PIO_8BIT_MONO            3
-#define RP2040_I2S_PIO_MAX_MODE             4
+#define J721E_I2S_PIO_16BIT_STEREO         0
+#define J721E_I2S_PIO_16BIT_MONO           1
+#define J721E_I2S_PIO_8BIT_STEREO          2
+#define J721E_I2S_PIO_8BIT_MONO            3
+#define J721E_I2S_PIO_MAX_MODE             4
 
 #ifndef __ASSEMBLY__
 
@@ -57,44 +57,44 @@ extern "C"
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_i2s_pio_configure
+ * Name: j721e_i2s_pio_configure
  *
  * Description:
- *   Configure RP2040 PIO for I2S
+ *   Configure J721E PIO for I2S
  *
  ****************************************************************************/
 
-int rp2040_i2s_pio_configure(int mode, uint32_t samplerate);
+int j721e_i2s_pio_configure(int mode, uint32_t samplerate);
 
 /****************************************************************************
- * Name: rp2040_i2s_pio_enable
+ * Name: j721e_i2s_pio_enable
  *
  * Description:
  *   Set enable I2S transfer
  *
  ****************************************************************************/
 
-void rp2040_i2s_pio_enable(bool enable);
+void j721e_i2s_pio_enable(bool enable);
 
 /****************************************************************************
- * Name: rp2040_i2s_pio_getdmaaddr
+ * Name: j721e_i2s_pio_getdmaaddr
  *
  * Description:
  *   Get DMA peripheral address for I2S transfer
  *
  ****************************************************************************/
 
-uintptr_t rp2040_i2s_pio_getdmaaddr(void);
+uintptr_t j721e_i2s_pio_getdmaaddr(void);
 
 /****************************************************************************
- * Name: rp2040_i2s_pio_getdmaaddr
+ * Name: j721e_i2s_pio_getdmaaddr
  *
  * Description:
  *   Get DREQ number for I2S transfer
  *
  ****************************************************************************/
 
-uint8_t rp2040_i2s_pio_getdreq(void);
+uint8_t j721e_i2s_pio_getdreq(void);
 
 #undef EXTERN
 #if defined(__cplusplus)
@@ -102,4 +102,4 @@ uint8_t rp2040_i2s_pio_getdreq(void);
 #endif
 
 #endif /* __ASSEMBLY__ */
-#endif /* __ARCH_ARM_SRC_RP2040_RP2040_I2S_PIO_H */
+#endif /* __ARCH_ARM_SRC_J721E_J721E_I2S_PIO_H */

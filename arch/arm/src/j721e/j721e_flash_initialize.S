@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_flash_initialize.S
+ * arch/arm/src/j721e/j721e_flash_initialize.S
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -20,11 +20,11 @@
 
 /****************************************************************************
  * Description:
- *   The low-level format of the smart filesystem for the rp2040 consists of
+ *   The low-level format of the smart filesystem for the j721e consists of
  *   a series of 4096-byte blocks each of which contain four 1024 byte
  *   logical sectors.  Due to the way flash works the filesystem can only
  *   erase (set to all 1 bits) a whole block.  It can however, write smaller
- *   amounts.  On the rp2040 the smallest write is 256 bytes.  The write can
+ *   amounts.  On the j721e the smallest write is 256 bytes.  The write can
  *   only flip 1 bits to 0 -- it cannot change a 0 bit to 1.
  *
  *   Each logical sector starts with a five byte sector header.  Most sectors
@@ -163,8 +163,8 @@ name_length= 16
 
     .section    .flash.init, "ax"
     .balign     4096
-    .global     rp2040_smart_flash_start
-rp2040_smart_flash_start:
+    .global     j721e_smart_flash_start
+j721e_smart_flash_start:
 
 /****************************************************************************
  * Volume Label
@@ -189,7 +189,7 @@ rp2040_smart_flash_start:
 
 
     .balign     4096, 0xff
-    .global     rp2040_smart_flash_end
-rp2040_smart_flash_end:
+    .global     j721e_smart_flash_end
+j721e_smart_flash_end:
 
     .end

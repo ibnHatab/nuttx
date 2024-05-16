@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_pio.c
+ * arch/arm/src/j721e/j721e_pio.c
  *
  * Based upon the software originally developed by
  *   Raspberry Pi (Trading) Ltd.
@@ -49,9 +49,9 @@
 
 #include <arch/board/board.h>
 
-#include "hardware/rp2040_pio.h"
-#include "rp2040_pio.h"
-#include "rp2040_pio_instructions.h"
+#include "hardware/j721e_pio.h"
+#include "j721e_pio.h"
+#include "j721e_pio_instructions.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -133,10 +133,10 @@ static void hw_claim_clear(uint8_t *bits, uint32_t bit_index)
 }
 
 static int _pio_find_offset_for_program(uint32_t pio,
-                                        const rp2040_pio_program_t *program)
+                                        const j721e_pio_program_t *program)
 {
   assert(program->length < PIO_INSTRUCTION_COUNT);
-  uint32_t used_mask = _used_instruction_space[rp2040_pio_get_index(pio)];
+  uint32_t used_mask = _used_instruction_space[j721e_pio_get_index(pio)];
   uint32_t program_mask = (1u << program->length) - 1;
 
   if (program->origin >= 0)
@@ -166,7 +166,7 @@ static int _pio_find_offset_for_program(uint32_t pio,
 }
 
 static bool _pio_can_add_program_at_offset(uint32_t pio,
-                                        const rp2040_pio_program_t *program,
+                                        const j721e_pio_program_t *program,
                                         uint32_t offset)
 {
   valid_params_if(PIO, offset < PIO_INSTRUCTION_COUNT);
@@ -176,13 +176,13 @@ static bool _pio_can_add_program_at_offset(uint32_t pio,
       return false;
     }
 
-  uint32_t used_mask = _used_instruction_space[rp2040_pio_get_index(pio)];
+  uint32_t used_mask = _used_instruction_space[j721e_pio_get_index(pio)];
   uint32_t program_mask = (1u << program->length) - 1;
   return !(used_mask & (program_mask << offset));
 }
 
 static void _pio_add_program_at_offset(uint32_t pio,
-                                       const rp2040_pio_program_t *program,
+                                       const j721e_pio_program_t *program,
                                        uint32_t offset)
 {
   if (!_pio_can_add_program_at_offset(pio, program, offset))
@@ -195,11 +195,11 @@ static void _pio_add_program_at_offset(uint32_t pio,
       uint16_t instr = program->instructions[i];
       putreg32(pio_instr_bits_jmp != _pio_major_instr_bits(instr) ?
                instr : instr + offset,
-               RP2040_PIO_INSTR_MEM(pio, offset + i));
+               J721E_PIO_INSTR_MEM(pio, offset + i));
     }
 
   uint32_t program_mask = (1u << program->length) - 1;
-  _used_instruction_space[rp2040_pio_get_index(pio)] |=
+  _used_instruction_space[j721e_pio_get_index(pio)] |=
     program_mask << offset;
 }
 
@@ -207,14 +207,14 @@ static void _pio_add_program_at_offset(uint32_t pio,
  * Public Functions
  ****************************************************************************/
 
-void rp2040_pio_sm_claim(uint32_t pio, uint32_t sm)
+void j721e_pio_sm_claim(uint32_t pio, uint32_t sm)
 {
   check_sm_param(sm);
-  uint32_t which = rp2040_pio_get_index(pio);
+  uint32_t which = j721e_pio_get_index(pio);
 
   if (which)
     {
-      hw_claim_or_assert(&claimed, RP2040_PIO_SM_NUM + sm,
+      hw_claim_or_assert(&claimed, J721E_PIO_SM_NUM + sm,
                          "PIO 1 SM (%d - 4) already claimed");
     }
   else
@@ -224,38 +224,38 @@ void rp2040_pio_sm_claim(uint32_t pio, uint32_t sm)
     }
 }
 
-void rp2040_pio_claim_sm_mask(uint32_t pio, uint32_t sm_mask)
+void j721e_pio_claim_sm_mask(uint32_t pio, uint32_t sm_mask)
 {
   for (uint32_t i = 0; sm_mask; i++, sm_mask >>= 1u)
     {
       if (sm_mask & 1u)
         {
-           rp2040_pio_sm_claim(pio, i);
+           j721e_pio_sm_claim(pio, i);
         }
     }
 }
 
-void rp2040_pio_sm_unclaim(uint32_t pio, uint32_t sm)
+void j721e_pio_sm_unclaim(uint32_t pio, uint32_t sm)
 {
   check_sm_param(sm);
-  uint32_t which = rp2040_pio_get_index(pio);
-  hw_claim_clear(&claimed, which * RP2040_PIO_SM_NUM + sm);
+  uint32_t which = j721e_pio_get_index(pio);
+  hw_claim_clear(&claimed, which * J721E_PIO_SM_NUM + sm);
 }
 
-int rp2040_pio_claim_unused_sm(uint32_t pio, bool required)
+int j721e_pio_claim_unused_sm(uint32_t pio, bool required)
 {
   /* PIO index is 0 or 1. */
 
-  uint32_t which = rp2040_pio_get_index(pio);
-  uint32_t base = which * RP2040_PIO_SM_NUM;
+  uint32_t which = j721e_pio_get_index(pio);
+  uint32_t base = which * J721E_PIO_SM_NUM;
   int index = hw_claim_unused_from_range((uint8_t *)&claimed, required, base,
-                                      base + RP2040_PIO_SM_NUM - 1,
+                                      base + J721E_PIO_SM_NUM - 1,
                                       "No PIO state machines are available");
   return index >= (int)base ? index - (int)base : -1;
 }
 
-bool rp2040_pio_can_add_program(uint32_t pio,
-                                const rp2040_pio_program_t *program)
+bool j721e_pio_can_add_program(uint32_t pio,
+                                const j721e_pio_program_t *program)
 {
   uint32_t save = hw_claim_lock();
   bool rc =  -1 != _pio_find_offset_for_program(pio, program);
@@ -263,8 +263,8 @@ bool rp2040_pio_can_add_program(uint32_t pio,
   return rc;
 }
 
-bool rp2040_pio_can_add_program_at_offset(uint32_t pio,
-                                        const rp2040_pio_program_t *program,
+bool j721e_pio_can_add_program_at_offset(uint32_t pio,
+                                        const j721e_pio_program_t *program,
                                         uint32_t offset)
 {
   uint32_t save = hw_claim_lock();
@@ -275,8 +275,8 @@ bool rp2040_pio_can_add_program_at_offset(uint32_t pio,
 
 /* these assert if unable */
 
-uint32_t rp2040_pio_add_program(uint32_t pio,
-                                const rp2040_pio_program_t *program)
+uint32_t j721e_pio_add_program(uint32_t pio,
+                                const j721e_pio_program_t *program)
 {
   uint32_t save = hw_claim_lock();
   int offset = _pio_find_offset_for_program(pio, program);
@@ -290,8 +290,8 @@ uint32_t rp2040_pio_add_program(uint32_t pio,
   return (uint32_t)offset;
 }
 
-void rp2040_pio_add_program_at_offset(uint32_t pio,
-                                      const rp2040_pio_program_t *program,
+void j721e_pio_add_program_at_offset(uint32_t pio,
+                                      const j721e_pio_program_t *program,
                                       uint32_t offset)
 {
   uint32_t save = hw_claim_lock();
@@ -299,27 +299,27 @@ void rp2040_pio_add_program_at_offset(uint32_t pio,
   hw_claim_unlock(save);
 }
 
-void rp2040_pio_remove_program(uint32_t pio,
-                               const rp2040_pio_program_t *program,
+void j721e_pio_remove_program(uint32_t pio,
+                               const j721e_pio_program_t *program,
                                uint32_t loaded_offset)
 {
   uint32_t program_mask = (1u << program->length) - 1;
   program_mask <<= loaded_offset;
   uint32_t save = hw_claim_lock();
   assert(program_mask ==
-         (_used_instruction_space[rp2040_pio_get_index(pio)] &
+         (_used_instruction_space[j721e_pio_get_index(pio)] &
             program_mask));
-  _used_instruction_space[rp2040_pio_get_index(pio)] &= ~program_mask;
+  _used_instruction_space[j721e_pio_get_index(pio)] &= ~program_mask;
   hw_claim_unlock(save);
 }
 
-void rp2040_pio_clear_instruction_memory(uint32_t pio)
+void j721e_pio_clear_instruction_memory(uint32_t pio)
 {
   uint32_t save = hw_claim_lock();
-  _used_instruction_space[rp2040_pio_get_index(pio)] = 0;
+  _used_instruction_space[j721e_pio_get_index(pio)] = 0;
   for (uint32_t i = 0; i < PIO_INSTRUCTION_COUNT; i++)
     {
-      putreg32(pio_encode_jmp(i), RP2040_PIO_INSTR_MEM(pio, i));
+      putreg32(pio_encode_jmp(i), J721E_PIO_INSTR_MEM(pio, i));
     }
 
   hw_claim_unlock(save);
@@ -331,76 +331,76 @@ void rp2040_pio_clear_instruction_memory(uint32_t pio)
  * one-time setup of initial pin states.
  */
 
-void rp2040_pio_sm_set_pins(uint32_t pio, uint32_t sm, uint32_t pins)
+void j721e_pio_sm_set_pins(uint32_t pio, uint32_t sm, uint32_t pins)
 {
   check_pio_param(pio);
   check_sm_param(sm);
-  uint32_t pinctrl_saved = getreg32(RP2040_PIO_SM_PINCTRL(pio, sm));
+  uint32_t pinctrl_saved = getreg32(J721E_PIO_SM_PINCTRL(pio, sm));
   uint32_t remaining = 32;
   uint32_t base = 0;
 
   while (remaining)
     {
       uint32_t decrement = remaining > 5 ? 5 : remaining;
-      putreg32((decrement << RP2040_PIO_SM_PINCTRL_SET_COUNT_SHIFT) |
-               (base << RP2040_PIO_SM_PINCTRL_SET_BASE_SHIFT),
-               RP2040_PIO_SM_PINCTRL(pio, sm));
-      rp2040_pio_sm_exec(pio, sm,
+      putreg32((decrement << J721E_PIO_SM_PINCTRL_SET_COUNT_SHIFT) |
+               (base << J721E_PIO_SM_PINCTRL_SET_BASE_SHIFT),
+               J721E_PIO_SM_PINCTRL(pio, sm));
+      j721e_pio_sm_exec(pio, sm,
                          pio_encode_set(pio_pins, pins & 0x1fu));
       remaining -= decrement;
       base += decrement;
       pins >>= 5;
     }
 
-  putreg32(pinctrl_saved, RP2040_PIO_SM_PINCTRL(pio, sm));
+  putreg32(pinctrl_saved, J721E_PIO_SM_PINCTRL(pio, sm));
 }
 
-void rp2040_pio_sm_set_pins_with_mask(uint32_t pio, uint32_t sm,
+void j721e_pio_sm_set_pins_with_mask(uint32_t pio, uint32_t sm,
                                     uint32_t pinvals, uint32_t pin_mask)
 {
   check_pio_param(pio);
   check_sm_param(sm);
-  uint32_t pinctrl_saved = getreg32(RP2040_PIO_SM_PINCTRL(pio, sm));
+  uint32_t pinctrl_saved = getreg32(J721E_PIO_SM_PINCTRL(pio, sm));
 
   while (pin_mask)
     {
       uint32_t base = (uint32_t)__builtin_ctz(pin_mask);
-      putreg32((1u << RP2040_PIO_SM_PINCTRL_SET_COUNT_SHIFT) |
-               (base << RP2040_PIO_SM_PINCTRL_SET_BASE_SHIFT),
-               RP2040_PIO_SM_PINCTRL(pio, sm));
-      rp2040_pio_sm_exec(pio, sm,
+      putreg32((1u << J721E_PIO_SM_PINCTRL_SET_COUNT_SHIFT) |
+               (base << J721E_PIO_SM_PINCTRL_SET_BASE_SHIFT),
+               J721E_PIO_SM_PINCTRL(pio, sm));
+      j721e_pio_sm_exec(pio, sm,
                          pio_encode_set(pio_pins,
                                         (pinvals >> base) & 0x1u));
       pin_mask &= pin_mask - 1;
     }
 
-  putreg32(pinctrl_saved, RP2040_PIO_SM_PINCTRL(pio, sm));
+  putreg32(pinctrl_saved, J721E_PIO_SM_PINCTRL(pio, sm));
 }
 
-void rp2040_pio_sm_set_pindirs_with_mask(uint32_t pio, uint32_t sm,
+void j721e_pio_sm_set_pindirs_with_mask(uint32_t pio, uint32_t sm,
                                          uint32_t pindirs,
                                          uint32_t pin_mask)
 {
   check_pio_param(pio);
   check_sm_param(sm);
-  uint32_t pinctrl_saved = getreg32(RP2040_PIO_SM_PINCTRL(pio, sm));
+  uint32_t pinctrl_saved = getreg32(J721E_PIO_SM_PINCTRL(pio, sm));
 
   while (pin_mask)
     {
       uint32_t base = (uint32_t)__builtin_ctz(pin_mask);
-      putreg32((1u << RP2040_PIO_SM_PINCTRL_SET_COUNT_SHIFT) |
-               (base << RP2040_PIO_SM_PINCTRL_SET_BASE_SHIFT),
-               RP2040_PIO_SM_PINCTRL(pio, sm));
-      rp2040_pio_sm_exec(pio, sm,
+      putreg32((1u << J721E_PIO_SM_PINCTRL_SET_COUNT_SHIFT) |
+               (base << J721E_PIO_SM_PINCTRL_SET_BASE_SHIFT),
+               J721E_PIO_SM_PINCTRL(pio, sm));
+      j721e_pio_sm_exec(pio, sm,
                          pio_encode_set(pio_pindirs,
                                         (pindirs >> base) & 0x1u));
       pin_mask &= pin_mask - 1;
     }
 
-  putreg32(pinctrl_saved, RP2040_PIO_SM_PINCTRL(pio, sm));
+  putreg32(pinctrl_saved, J721E_PIO_SM_PINCTRL(pio, sm));
 }
 
-void rp2040_pio_sm_set_consecutive_pindirs(uint32_t pio, uint32_t sm,
+void j721e_pio_sm_set_consecutive_pindirs(uint32_t pio, uint32_t sm,
                                            uint32_t pin,
                                            uint32_t count, bool is_out)
 {
@@ -408,73 +408,73 @@ void rp2040_pio_sm_set_consecutive_pindirs(uint32_t pio, uint32_t sm,
   check_sm_param(sm);
   valid_params_if(PIO, pin < 32u);
 
-  uint32_t pinctrl_saved = getreg32(RP2040_PIO_SM_PINCTRL(pio, sm));
+  uint32_t pinctrl_saved = getreg32(J721E_PIO_SM_PINCTRL(pio, sm));
   uint32_t pindir_val = is_out ? 0x1f : 0;
 
   while (count > 5)
     {
-      putreg32((5u << RP2040_PIO_SM_PINCTRL_SET_COUNT_SHIFT) |
-               (pin << RP2040_PIO_SM_PINCTRL_SET_BASE_SHIFT),
-               RP2040_PIO_SM_PINCTRL(pio, sm));
-      rp2040_pio_sm_exec(pio, sm,
+      putreg32((5u << J721E_PIO_SM_PINCTRL_SET_COUNT_SHIFT) |
+               (pin << J721E_PIO_SM_PINCTRL_SET_BASE_SHIFT),
+               J721E_PIO_SM_PINCTRL(pio, sm));
+      j721e_pio_sm_exec(pio, sm,
                          pio_encode_set(pio_pindirs, pindir_val));
       count -= 5;
       pin = (pin + 5) & 0x1f;
     }
 
-  putreg32((count << RP2040_PIO_SM_PINCTRL_SET_COUNT_SHIFT) |
-           (pin << RP2040_PIO_SM_PINCTRL_SET_BASE_SHIFT),
-           RP2040_PIO_SM_PINCTRL(pio, sm));
-  rp2040_pio_sm_exec(pio, sm,
+  putreg32((count << J721E_PIO_SM_PINCTRL_SET_COUNT_SHIFT) |
+           (pin << J721E_PIO_SM_PINCTRL_SET_BASE_SHIFT),
+           J721E_PIO_SM_PINCTRL(pio, sm));
+  j721e_pio_sm_exec(pio, sm,
                      pio_encode_set(pio_pindirs, pindir_val));
-  putreg32(pinctrl_saved, RP2040_PIO_SM_PINCTRL(pio, sm));
+  putreg32(pinctrl_saved, J721E_PIO_SM_PINCTRL(pio, sm));
 }
 
-void rp2040_pio_sm_init(uint32_t pio, uint32_t sm, uint32_t initial_pc,
-                        const rp2040_pio_sm_config *config)
+void j721e_pio_sm_init(uint32_t pio, uint32_t sm, uint32_t initial_pc,
+                        const j721e_pio_sm_config *config)
 {
   valid_params_if(PIO, initial_pc < PIO_INSTRUCTION_COUNT);
 
   /* Halt the machine, set some sensible defaults */
 
-  rp2040_pio_sm_set_enabled(pio, sm, false);
+  j721e_pio_sm_set_enabled(pio, sm, false);
 
   if (config)
     {
-      rp2040_pio_sm_set_config(pio, sm, config);
+      j721e_pio_sm_set_config(pio, sm, config);
     }
   else
     {
-      rp2040_pio_sm_config c = rp2040_pio_get_default_sm_config();
-      rp2040_pio_sm_set_config(pio, sm, &c);
+      j721e_pio_sm_config c = j721e_pio_get_default_sm_config();
+      j721e_pio_sm_set_config(pio, sm, &c);
     }
 
-  rp2040_pio_sm_clear_fifos(pio, sm);
+  j721e_pio_sm_clear_fifos(pio, sm);
 
   /* Clear FIFO debug flags */
 
-  const uint32_t fdebug_sm_mask = (1u << RP2040_PIO_FDEBUG_TXOVER_SHIFT) |
-                                  (1u << RP2040_PIO_FDEBUG_RXUNDER_SHIFT) |
-                                  (1u << RP2040_PIO_FDEBUG_TXSTALL_SHIFT) |
-                                  (1u << RP2040_PIO_FDEBUG_RXSTALL_SHIFT);
-  putreg32(fdebug_sm_mask << sm, RP2040_PIO_FDEBUG(pio));
+  const uint32_t fdebug_sm_mask = (1u << J721E_PIO_FDEBUG_TXOVER_SHIFT) |
+                                  (1u << J721E_PIO_FDEBUG_RXUNDER_SHIFT) |
+                                  (1u << J721E_PIO_FDEBUG_TXSTALL_SHIFT) |
+                                  (1u << J721E_PIO_FDEBUG_RXSTALL_SHIFT);
+  putreg32(fdebug_sm_mask << sm, J721E_PIO_FDEBUG(pio));
 
   /* Finally, clear some internal SM state */
 
-  rp2040_pio_sm_restart(pio, sm);
-  rp2040_pio_sm_clkdiv_restart(pio, sm);
-  rp2040_pio_sm_exec(pio, sm, pio_encode_jmp(initial_pc));
+  j721e_pio_sm_restart(pio, sm);
+  j721e_pio_sm_clkdiv_restart(pio, sm);
+  j721e_pio_sm_exec(pio, sm, pio_encode_jmp(initial_pc));
 }
 
-void rp2040_pio_sm_drain_tx_fifo(uint32_t pio, uint32_t sm)
+void j721e_pio_sm_drain_tx_fifo(uint32_t pio, uint32_t sm)
 {
-  uint32_t instr = (getreg32(RP2040_PIO_SM_SHIFTCTRL(pio, sm)) &
-                    RP2040_PIO_SM_SHIFTCTRL_AUTOPULL) ?
+  uint32_t instr = (getreg32(J721E_PIO_SM_SHIFTCTRL(pio, sm)) &
+                    J721E_PIO_SM_SHIFTCTRL_AUTOPULL) ?
                    pio_encode_out(pio_null, 32) :
                    pio_encode_pull(false, false);
 
-  while (!rp2040_pio_sm_is_tx_fifo_empty(pio, sm))
+  while (!j721e_pio_sm_is_tx_fifo_empty(pio, sm))
     {
-      rp2040_pio_sm_exec(pio, sm, instr);
+      j721e_pio_sm_exec(pio, sm, instr);
     }
 }

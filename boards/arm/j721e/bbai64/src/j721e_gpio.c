@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/rp2040/raspberrypi-pico/src/rp2040_gpio.c
+ * boards/arm/j721e/bbai64/src/j721e_gpio.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -37,7 +37,7 @@
 
 #include "arm_internal.h"
 #include "chip.h"
-#include "rp2040_gpio.h"
+#include "j721e_gpio.h"
 
 #if defined(CONFIG_DEV_GPIO) && !defined(CONFIG_GPIO_LOWER_HALF)
 
@@ -60,15 +60,15 @@
  * Private Types
  ****************************************************************************/
 
-struct rp2040gpio_dev_s
+struct j721egpio_dev_s
 {
   struct gpio_dev_s gpio;
   uint8_t id;
 };
 
-struct rp2040gpint_dev_s
+struct j721egpint_dev_s
 {
-  struct rp2040gpio_dev_s rp2040gpio;
+  struct j721egpio_dev_s j721egpio;
   pin_interrupt_t callback;
 };
 
@@ -112,7 +112,7 @@ static const uint32_t g_gpiooutputs[BOARD_NGPIOOUT] =
   GPIO_OUT1
 };
 
-static struct rp2040gpio_dev_s g_gpout[BOARD_NGPIOOUT];
+static struct j721egpio_dev_s g_gpout[BOARD_NGPIOOUT];
 #endif
 
 #if BOARD_NGPIOIN > 0
@@ -131,7 +131,7 @@ static const uint32_t g_gpioinputs[BOARD_NGPIOIN] =
   GPIO_IN1
 };
 
-static struct rp2040gpio_dev_s g_gpin[BOARD_NGPIOIN];
+static struct j721egpio_dev_s g_gpin[BOARD_NGPIOIN];
 #endif
 
 #if BOARD_NGPIOINT > 0
@@ -150,7 +150,7 @@ static const uint32_t g_gpiointinputs[BOARD_NGPIOINT] =
   GPIO_IRQPIN1,
 };
 
-static struct rp2040gpint_dev_s g_gpint[BOARD_NGPIOINT];
+static struct j721egpint_dev_s g_gpint[BOARD_NGPIOINT];
 #endif
 
 /****************************************************************************
@@ -164,14 +164,14 @@ static struct rp2040gpint_dev_s g_gpint[BOARD_NGPIOINT];
 #if BOARD_NGPIOOUT > 0
 static int gpout_read(struct gpio_dev_s *dev, bool *value)
 {
-  struct rp2040gpio_dev_s *rp2040gpio =
-    (struct rp2040gpio_dev_s *)dev;
+  struct j721egpio_dev_s *j721egpio =
+    (struct j721egpio_dev_s *)dev;
 
-  DEBUGASSERT(rp2040gpio != NULL && value != NULL);
-  DEBUGASSERT(rp2040gpio->id < BOARD_NGPIOOUT);
+  DEBUGASSERT(j721egpio != NULL && value != NULL);
+  DEBUGASSERT(j721egpio->id < BOARD_NGPIOOUT);
   gpioinfo("Reading...\n");
 
-  *value = rp2040_gpio_get(g_gpiooutputs[rp2040gpio->id]);
+  *value = j721e_gpio_get(g_gpiooutputs[j721egpio->id]);
   return OK;
 }
 
@@ -181,14 +181,14 @@ static int gpout_read(struct gpio_dev_s *dev, bool *value)
 
 static int gpout_write(struct gpio_dev_s *dev, bool value)
 {
-  struct rp2040gpio_dev_s *rp2040gpio =
-    (struct rp2040gpio_dev_s *)dev;
+  struct j721egpio_dev_s *j721egpio =
+    (struct j721egpio_dev_s *)dev;
 
-  DEBUGASSERT(rp2040gpio != NULL);
-  DEBUGASSERT(rp2040gpio->id < BOARD_NGPIOOUT);
+  DEBUGASSERT(j721egpio != NULL);
+  DEBUGASSERT(j721egpio->id < BOARD_NGPIOOUT);
   gpioinfo("Writing %d\n", (int)value);
 
-  rp2040_gpio_put(g_gpiooutputs[rp2040gpio->id], value);
+  j721e_gpio_put(g_gpiooutputs[j721egpio->id], value);
   return OK;
 }
 #endif
@@ -200,33 +200,33 @@ static int gpout_write(struct gpio_dev_s *dev, bool value)
 #if BOARD_NGPIOIN > 0
 static int gpin_read(struct gpio_dev_s *dev, bool *value)
 {
-  struct rp2040gpio_dev_s *rp2040gpio =
-    (struct rp2040gpio_dev_s *)dev;
+  struct j721egpio_dev_s *j721egpio =
+    (struct j721egpio_dev_s *)dev;
 
-  DEBUGASSERT(rp2040gpio != NULL && value != NULL);
-  DEBUGASSERT(rp2040gpio->id < BOARD_NGPIOIN);
-  gpioinfo("Reading... pin %d\n", (int)g_gpioinputs[rp2040gpio->id]);
+  DEBUGASSERT(j721egpio != NULL && value != NULL);
+  DEBUGASSERT(j721egpio->id < BOARD_NGPIOIN);
+  gpioinfo("Reading... pin %d\n", (int)g_gpioinputs[j721egpio->id]);
 
-  *value = rp2040_gpio_get(g_gpioinputs[rp2040gpio->id]);
+  *value = j721e_gpio_get(g_gpioinputs[j721egpio->id]);
   return OK;
 }
 #endif
 
 /****************************************************************************
- * Name: rp2040gpio_interrupt
+ * Name: j721egpio_interrupt
  ****************************************************************************/
 
 #if BOARD_NGPIOINT > 0
-static int rp2040gpio_interrupt(int irq, void *context, void *arg)
+static int j721egpio_interrupt(int irq, void *context, void *arg)
 {
-  struct rp2040gpint_dev_s *rp2040gpint =
-    (struct rp2040gpint_dev_s *)arg;
+  struct j721egpint_dev_s *j721egpint =
+    (struct j721egpint_dev_s *)arg;
 
-  DEBUGASSERT(rp2040gpint != NULL && rp2040gpint->callback != NULL);
-  gpioinfo("Interrupt! callback=%p\n", rp2040gpint->callback);
+  DEBUGASSERT(j721egpint != NULL && j721egpint->callback != NULL);
+  gpioinfo("Interrupt! callback=%p\n", j721egpint->callback);
 
-  rp2040gpint->callback(&rp2040gpint->rp2040gpio.gpio,
-                       rp2040gpint->rp2040gpio.id);
+  j721egpint->callback(&j721egpint->j721egpio.gpio,
+                       j721egpint->j721egpio.id);
   return OK;
 }
 
@@ -236,14 +236,14 @@ static int rp2040gpio_interrupt(int irq, void *context, void *arg)
 
 static int gpint_read(struct gpio_dev_s *dev, bool *value)
 {
-  struct rp2040gpint_dev_s *rp2040gpint =
-    (struct rp2040gpint_dev_s *)dev;
+  struct j721egpint_dev_s *j721egpint =
+    (struct j721egpint_dev_s *)dev;
 
-  DEBUGASSERT(rp2040gpint != NULL && value != NULL);
-  DEBUGASSERT(rp2040gpint->rp2040gpio.id < BOARD_NGPIOINT);
+  DEBUGASSERT(j721egpint != NULL && value != NULL);
+  DEBUGASSERT(j721egpint->j721egpio.id < BOARD_NGPIOINT);
   gpioinfo("Reading int pin...\n");
 
-  *value = rp2040_gpio_get(g_gpiointinputs[rp2040gpint->rp2040gpio.id]);
+  *value = j721e_gpio_get(g_gpiointinputs[j721egpint->j721egpio.id]);
   return OK;
 }
 
@@ -254,20 +254,20 @@ static int gpint_read(struct gpio_dev_s *dev, bool *value)
 static int gpint_attach(struct gpio_dev_s *dev,
                         pin_interrupt_t callback)
 {
-  struct rp2040gpint_dev_s *rp2040gpint =
-    (struct rp2040gpint_dev_s *)dev;
-  int irq = g_gpiointinputs[rp2040gpint->rp2040gpio.id];
+  struct j721egpint_dev_s *j721egpint =
+    (struct j721egpint_dev_s *)dev;
+  int irq = g_gpiointinputs[j721egpint->j721egpio.id];
   int ret;
 
   gpioinfo("Attaching the callback\n");
 
   /* Make sure the interrupt is disabled */
 
-  rp2040_gpio_disable_irq(irq);
-  ret = rp2040_gpio_irq_attach(irq,
-                               RP2040_GPIO_INTR_EDGE_LOW,
-                               rp2040gpio_interrupt,
-                               &g_gpint[rp2040gpint->rp2040gpio.id]);
+  j721e_gpio_disable_irq(irq);
+  ret = j721e_gpio_irq_attach(irq,
+                               J721E_GPIO_INTR_EDGE_LOW,
+                               j721egpio_interrupt,
+                               &g_gpint[j721egpint->j721egpio.id]);
   if (ret < 0)
     {
       syslog(LOG_ERR, "ERROR: gpint_attach() failed: %d\n", ret);
@@ -275,7 +275,7 @@ static int gpint_attach(struct gpio_dev_s *dev,
     }
 
   gpioinfo("Attach %p\n", callback);
-  rp2040gpint->callback = callback;
+  j721egpint->callback = callback;
   return OK;
 }
 
@@ -285,25 +285,25 @@ static int gpint_attach(struct gpio_dev_s *dev,
 
 static int gpint_enable(struct gpio_dev_s *dev, bool enable)
 {
-  struct rp2040gpint_dev_s *rp2040gpint =
-    (struct rp2040gpint_dev_s *)dev;
-  int irq = g_gpiointinputs[rp2040gpint->rp2040gpio.id];
+  struct j721egpint_dev_s *j721egpint =
+    (struct j721egpint_dev_s *)dev;
+  int irq = g_gpiointinputs[j721egpint->j721egpio.id];
 
   if (enable)
     {
-      if (rp2040gpint->callback != NULL)
+      if (j721egpint->callback != NULL)
         {
           gpioinfo("Enabling the interrupt\n");
 
           /* Configure the interrupt for rising edge */
 
-          rp2040_gpio_enable_irq(irq);
+          j721e_gpio_enable_irq(irq);
         }
     }
   else
     {
       gpioinfo("Disable the interrupt\n");
-      rp2040_gpio_disable_irq(irq);
+      j721e_gpio_disable_irq(irq);
     }
 
   return OK;
@@ -315,10 +315,10 @@ static int gpint_enable(struct gpio_dev_s *dev, bool enable)
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_dev_gpio_init
+ * Name: j721e_dev_gpio_init
  ****************************************************************************/
 
-int rp2040_dev_gpio_init(void)
+int j721e_dev_gpio_init(void)
 {
   int i;
   int pincount = 0;
@@ -335,9 +335,9 @@ int rp2040_dev_gpio_init(void)
 
       /* Configure the pins that will be used as output */
 
-      rp2040_gpio_init(g_gpiooutputs[i]);
-      rp2040_gpio_setdir(g_gpiooutputs[i], true);
-      rp2040_gpio_put(g_gpiooutputs[i], false);
+      j721e_gpio_init(g_gpiooutputs[i]);
+      j721e_gpio_setdir(g_gpiooutputs[i], true);
+      j721e_gpio_put(g_gpiooutputs[i], false);
 
       pincount++;
     }
@@ -357,7 +357,7 @@ int rp2040_dev_gpio_init(void)
 
       /* Configure the pins that will be used as INPUT */
 
-      rp2040_gpio_init(g_gpioinputs[i]);
+      j721e_gpio_init(g_gpioinputs[i]);
 
       pincount++;
     }
@@ -370,18 +370,18 @@ int rp2040_dev_gpio_init(void)
     {
       /* Setup and register the GPIO pin */
 
-      g_gpint[i].rp2040gpio.gpio.gp_pintype = GPIO_INTERRUPT_PIN;
-      g_gpint[i].rp2040gpio.gpio.gp_ops     = &gpint_ops;
-      g_gpint[i].rp2040gpio.id              = i;
-      gpio_pin_register(&g_gpint[i].rp2040gpio.gpio, g_gpiointinputs[i]);
+      g_gpint[i].j721egpio.gpio.gp_pintype = GPIO_INTERRUPT_PIN;
+      g_gpint[i].j721egpio.gpio.gp_ops     = &gpint_ops;
+      g_gpint[i].j721egpio.id              = i;
+      gpio_pin_register(&g_gpint[i].j721egpio.gpio, g_gpiointinputs[i]);
 
       /* Configure the pins that will be used as interrupt input */
 
-      rp2040_gpio_init(g_gpiointinputs[i]);
+      j721e_gpio_init(g_gpiointinputs[i]);
 
       /* pull-up = false : pull-down = true */
 
-      rp2040_gpio_set_pulls(g_gpiointinputs[i], false, true);
+      j721e_gpio_set_pulls(g_gpiointinputs[i], false, true);
 
       pincount++;
     }

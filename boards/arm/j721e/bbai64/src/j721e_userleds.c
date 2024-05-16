@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/rp2040/raspberrypi-pico/src/rp2040_userleds.c
+ * boards/arm/j721e/bbai64/src/j721e_userleds.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -34,9 +34,9 @@
 
 #include "arm_internal.h"
 #include "chip.h"
-#include "rp2040_gpio.h"
+#include "j721e_gpio.h"
 
-#include "rp2040_pico.h"
+#include "j721e_pico.h"
 
 #ifndef CONFIG_ARCH_LEDS
 
@@ -168,8 +168,8 @@ uint32_t board_userled_initialize(void)
 {
   /* Configure LED GPIO for output */
 
-  rp2040_gpio_init(GPIO_LED1);
-  rp2040_gpio_setdir(GPIO_LED1, true);
+  j721e_gpio_init(GPIO_LED1);
+  j721e_gpio_setdir(GPIO_LED1, true);
 
   return BOARD_NLEDS;
 }
@@ -182,7 +182,7 @@ void board_userled(int led, bool ledon)
 {
   if ((unsigned)led < BOARD_NLEDS)
     {
-      rp2040_gpio_put(g_ledcfg[led], ledon);
+      j721e_gpio_put(g_ledcfg[led], ledon);
     }
 }
 
@@ -192,15 +192,15 @@ void board_userled(int led, bool ledon)
 
 void board_userled_all(uint32_t ledset)
 {
-  rp2040_gpio_put(GPIO_LED1, (ledset & BOARD_LED1_BIT));
+  j721e_gpio_put(GPIO_LED1, (ledset & BOARD_LED1_BIT));
 }
 
 /****************************************************************************
- * Name: rp2040_led_pminitialize
+ * Name: j721e_led_pminitialize
  ****************************************************************************/
 
 #ifdef CONFIG_PM
-void rp2040_led_pminitialize(void)
+void j721e_led_pminitialize(void)
 {
   /* Register to receive power management callbacks */
 

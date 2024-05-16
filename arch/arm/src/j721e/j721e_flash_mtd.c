@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_flash_mtd.c
+ * arch/arm/src/j721e/j721e_flash_mtd.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -20,17 +20,17 @@
 
 /****************************************************************************
  * This code implements a Sector Mapped Allocation for Really Tiny (SMART)
- * filesystem in the RP2040 flash memory chip.  It uses the space not
+ * filesystem in the J721E flash memory chip.  It uses the space not
  * otherwise used by the NuttX binary and supports both read and write
  * access.
  *
  * There initial contents of this filesystem may be configured when a NuttX
- * binary is built (using tools/rp2040/make_flash_fs.c), but any changes
+ * binary is built (using tools/j721e/make_flash_fs.c), but any changes
  * subsequently written to the filesystem will persist over re-boots of the
- * RP2040.
+ * J721E.
  *
  * Note: Although read access to any data stored in this filesystem is very
- *       rapid; because of how the RP2040's flash access routines work with
+ *       rapid; because of how the J721E's flash access routines work with
  *       the normal execute-in-place (XIP) access to that chip, no code can
  *       access flash in the normal manner when this filesystem is erasing
  *       or writing blocks.   This means that interrupts must be disabled
@@ -48,8 +48,8 @@
 #include <nuttx/irq.h>
 #include <nuttx/mutex.h>
 
-#include "rp2040_flash_mtd.h"
-#include "rp2040_rom.h"
+#include "j721e_flash_mtd.h"
+#include "j721e_rom.h"
 
 #include <sys/types.h>
 #include <stdint.h>
@@ -68,9 +68,9 @@
 #define FLASH_BLOCK_ERASE_CMD    0x20
 #define BOOT_2_SIZE              256
 
-#define FLASH_START_OFFSET (rp2040_smart_flash_start - (uint8_t *)XIP_BASE)
-#define FLASH_END_OFFSET   (rp2040_smart_flash_end   - (uint8_t *)XIP_BASE)
-#define FLASH_START_READ   (rp2040_smart_flash_start + 0x03000000)
+#define FLASH_START_OFFSET (j721e_smart_flash_start - (uint8_t *)XIP_BASE)
+#define FLASH_END_OFFSET   (j721e_smart_flash_end   - (uint8_t *)XIP_BASE)
+#define FLASH_START_READ   (j721e_smart_flash_start + 0x03000000)
 
 /* Note: There is some ambiguity in terminology when it comes to flash.
  *       Some call the chunk that can be erased a sector where others
@@ -83,13 +83,13 @@
 /* Blocks are the smallest unit that can be erased */
 
 #define FLASH_BLOCK_SIZE   (4 * 1024)
-#define FLASH_BLOCK_COUNT  (CONFIG_RP2040_FLASH_LENGTH - FLASH_START_OFFSET)\
+#define FLASH_BLOCK_COUNT  (CONFIG_J721E_FLASH_LENGTH - FLASH_START_OFFSET)\
                            / FLASH_BLOCK_SIZE
 
 /* Sectors are the smallest unit that can be written */
 
 #define FLASH_SECTOR_SIZE  256
-#define FLASH_SECTOR_COUNT (CONFIG_RP2040_FLASH_LENGTH - FLASH_START_OFFSET)\
+#define FLASH_SECTOR_COUNT (CONFIG_J721E_FLASH_LENGTH - FLASH_START_OFFSET)\
                            / FLASH_SECTOR_SIZE
 
 #ifdef CONFIG_SMP
@@ -100,12 +100,12 @@
  * Private Types
  ****************************************************************************/
 
-typedef struct rp2040_flash_dev_s
+typedef struct j721e_flash_dev_s
 {
   struct mtd_dev_s mtd_dev;                 /* Embedded mdt_dev structure */
   mutex_t          lock;                    /* file access serialization  */
   uint32_t         boot_2[BOOT_2_SIZE / 4]; /* RAM copy of boot_2         */
-} rp2040_flash_dev_t;
+} j721e_flash_dev_t;
 
 typedef void (*connect_internal_flash_f)(void);
 typedef void (*flash_exit_xip_f)(void);
@@ -118,26 +118,26 @@ typedef void (*flash_enable_xip_f)(void);
  * Private Function Prototypes
  ****************************************************************************/
 
-static int     rp2040_flash_erase      (struct mtd_dev_s *dev,
+static int     j721e_flash_erase      (struct mtd_dev_s *dev,
                                         off_t             startblock,
                                         size_t            nblocks);
 
-static ssize_t rp2040_flash_block_read (struct mtd_dev_s *dev,
+static ssize_t j721e_flash_block_read (struct mtd_dev_s *dev,
                                         off_t             startblock,
                                         size_t            nblocks,
                                         uint8_t          *buffer);
 
-static ssize_t rp2040_flash_block_write(struct mtd_dev_s *dev,
+static ssize_t j721e_flash_block_write(struct mtd_dev_s *dev,
                                         off_t             startblock,
                                         size_t            nblocks,
                                         const uint8_t    *buffer);
 
-static ssize_t rp2040_flash_byte_read  (struct mtd_dev_s *dev,
+static ssize_t j721e_flash_byte_read  (struct mtd_dev_s *dev,
                                         off_t             offset,
                                         size_t            nbytes,
                                         uint8_t          *buffer);
 
-static int     rp2040_flash_ioctl      (struct mtd_dev_s *dev,
+static int     j721e_flash_ioctl      (struct mtd_dev_s *dev,
                                         int              cmd,
                                         unsigned long    arg);
 
@@ -145,25 +145,25 @@ static int     rp2040_flash_ioctl      (struct mtd_dev_s *dev,
  * Public Data
  ****************************************************************************/
 
-extern const uint8_t rp2040_smart_flash_start[256];
-extern const uint8_t rp2040_smart_flash_end[0];
+extern const uint8_t j721e_smart_flash_start[256];
+extern const uint8_t j721e_smart_flash_end[0];
 
 /****************************************************************************
  * Private Data
  ****************************************************************************/
 
-static struct rp2040_flash_dev_s my_dev =
+static struct j721e_flash_dev_s my_dev =
 {
   .mtd_dev =
   {
-    rp2040_flash_erase,
-    rp2040_flash_block_read,
-    rp2040_flash_block_write,
-    rp2040_flash_byte_read,
+    j721e_flash_erase,
+    j721e_flash_block_read,
+    j721e_flash_block_write,
+    j721e_flash_byte_read,
 #ifdef CONFIG_MTD_BYTE_WRITE
     NULL,
 #endif
-    rp2040_flash_ioctl,
+    j721e_flash_ioctl,
     NULL,
     NULL,
     "rp_flash"
@@ -242,14 +242,14 @@ void RAM_CODE(do_write)(uint32_t addr, const uint8_t *data, size_t count)
 }
 
 /****************************************************************************
- * Name: rp2040_flash_erase
+ * Name: j721e_flash_erase
  ****************************************************************************/
 
-static int     rp2040_flash_erase(struct mtd_dev_s *dev,
+static int     j721e_flash_erase(struct mtd_dev_s *dev,
                                   off_t             startblock,
                                   size_t            nblocks)
 {
-  rp2040_flash_dev_t *rp_dev = (rp2040_flash_dev_t *)dev;
+  j721e_flash_dev_t *rp_dev = (j721e_flash_dev_t *)dev;
   irqstate_t          flags;
   int                 ret    = OK;
 
@@ -287,15 +287,15 @@ static int     rp2040_flash_erase(struct mtd_dev_s *dev,
 }
 
 /****************************************************************************
- * Name: rp2040_flash_block_read
+ * Name: j721e_flash_block_read
  ****************************************************************************/
 
-static ssize_t rp2040_flash_block_read(struct mtd_dev_s *dev,
+static ssize_t j721e_flash_block_read(struct mtd_dev_s *dev,
                                        off_t             startblock,
                                        size_t            nblocks,
                                        uint8_t          *buffer)
 {
-  rp2040_flash_dev_t *rp_dev = (rp2040_flash_dev_t *)dev;
+  j721e_flash_dev_t *rp_dev = (j721e_flash_dev_t *)dev;
   int                 start;
   int                 length;
   int                 ret   = OK;
@@ -330,15 +330,15 @@ static ssize_t rp2040_flash_block_read(struct mtd_dev_s *dev,
 }
 
 /****************************************************************************
- * Name: rp2040_flash_write
+ * Name: j721e_flash_write
  ****************************************************************************/
 
-static ssize_t rp2040_flash_block_write(struct mtd_dev_s *dev,
+static ssize_t j721e_flash_block_write(struct mtd_dev_s *dev,
                                         off_t             startblock,
                                         size_t            nblocks,
                                         const uint8_t    *buffer)
 {
-  rp2040_flash_dev_t *rp_dev = (rp2040_flash_dev_t *)dev;
+  j721e_flash_dev_t *rp_dev = (j721e_flash_dev_t *)dev;
   irqstate_t          flags;
   int                 ret;
 
@@ -388,15 +388,15 @@ static ssize_t rp2040_flash_block_write(struct mtd_dev_s *dev,
 }
 
 /****************************************************************************
- * Name: rp2040_flash_byte_read
+ * Name: j721e_flash_byte_read
  ****************************************************************************/
 
-static ssize_t rp2040_flash_byte_read(struct mtd_dev_s *dev,
+static ssize_t j721e_flash_byte_read(struct mtd_dev_s *dev,
                                       off_t             offset,
                                       size_t            nbytes,
                                       uint8_t          *buffer)
 {
-  rp2040_flash_dev_t *rp_dev = (rp2040_flash_dev_t *)dev;
+  j721e_flash_dev_t *rp_dev = (j721e_flash_dev_t *)dev;
   int                 length;
   int                 ret   = OK;
 
@@ -438,14 +438,14 @@ static ssize_t rp2040_flash_byte_read(struct mtd_dev_s *dev,
 }
 
 /****************************************************************************
- * Name: rp2040_flash_ioctl
+ * Name: j721e_flash_ioctl
  ****************************************************************************/
 
-static int rp2040_flash_ioctl(struct mtd_dev_s *dev,
+static int j721e_flash_ioctl(struct mtd_dev_s *dev,
                               int               cmd,
                               unsigned long     arg)
 {
-  rp2040_flash_dev_t *rp_dev = (rp2040_flash_dev_t *)dev;
+  j721e_flash_dev_t *rp_dev = (j721e_flash_dev_t *)dev;
   int                 ret    = OK;
 
   UNUSED(rp_dev);
@@ -475,7 +475,7 @@ static int rp2040_flash_ioctl(struct mtd_dev_s *dev,
            * device.
            */
 
-          ret = rp2040_flash_erase(dev, 0, FLASH_BLOCK_COUNT);
+          ret = j721e_flash_erase(dev, 0, FLASH_BLOCK_COUNT);
 
           break;
         }
@@ -492,13 +492,13 @@ static int rp2040_flash_ioctl(struct mtd_dev_s *dev,
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_flash_initialize
+ * Name: j721e_flash_initialize
  *
- * Description: Bind a block mode driver that uses the built-in rp2040
+ * Description: Bind a block mode driver that uses the built-in j721e
  * flash programming commands for read/write access to unused flash.
  ****************************************************************************/
 
-struct mtd_dev_s *rp2040_flash_mtd_initialize(void)
+struct mtd_dev_s *j721e_flash_mtd_initialize(void)
 {
   if (initialized)
     {
@@ -534,7 +534,7 @@ struct mtd_dev_s *rp2040_flash_mtd_initialize(void)
 
   /* Do we need to initialize the flash? */
 
-  if (memcmp(rp2040_smart_flash_start, "2040", 4) == 0)
+  if (memcmp(j721e_smart_flash_start, "2040", 4) == 0)
     {
       uint8_t    buffer[FLASH_SECTOR_SIZE];
       irqstate_t flags = enter_critical_section();
@@ -544,11 +544,11 @@ struct mtd_dev_s *rp2040_flash_mtd_initialize(void)
       /* Erase all flash beyond what was loaded from NuttX binary. */
 
       do_erase(FLASH_END_OFFSET,
-                CONFIG_RP2040_FLASH_LENGTH - FLASH_END_OFFSET);
+                CONFIG_J721E_FLASH_LENGTH - FLASH_END_OFFSET);
 
       /* Erase the "magic" flag, setting the first two bytes to zero. */
 
-      memcpy(buffer, rp2040_smart_flash_start, FLASH_SECTOR_SIZE);
+      memcpy(buffer, j721e_smart_flash_start, FLASH_SECTOR_SIZE);
 
       buffer[0] = 0;
       buffer[1] = 0;

@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_adc.h
+ * arch/arm/src/j721e/j721e_adc.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -22,13 +22,13 @@
  * Note:
  *    The ADC driver upper-half returns signed values of up to 32-bits to
  *    the user and expects the high-order bits in any result to be
- *    significant.  So, while the RP2040 hardware returns an unsigned value
+ *    significant.  So, while the J721E hardware returns an unsigned value
  *    in the low-order 12 bits of the result register, we shift this
  *    value to the high-order bits.
  *
  *    The result is that to convert a 32-bit value returned from the ADC
  *    driver, you should use   V = ADC_AVDD * value / (2^31)  where ADC_AVDD
- *    is the analogue reference voltage supplied to the RP2040 chip.  If
+ *    is the analogue reference voltage supplied to the J721E chip.  If
  *    8 or 16 bit values are returned the divisor would be (2^15) or (2^7)
  *    respectively.
  *
@@ -37,8 +37,8 @@
  *    be treated as erroneous.
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_RP2040_ADC_H
-#define __ARCH_ARM_SRC_RP2040_RP2040_ADC_H
+#ifndef __ARCH_ARM_SRC_J721E_J721E_ADC_H
+#define __ARCH_ARM_SRC_J721E_J721E_ADC_H
 
 /****************************************************************************
  * Included Files
@@ -57,7 +57,7 @@ extern "C"
 #define EXTERN extern
 #endif
 
-#ifdef CONFIG_RP2040_ADC
+#ifdef CONFIG_J721E_ADC
 
 /****************************************************************************
  * Public Function Prototypes
@@ -66,7 +66,7 @@ extern "C"
 #ifdef CONFIG_ADC
 
 /****************************************************************************
- * Name: rp2040_adc_setup
+ * Name: j721e_adc_setup
  *
  * Description:
  *   Initialize and register the ADC driver.
@@ -83,7 +83,7 @@ extern "C"
  *   OK on success or an ERROR on failure
  ****************************************************************************/
 
-int rp2040_adc_setup(const char *path,
+int j721e_adc_setup(const char *path,
                      bool        read_adc0,
                      bool        read_adc1,
                      bool        read_adc2,
@@ -96,7 +96,7 @@ int rp2040_adc_setup(const char *path,
 
 #endif /* CONFIG_ADC */
 
-#endif /* CONFIG_RP2040_ADC */
+#endif /* CONFIG_J721E_ADC */
 
 #undef EXTERN
 #if defined(__cplusplus)
@@ -105,4 +105,4 @@ int rp2040_adc_setup(const char *path,
 
 #endif /* __ASSEMBLY__ */
 
-#endif /* __ARCH_ARM_SRC_RP2040_RP2040_ADC_H */
+#endif /* __ARCH_ARM_SRC_J721E_J721E_ADC_H */

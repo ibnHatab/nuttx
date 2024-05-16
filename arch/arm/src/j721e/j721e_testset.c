@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_testset.c
+ * arch/arm/src/j721e/j721e_testset.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -27,14 +27,14 @@
 #include <nuttx/arch.h>
 #include <nuttx/spinlock.h>
 
-#include "hardware/rp2040_sio.h"
+#include "hardware/j721e_sio.h"
 #include "arm_internal.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define RP2040_TESTSET_SPINLOCK     0   /* Spinlock used for test and set */
+#define J721E_TESTSET_SPINLOCK     0   /* Spinlock used for test and set */
 
 /****************************************************************************
  * Public Functions
@@ -65,7 +65,7 @@ spinlock_t up_testset(volatile spinlock_t *lock)
 
   /* Lock hardware spinlock */
 
-  while (getreg32(RP2040_SIO_SPINLOCK(RP2040_TESTSET_SPINLOCK)) == 0)
+  while (getreg32(J721E_SIO_SPINLOCK(J721E_TESTSET_SPINLOCK)) == 0)
     ;
 
   ret = *lock;
@@ -78,7 +78,7 @@ spinlock_t up_testset(volatile spinlock_t *lock)
 
   /* Unlock hardware spinlock */
 
-  putreg32(0, RP2040_SIO_SPINLOCK(RP2040_TESTSET_SPINLOCK));
+  putreg32(0, J721E_SIO_SPINLOCK(J721E_TESTSET_SPINLOCK));
 
   return ret;
 }

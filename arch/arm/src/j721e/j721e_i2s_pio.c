@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_i2s_pio.c
+ * arch/arm/src/j721e/j721e_i2s_pio.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -29,9 +29,9 @@
 
 #include <arch/board/board.h>
 
-#include "rp2040_i2s_pio.h"
-#include "rp2040_pio.h"
-#include "rp2040_pio_instructions.h"
+#include "j721e_i2s_pio.h"
+#include "j721e_pio.h"
+#include "j721e_pio_instructions.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -39,21 +39,21 @@
 
 /* Configuration ************************************************************/
 
-#ifndef CONFIG_RP2040_I2S_PIO
-  #define CONFIG_RP2040_I2S_PIO     0
+#ifndef CONFIG_J721E_I2S_PIO
+  #define CONFIG_J721E_I2S_PIO     0
 #endif
 
-#ifndef  CONFIG_RP2040_I2S_PIO_SM
-  #define CONFIG_RP2040_I2S_PIO_SM  0
+#ifndef  CONFIG_J721E_I2S_PIO_SM
+  #define CONFIG_J721E_I2S_PIO_SM  0
 #endif
 
 /****************************************************************************
  * Private Types
  ****************************************************************************/
 
-struct rp2040_i2s_pio_config
+struct j721e_i2s_pio_config
 {
-  const rp2040_pio_program_t program;
+  const j721e_pio_program_t program;
   uint32_t entry;
   uint32_t wrap_target;
   uint32_t wrap;
@@ -181,9 +181,9 @@ static const uint16_t pio_program_i2s_8m[] =
 
 /* PIO configuration table */
 
-static const struct rp2040_i2s_pio_config g_pio_i2s_configs[] =
+static const struct j721e_i2s_pio_config g_pio_i2s_configs[] =
   {
-    [RP2040_I2S_PIO_16BIT_STEREO] =
+    [J721E_I2S_PIO_16BIT_STEREO] =
       {
         {
           pio_program_i2s_16s,
@@ -194,7 +194,7 @@ static const struct rp2040_i2s_pio_config g_pio_i2s_configs[] =
         true, 16 * 2 * 2
       },
 
-    [RP2040_I2S_PIO_16BIT_MONO] =
+    [J721E_I2S_PIO_16BIT_MONO] =
       {
         {
           pio_program_i2s_16m,
@@ -205,7 +205,7 @@ static const struct rp2040_i2s_pio_config g_pio_i2s_configs[] =
         false, 16 * 2 * 4
       },
 
-    [RP2040_I2S_PIO_8BIT_STEREO] =
+    [J721E_I2S_PIO_8BIT_STEREO] =
       {
         {
           pio_program_i2s_8s,
@@ -216,7 +216,7 @@ static const struct rp2040_i2s_pio_config g_pio_i2s_configs[] =
         false, 16 * 2 * 4
       },
 
-    [RP2040_I2S_PIO_8BIT_MONO] =
+    [J721E_I2S_PIO_8BIT_MONO] =
       {
         {
           pio_program_i2s_8m,
@@ -228,8 +228,8 @@ static const struct rp2040_i2s_pio_config g_pio_i2s_configs[] =
       }
   };
 
-static const uint32_t g_i2s_pio = CONFIG_RP2040_I2S_PIO;
-static const uint32_t g_i2s_pio_sm = CONFIG_RP2040_I2S_PIO_SM;
+static const uint32_t g_i2s_pio = CONFIG_J721E_I2S_PIO;
+static const uint32_t g_i2s_pio_sm = CONFIG_J721E_I2S_PIO_SM;
 
 /* PIO I2S status */
 
@@ -254,25 +254,25 @@ static float get_clkdiv(int mode, uint32_t samplerate)
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_i2s_pio_configure
+ * Name: j721e_i2s_pio_configure
  *
  * Description:
- *   Configure RP2040 PIO for I2S
+ *   Configure J721E PIO for I2S
  *
  ****************************************************************************/
 
-int rp2040_i2s_pio_configure(int mode, uint32_t samplerate)
+int j721e_i2s_pio_configure(int mode, uint32_t samplerate)
 {
-  const struct rp2040_i2s_pio_config *conf;
-  rp2040_pio_sm_config sm_config;
+  const struct j721e_i2s_pio_config *conf;
+  j721e_pio_sm_config sm_config;
 
-  uint32_t data_pin = CONFIG_RP2040_I2S_DATA;
-  uint32_t clock_pin_base = CONFIG_RP2040_I2S_CLOCK;
+  uint32_t data_pin = CONFIG_J721E_I2S_DATA;
+  uint32_t clock_pin_base = CONFIG_J721E_I2S_CLOCK;
   uint32_t pin_mask = (1u << data_pin) | (3u << clock_pin_base);
 
   /* Check parameters */
 
-  if (mode < 0 || mode >= RP2040_I2S_PIO_MAX_MODE ||
+  if (mode < 0 || mode >= J721E_I2S_PIO_MAX_MODE ||
       samplerate == 0)
     {
       return -1;
@@ -288,9 +288,9 @@ int rp2040_i2s_pio_configure(int mode, uint32_t samplerate)
         {
           /* Only changing the sampling rate */
 
-          rp2040_pio_sm_set_clkdiv(g_i2s_pio, g_i2s_pio_sm,
+          j721e_pio_sm_set_clkdiv(g_i2s_pio, g_i2s_pio_sm,
                                    get_clkdiv(mode, samplerate));
-          rp2040_pio_sm_clkdiv_restart(g_i2s_pio, g_i2s_pio_sm);
+          j721e_pio_sm_clkdiv_restart(g_i2s_pio, g_i2s_pio_sm);
           return 0;
         }
     }
@@ -299,13 +299,13 @@ int rp2040_i2s_pio_configure(int mode, uint32_t samplerate)
     {
       /* Claim to use PIO state machine for I2S */
 
-      rp2040_pio_sm_claim(g_i2s_pio, g_i2s_pio_sm);
+      j721e_pio_sm_claim(g_i2s_pio, g_i2s_pio_sm);
     }
   else
     {
       /* Remove existing PIO program to change the I2S mode */
 
-      rp2040_pio_remove_program(CONFIG_RP2040_I2S_PIO,
+      j721e_pio_remove_program(CONFIG_J721E_I2S_PIO,
                           &g_pio_i2s_configs[g_pio_current_mode].program,
                           g_pio_current_offset);
     }
@@ -313,70 +313,70 @@ int rp2040_i2s_pio_configure(int mode, uint32_t samplerate)
   /* Program the PIO */
 
   conf = &g_pio_i2s_configs[mode];
-  g_pio_current_offset = rp2040_pio_add_program(CONFIG_RP2040_I2S_PIO,
+  g_pio_current_offset = j721e_pio_add_program(CONFIG_J721E_I2S_PIO,
                           &conf->program);
   g_pio_current_mode = mode;
 
   /* Configure the state machine */
 
-  sm_config = rp2040_pio_get_default_sm_config();
-  rp2040_sm_config_set_wrap(&sm_config,
+  sm_config = j721e_pio_get_default_sm_config();
+  j721e_sm_config_set_wrap(&sm_config,
                             g_pio_current_offset + conf->wrap_target,
                             g_pio_current_offset + conf->wrap);
-  rp2040_sm_config_set_sideset(&sm_config, 2, false, false);
+  j721e_sm_config_set_sideset(&sm_config, 2, false, false);
 
-  rp2040_sm_config_set_out_pins(&sm_config, data_pin, 1);
-  rp2040_sm_config_set_sideset_pins(&sm_config, clock_pin_base);
-  rp2040_sm_config_set_out_shift(&sm_config, false, conf->autopull, 32);
-  rp2040_sm_config_set_set_pins(&sm_config, data_pin, 1);
-  rp2040_sm_config_set_clkdiv(&sm_config, get_clkdiv(mode, samplerate));
-  rp2040_pio_sm_init(g_i2s_pio, g_i2s_pio_sm,
+  j721e_sm_config_set_out_pins(&sm_config, data_pin, 1);
+  j721e_sm_config_set_sideset_pins(&sm_config, clock_pin_base);
+  j721e_sm_config_set_out_shift(&sm_config, false, conf->autopull, 32);
+  j721e_sm_config_set_set_pins(&sm_config, data_pin, 1);
+  j721e_sm_config_set_clkdiv(&sm_config, get_clkdiv(mode, samplerate));
+  j721e_pio_sm_init(g_i2s_pio, g_i2s_pio_sm,
                      g_pio_current_offset, &sm_config);
 
-  rp2040_pio_sm_set_pindirs_with_mask(g_i2s_pio, g_i2s_pio_sm,
+  j721e_pio_sm_set_pindirs_with_mask(g_i2s_pio, g_i2s_pio_sm,
                                       pin_mask, pin_mask);
-  rp2040_pio_sm_set_pins(g_i2s_pio, g_i2s_pio_sm, 1); /* clear pins */
-  rp2040_pio_sm_exec(g_i2s_pio, g_i2s_pio_sm,
+  j721e_pio_sm_set_pins(g_i2s_pio, g_i2s_pio_sm, 1); /* clear pins */
+  j721e_pio_sm_exec(g_i2s_pio, g_i2s_pio_sm,
                      pio_encode_jmp(g_pio_current_offset + conf->entry));
 
   return 0;
 }
 
 /****************************************************************************
- * Name: rp2040_i2s_pio_enable
+ * Name: j721e_i2s_pio_enable
  *
  * Description:
  *   Set enable I2S transfer
  *
  ****************************************************************************/
 
-void rp2040_i2s_pio_enable(bool enable)
+void j721e_i2s_pio_enable(bool enable)
 {
-  rp2040_pio_sm_set_enabled(g_i2s_pio, g_i2s_pio_sm, enable);
+  j721e_pio_sm_set_enabled(g_i2s_pio, g_i2s_pio_sm, enable);
 }
 
 /****************************************************************************
- * Name: rp2040_i2s_pio_getdmaaddr
+ * Name: j721e_i2s_pio_getdmaaddr
  *
  * Description:
  *   Get DMA peripheral address for I2S transfer
  *
  ****************************************************************************/
 
-uintptr_t rp2040_i2s_pio_getdmaaddr(void)
+uintptr_t j721e_i2s_pio_getdmaaddr(void)
 {
-  return RP2040_PIO_TXF(g_i2s_pio, g_i2s_pio_sm);
+  return J721E_PIO_TXF(g_i2s_pio, g_i2s_pio_sm);
 }
 
 /****************************************************************************
- * Name: rp2040_i2s_pio_getdmaaddr
+ * Name: j721e_i2s_pio_getdmaaddr
  *
  * Description:
  *   Get DMA peripheral address for I2S transfer
  *
  ****************************************************************************/
 
-uint8_t rp2040_i2s_pio_getdreq(void)
+uint8_t j721e_i2s_pio_getdreq(void)
 {
-  return RP2040_DMA_DREQ_PIO0_TX0 + g_i2s_pio_sm + g_i2s_pio * 8;
+  return J721E_DMA_DREQ_PIO0_TX0 + g_i2s_pio_sm + g_i2s_pio * 8;
 }

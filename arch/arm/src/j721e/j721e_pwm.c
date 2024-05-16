@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_pwm.c
+ * arch/arm/src/j721e/j721e_pwm.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -36,8 +36,8 @@
 #include <nuttx/irq.h>
 #include <nuttx/timers/pwm.h>
 #include <arch/board/board.h>
-#include "rp2040_gpio.h"
-#include "rp2040_pwm.h"
+#include "j721e_gpio.h"
+#include "j721e_pwm.h"
 
 /****************************************************************************
  * Local Function Prototypes
@@ -56,13 +56,13 @@ static int  pwm_ioctl    (struct pwm_lowerhalf_s  * dev,
                            int                       cmd,
                            unsigned long             arg);
 
-static void setup_period (struct rp2040_pwm_lowerhalf_s  * priv);
+static void setup_period (struct j721e_pwm_lowerhalf_s  * priv);
 
-static void setup_pulse  (struct rp2040_pwm_lowerhalf_s  * priv);
+static void setup_pulse  (struct j721e_pwm_lowerhalf_s  * priv);
 
-static void set_enabled  (struct rp2040_pwm_lowerhalf_s  * priv);
+static void set_enabled  (struct j721e_pwm_lowerhalf_s  * priv);
 
-static void clear_enabled(struct rp2040_pwm_lowerhalf_s  * priv);
+static void clear_enabled(struct j721e_pwm_lowerhalf_s  * priv);
 
 /****************************************************************************
  * Private Data
@@ -84,11 +84,11 @@ static const struct pwm_ops_s g_pwmops =
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_pwm_initialize
+ * Name: j721e_pwm_initialize
  *
  * Description:
  *   Initialize the selected PWM port. And return a unique instance of struct
- *   struct rp2040_pwm_lowerhalf_s.  This function may be called to obtain
+ *   struct j721e_pwm_lowerhalf_s.  This function may be called to obtain
  *   multiple instances of the interface, each of which may be set up with a
  *   different frequency and address.
  *
@@ -103,19 +103,19 @@ static const struct pwm_ops_s g_pwmops =
  ****************************************************************************/
 
 #if defined(CONFIG_PWM_NCHANNELS) && CONFIG_PWM_NCHANNELS == 2
-struct rp2040_pwm_lowerhalf_s *rp2040_pwm_initialize(int      port,
+struct j721e_pwm_lowerhalf_s *j721e_pwm_initialize(int      port,
                                                       int      pin_a,
                                                       int      pin_b,
                                                       uint32_t flags)
 #else
-struct rp2040_pwm_lowerhalf_s *rp2040_pwm_initialize(int      port,
+struct j721e_pwm_lowerhalf_s *j721e_pwm_initialize(int      port,
                                                       int      pin,
                                                       uint32_t flags)
 #endif
 {
-  struct rp2040_pwm_lowerhalf_s *data;
+  struct j721e_pwm_lowerhalf_s *data;
 
-  data = calloc(1, sizeof (struct rp2040_pwm_lowerhalf_s));
+  data = calloc(1, sizeof (struct j721e_pwm_lowerhalf_s));
 
   if (data != NULL)
     {
@@ -157,13 +157,13 @@ struct rp2040_pwm_lowerhalf_s *rp2040_pwm_initialize(int      port,
 }
 
 /****************************************************************************
- * Name: rp2040_pwm_uninitialize
+ * Name: j721e_pwm_uninitialize
  *
  * Description:
  *   De-initialize the selected pwm port, and power down the device.
  *
  * Input Parameter:
- *   Device structure as returned by the rp2040_pwmdev_initialize()
+ *   Device structure as returned by the j721e_pwmdev_initialize()
  *
  * Returned Value:
  *   OK on success, ERROR when internal reference count mismatch or dev
@@ -171,7 +171,7 @@ struct rp2040_pwm_lowerhalf_s *rp2040_pwm_initialize(int      port,
  *
  ****************************************************************************/
 
-int rp2040_pwm_uninitialize(struct pwm_lowerhalf_s *dev)
+int j721e_pwm_uninitialize(struct pwm_lowerhalf_s *dev)
 {
   free(dev);
   return (OK);
@@ -199,7 +199,7 @@ int rp2040_pwm_uninitialize(struct pwm_lowerhalf_s *dev)
 
 int pwm_setup(struct pwm_lowerhalf_s  * dev)
 {
-  struct rp2040_pwm_lowerhalf_s *priv = (struct rp2040_pwm_lowerhalf_s *)dev;
+  struct j721e_pwm_lowerhalf_s *priv = (struct j721e_pwm_lowerhalf_s *)dev;
 
 #if defined(CONFIG_PWM_NCHANNELS) && CONFIG_PWM_NCHANNELS == 2
   pwminfo("PWM%d pin_a %d pin_b %d\n",
@@ -209,17 +209,17 @@ int pwm_setup(struct pwm_lowerhalf_s  * dev)
 
   if (priv->pin[0] >= 0)
     {
-      rp2040_gpio_set_function(priv->pin[0], RP2040_GPIO_FUNC_PWM);
+      j721e_gpio_set_function(priv->pin[0], J721E_GPIO_FUNC_PWM);
     }
 
   if (priv->pin[1] >= 0)
     {
-      rp2040_gpio_set_function(priv->pin[1], RP2040_GPIO_FUNC_PWM);
+      j721e_gpio_set_function(priv->pin[1], J721E_GPIO_FUNC_PWM);
     }
 #else
   if (priv->pin >= 0)
     {
-      rp2040_gpio_set_function(priv->pin, RP2040_GPIO_FUNC_PWM);
+      j721e_gpio_set_function(priv->pin, J721E_GPIO_FUNC_PWM);
     }
 #endif
 
@@ -244,7 +244,7 @@ int pwm_setup(struct pwm_lowerhalf_s  * dev)
 
 int pwm_shutdown (struct pwm_lowerhalf_s  * dev)
 {
-  struct rp2040_pwm_lowerhalf_s *priv = (struct rp2040_pwm_lowerhalf_s *)dev;
+  struct j721e_pwm_lowerhalf_s *priv = (struct j721e_pwm_lowerhalf_s *)dev;
 
   pwminfo("PWM%d\n", priv->num);
 
@@ -264,34 +264,34 @@ int pwm_shutdown (struct pwm_lowerhalf_s  * dev)
     {
       pwminfo("PWM%d setting pin_a %d\n",
               priv->num,
-              (priv->flags & RP2040_PWM_CSR_A_INV) ? 1 : 0);
+              (priv->flags & J721E_PWM_CSR_A_INV) ? 1 : 0);
 
-      rp2040_gpio_setdir(priv->pin[0], true);
-      rp2040_gpio_put(priv->pin[0],
-                      ((priv->flags & RP2040_PWM_CSR_A_INV) != 0));
-      rp2040_gpio_set_function(priv->pin[0], RP2040_GPIO_FUNC_SIO);
+      j721e_gpio_setdir(priv->pin[0], true);
+      j721e_gpio_put(priv->pin[0],
+                      ((priv->flags & J721E_PWM_CSR_A_INV) != 0));
+      j721e_gpio_set_function(priv->pin[0], J721E_GPIO_FUNC_SIO);
     }
 
   if (priv->pin[1] >= 0)
     {
       pwminfo("PWM%d setting pin_b %d\n",
               priv->num,
-              (priv->flags & RP2040_PWM_CSR_B_INV) ? 1 : 0);
+              (priv->flags & J721E_PWM_CSR_B_INV) ? 1 : 0);
 
-      rp2040_gpio_setdir(priv->pin[1], true);
-      rp2040_gpio_put(priv->pin[1],
-                      ((priv->flags & RP2040_PWM_CSR_B_INV) != 0));
-      rp2040_gpio_set_function(priv->pin[1], RP2040_GPIO_FUNC_SIO);
+      j721e_gpio_setdir(priv->pin[1], true);
+      j721e_gpio_put(priv->pin[1],
+                      ((priv->flags & J721E_PWM_CSR_B_INV) != 0));
+      j721e_gpio_set_function(priv->pin[1], J721E_GPIO_FUNC_SIO);
     }
 #else
   pwminfo("PWM%d pin %d\n", priv->num, priv->pin);
 
   if (priv->pin >= 0)
     {
-      rp2040_gpio_setdir(priv->pin, true);
-      rp2040_gpio_put(priv->pin,
-                      ((priv->flags & RP2040_PWM_CSR_A_INV) != 0));
-      rp2040_gpio_set_function(priv->pin, RP2040_GPIO_FUNC_SIO);
+      j721e_gpio_setdir(priv->pin, true);
+      j721e_gpio_put(priv->pin,
+                      ((priv->flags & J721E_PWM_CSR_A_INV) != 0));
+      j721e_gpio_set_function(priv->pin, J721E_GPIO_FUNC_SIO);
     }
 #endif
 
@@ -331,7 +331,7 @@ int pwm_shutdown (struct pwm_lowerhalf_s  * dev)
 int pwm_start(struct pwm_lowerhalf_s  * dev,
                const struct pwm_info_s * info)
 {
-  struct rp2040_pwm_lowerhalf_s *priv = (struct rp2040_pwm_lowerhalf_s *)dev;
+  struct j721e_pwm_lowerhalf_s *priv = (struct j721e_pwm_lowerhalf_s *)dev;
 
   pwminfo("PWM%d\n", priv->num);
 
@@ -386,7 +386,7 @@ int pwm_start(struct pwm_lowerhalf_s  * dev,
 
 int pwm_stop(struct pwm_lowerhalf_s  * dev)
 {
-  struct rp2040_pwm_lowerhalf_s *priv = (struct rp2040_pwm_lowerhalf_s *)dev;
+  struct j721e_pwm_lowerhalf_s *priv = (struct j721e_pwm_lowerhalf_s *)dev;
 
   pwminfo("PWM%d\n", priv->num);
 
@@ -415,7 +415,7 @@ int pwm_ioctl(struct pwm_lowerhalf_s  * dev,
                int                       cmd,
                unsigned long             arg)
 {
-  struct rp2040_pwm_lowerhalf_s *priv = (struct rp2040_pwm_lowerhalf_s *)dev;
+  struct j721e_pwm_lowerhalf_s *priv = (struct j721e_pwm_lowerhalf_s *)dev;
 
 #ifdef CONFIG_DEBUG_PWM_INFO
   pwminfo("PWM%d\n", priv->num);
@@ -423,8 +423,8 @@ int pwm_ioctl(struct pwm_lowerhalf_s  * dev,
 
   switch (cmd)
     {
-    case PWMIOC_RP2040_SETINVERTPULSE:
-      priv->flags &= ~(RP2040_PWM_CSR_B_INV | RP2040_PWM_CSR_A_INV);
+    case PWMIOC_J721E_SETINVERTPULSE:
+      priv->flags &= ~(J721E_PWM_CSR_B_INV | J721E_PWM_CSR_A_INV);
       priv->flags |= (arg & 0x03) << 2;
 
       setup_period(priv);
@@ -432,21 +432,21 @@ int pwm_ioctl(struct pwm_lowerhalf_s  * dev,
 
       return 0;
 
-    case PWMIOC_RP2040_GETINVERTPULSE:
-      return (priv->flags &  (RP2040_PWM_CSR_B_INV
-                            | RP2040_PWM_CSR_A_INV)) >> 2;
+    case PWMIOC_J721E_GETINVERTPULSE:
+      return (priv->flags &  (J721E_PWM_CSR_B_INV
+                            | J721E_PWM_CSR_A_INV)) >> 2;
 
-    case PWMIOC_RP2040_SETPHASECORRECT:
-      priv->flags &= ~(RP2040_PWM_CSR_PH_CORRECT);
-      priv->flags |= (arg != 0) ? RP2040_PWM_CSR_PH_CORRECT : 0x00;
+    case PWMIOC_J721E_SETPHASECORRECT:
+      priv->flags &= ~(J721E_PWM_CSR_PH_CORRECT);
+      priv->flags |= (arg != 0) ? J721E_PWM_CSR_PH_CORRECT : 0x00;
 
       setup_period(priv);
       setup_pulse(priv);
 
       return 0;
 
-    case PWMIOC_RP2040_GETPHASECORRECT:
-      return (priv->flags & RP2040_PWM_CSR_PH_CORRECT) ? 1 : 0;
+    case PWMIOC_J721E_GETPHASECORRECT:
+      return (priv->flags & J721E_PWM_CSR_PH_CORRECT) ? 1 : 0;
   }
 
   return -ENOTTY;
@@ -463,7 +463,7 @@ int pwm_ioctl(struct pwm_lowerhalf_s  * dev,
  *
  ****************************************************************************/
 
-void setup_period(struct rp2040_pwm_lowerhalf_s  * priv)
+void setup_period(struct j721e_pwm_lowerhalf_s  * priv)
 {
   irqstate_t flags;
   uint32_t max_freq = BOARD_SYS_FREQ / 0x10000; /* initially, with full range count */
@@ -474,7 +474,7 @@ void setup_period(struct rp2040_pwm_lowerhalf_s  * priv)
    * would be in normal (non-phase correct) mode
    */
 
-  if (priv->flags & RP2040_PWM_CSR_PH_CORRECT)
+  if (priv->flags & J721E_PWM_CSR_PH_CORRECT)
     {
       frequency *= 2;
     }
@@ -507,8 +507,8 @@ void setup_period(struct rp2040_pwm_lowerhalf_s  * priv)
 
   flags = enter_critical_section();
 
-  putreg32(priv->top,     RP2040_PWM_TOP(priv->num));
-  putreg32(priv->divisor, RP2040_PWM_DIV(priv->num));
+  putreg32(priv->top,     J721E_PWM_TOP(priv->num));
+  putreg32(priv->divisor, J721E_PWM_DIV(priv->num));
 
   leave_critical_section(flags);
 }
@@ -524,7 +524,7 @@ void setup_period(struct rp2040_pwm_lowerhalf_s  * priv)
  *
  ****************************************************************************/
 
-void setup_pulse(struct rp2040_pwm_lowerhalf_s  * priv)
+void setup_pulse(struct j721e_pwm_lowerhalf_s  * priv)
 {
   irqstate_t flags;
 
@@ -543,14 +543,14 @@ void setup_pulse(struct rp2040_pwm_lowerhalf_s  * priv)
 
   flags = enter_critical_section();
 
-  putreg32(compare, RP2040_PWM_CC(priv->num));
+  putreg32(compare, J721E_PWM_CC(priv->num));
 
   modreg32(priv->flags,
-            RP2040_PWM_CSR_DIVMODE_MASK
-          | RP2040_PWM_CSR_B_INV
-          | RP2040_PWM_CSR_A_INV
-          | RP2040_PWM_CSR_PH_CORRECT,
-          RP2040_PWM_CSR(priv->num));
+            J721E_PWM_CSR_DIVMODE_MASK
+          | J721E_PWM_CSR_B_INV
+          | J721E_PWM_CSR_A_INV
+          | J721E_PWM_CSR_PH_CORRECT,
+          J721E_PWM_CSR(priv->num));
 
   leave_critical_section(flags);
 }
@@ -566,11 +566,11 @@ void setup_pulse(struct rp2040_pwm_lowerhalf_s  * priv)
  *
  ****************************************************************************/
 
-static inline void set_enabled(struct rp2040_pwm_lowerhalf_s  * priv)
+static inline void set_enabled(struct j721e_pwm_lowerhalf_s  * priv)
 {
   irqstate_t flags = enter_critical_section();
 
-  modreg32(1 << priv->num, 1 << priv->num,  RP2040_PWM_ENA);
+  modreg32(1 << priv->num, 1 << priv->num,  J721E_PWM_ENA);
 
   leave_critical_section(flags);
 }
@@ -586,11 +586,11 @@ static inline void set_enabled(struct rp2040_pwm_lowerhalf_s  * priv)
  *
  ****************************************************************************/
 
-static inline void clear_enabled(struct rp2040_pwm_lowerhalf_s  * priv)
+static inline void clear_enabled(struct j721e_pwm_lowerhalf_s  * priv)
 {
   irqstate_t flags = enter_critical_section();
 
-  modreg32(0, 1 << priv->num, RP2040_PWM_ENA);
+  modreg32(0, 1 << priv->num, J721E_PWM_ENA);
 
   leave_critical_section(flags);
 }

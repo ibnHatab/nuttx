@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_usbdev.h
+ * arch/arm/src/j721e/j721e_usbdev.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_RP2040_USBDEV_H
-#define __ARCH_ARM_SRC_RP2040_RP2040_USBDEV_H
+#ifndef __ARCH_ARM_SRC_J721E_J721E_USBDEV_H
+#define __ARCH_ARM_SRC_J721E_J721E_USBDEV_H
 
 /****************************************************************************
  * Included Files
@@ -28,8 +28,8 @@
 #include <nuttx/config.h>
 #include <stdint.h>
 
-#include "hardware/rp2040_usbctrl_regs.h"
-#include "hardware/rp2040_usbctrl_dpsram.h"
+#include "hardware/j721e_usbctrl_regs.h"
+#include "hardware/j721e_usbctrl_dpsram.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -56,4 +56,4 @@ extern "C"
 #endif
 
 #endif /* __ASSEMBLY__ */
-#endif /* __ARCH_ARM_SRC_RP2040_RP2040_USBDEV_H */
+#endif /* __ARCH_ARM_SRC_J721E_J721E_USBDEV_H */

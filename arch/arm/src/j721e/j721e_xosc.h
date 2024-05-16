@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_xosc.h
+ * arch/arm/src/j721e/j721e_xosc.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_RP2040_XOSC_H
-#define __ARCH_ARM_SRC_RP2040_RP2040_XOSC_H
+#ifndef __ARCH_ARM_SRC_J721E_J721E_XOSC_H
+#define __ARCH_ARM_SRC_J721E_J721E_XOSC_H
 
 /****************************************************************************
  * Included Files
@@ -55,18 +55,18 @@ extern "C"
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_xosc_init
+ * Name: j721e_xosc_init
  *
  * Description:
  *   Initialize Crystal Oscillator (XOSC).
  *
  ****************************************************************************/
 
-void rp2040_xosc_init(void);
+void j721e_xosc_init(void);
 
 #undef EXTERN
 #if defined(__cplusplus)
 }
 #endif
 #endif /* __ASSEMBLY__ */
-#endif /* __ARCH_ARM_SRC_RP2040_RP2040_XOSC_H */
+#endif /* __ARCH_ARM_SRC_J721E_J721E_XOSC_H */

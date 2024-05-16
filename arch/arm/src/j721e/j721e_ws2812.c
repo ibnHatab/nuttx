@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_ws2812.c
+ * arch/arm/src/j721e/j721e_ws2812.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -22,7 +22,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <rp2040_ws2812.h>
+#include <j721e_ws2812.h>
 
 #include <stdlib.h>
 #include <fcntl.h>
@@ -33,7 +33,7 @@
 #include <nuttx/signal.h>
 #include <nuttx/leds/ws2812.h>
 
-#include <rp2040_pio.h>
+#include <j721e_pio.h>
 
 #ifdef CONFIG_WS2812
 
@@ -64,7 +64,7 @@ static const uint16_t ws2812_program_instructions[] =
   0xa442, /* 3: nop           side 0 [4]  --> wrap        */
 };
 
-static const struct rp2040_pio_program pio_program =
+static const struct j721e_pio_program pio_program =
 {
   .instructions = ws2812_program_instructions,
   .length       = 4,
@@ -100,7 +100,7 @@ void dma_complete(DMA_HANDLE handle, uint8_t status, void *arg)
   struct ws2812_dev_s *dev_data = arg;
   struct instance     *priv     = (struct instance *)dev_data->private;
 
-  rp2040_dmafree(handle);
+  j721e_dmafree(handle);
 
   priv->last_dma = clock_systime_ticks();
   nxmutex_unlock(&dev_data->lock);
@@ -121,16 +121,16 @@ static void update_pixels(struct ws2812_dev_s  *dev_data)
 {
   struct instance *priv       = (struct instance *)dev_data->private;
   clock_t          time_delta;
-  DMA_HANDLE       dma_handle = rp2040_dmachannel();
+  DMA_HANDLE       dma_handle = j721e_dmachannel();
   dma_config_t     dma_config =
     {
-      .dreq   = rp2040_pio_get_dreq(priv->pio, priv->pio_sm, true),
-      .size   = RP2040_DMA_SIZE_WORD,
+      .dreq   = j721e_pio_get_dreq(priv->pio, priv->pio_sm, true),
+      .size   = J721E_DMA_SIZE_WORD,
       .noincr = false
     };
 
-  rp2040_txdmasetup(dma_handle,
-                    (uintptr_t) RP2040_PIO_TXF(priv->pio, priv->pio_sm),
+  j721e_txdmasetup(dma_handle,
+                    (uintptr_t) J721E_PIO_TXF(priv->pio, priv->pio_sm),
                     (uintptr_t) priv->pixels,
                     4 * dev_data->nleds,
                     dma_config);
@@ -145,7 +145,7 @@ static void update_pixels(struct ws2812_dev_s  *dev_data)
       nxsig_usleep(50 - time_delta);
     }
 
-  rp2040_dmastart(dma_handle, dma_complete, dev_data);
+  j721e_dmastart(dma_handle, dma_complete, dev_data);
 
   /* NOTE: we don't post lock here, the dma_complete does that */
 }
@@ -159,7 +159,7 @@ static void update_pixels(struct ws2812_dev_s  *dev_data)
  *   dev_data - Pointer to a ws2812_dev_s
  *
  * Returned Value:
- *   A pointer to an internal structure used by rp2040_ws2812
+ *   A pointer to an internal structure used by j721e_ws2812
  *
  ****************************************************************************/
 
@@ -168,7 +168,7 @@ static int my_open(struct file *filep)
   struct inode         *inode     = filep->f_inode;
   struct ws2812_dev_s  *dev_data  = inode->i_private;
   struct instance      *priv      = (struct instance *)dev_data->private;
-  rp2040_pio_sm_config  config;
+  j721e_pio_sm_config  config;
   int                   divisor;
   int                   ret;
   irqstate_t            flags;
@@ -181,13 +181,13 @@ static int my_open(struct file *filep)
     {
       /* We've already been initialized.  Keep on truckin' */
 
-      ledinfo("rp2040_ws2812 re-open dev: 0x%p\n", dev_data);
+      ledinfo("j721e_ws2812 re-open dev: 0x%p\n", dev_data);
 
       ret = OK;
       goto post_and_return;
     }
 
-  ledinfo("rp2040_ws2812 open dev: 0x%p\n", dev_data);
+  ledinfo("j721e_ws2812 open dev: 0x%p\n", dev_data);
 
   /* Allocate the pixel buffer */
 
@@ -195,7 +195,7 @@ static int my_open(struct file *filep)
 
   if (priv->pixels == NULL)
     {
-      lederr("rp2040_ws2812 open: out of memory\n");
+      lederr("j721e_ws2812 open: out of memory\n");
 
       ret = -ENOMEM;
       goto post_and_return;
@@ -205,11 +205,11 @@ static int my_open(struct file *filep)
 
   /* get pio instance and load program */
 
-  for (priv->pio = 0; priv->pio < RP2040_PIO_NUM; ++priv->pio)
+  for (priv->pio = 0; priv->pio < J721E_PIO_NUM; ++priv->pio)
     {
       /* Try to claim a state machine */
 
-      priv->pio_sm = rp2040_pio_claim_unused_sm(priv->pio, false);
+      priv->pio_sm = j721e_pio_claim_unused_sm(priv->pio, false);
 
       /* If we did not get one try the next pio block, if any */
 
@@ -217,11 +217,11 @@ static int my_open(struct file *filep)
 
       /* See if we have space in this block to load our program */
 
-      if (rp2040_pio_can_add_program(priv->pio, &pio_program))
+      if (j721e_pio_can_add_program(priv->pio, &pio_program))
         {
           /* Great! load the program and exit the pio choice loop */
 
-          priv->pio_location = rp2040_pio_add_program(priv->pio,
+          priv->pio_location = j721e_pio_add_program(priv->pio,
                                                       &pio_program);
 
           break;
@@ -229,10 +229,10 @@ static int my_open(struct file *filep)
 
       /* Oops -- no room at the inn!  Release sm and try next pio */
 
-      rp2040_pio_sm_unclaim(priv->pio, priv->pio_sm);
+      j721e_pio_sm_unclaim(priv->pio, priv->pio_sm);
     }
 
-  if (priv->pio >= RP2040_PIO_NUM)
+  if (priv->pio >= J721E_PIO_NUM)
     {
       kmm_free(priv->pixels);
 
@@ -244,9 +244,9 @@ static int my_open(struct file *filep)
 
   /* Configure our pin as used by PIO for output */
 
-  rp2040_pio_gpio_init(priv->pio, dev_data->port);
+  j721e_pio_gpio_init(priv->pio, dev_data->port);
 
-  rp2040_pio_sm_set_consecutive_pindirs(priv->pio,
+  j721e_pio_sm_set_consecutive_pindirs(priv->pio,
                                         priv->pio_sm,
                                         dev_data->port,
                                         1,
@@ -254,7 +254,7 @@ static int my_open(struct file *filep)
 
   /* Initialize the config structure */
 
-  memset(&config, 1, sizeof(rp2040_pio_sm_config));
+  memset(&config, 1, sizeof(j721e_pio_sm_config));
 
   /* Set the clock divisor as appropriate for our system clock speed
    * so the pio clock rus at nine time the requested bit clock rate
@@ -263,58 +263,58 @@ static int my_open(struct file *filep)
   divisor =   ((uint64_t)BOARD_SYS_FREQ << 8)
             / (9 * (uint64_t)dev_data->clock);
 
-  rp2040_sm_config_set_clkdiv_int_frac(&config,
+  j721e_sm_config_set_clkdiv_int_frac(&config,
                                        divisor >> 8,
                                        divisor & 0xff);
 
   /* Set the wrap points as required by the program */
 
-  rp2040_sm_config_set_wrap(&config,
+  j721e_sm_config_set_wrap(&config,
                             priv->pio_location + ws2812_wrap_target,
                             priv->pio_location + ws2812_wrap);
 
   /* set to shift out 24 or 32 bits depending on has_white. */
 
-  rp2040_sm_config_set_out_shift(&config,
+  j721e_sm_config_set_out_shift(&config,
                                  false,
                                  true,
                                  dev_data->has_white ? 32 : 24);
 
   /* Configure a single mandatory side-set pin */
 
-  rp2040_sm_config_set_sideset(&config, 1, false, false);
+  j721e_sm_config_set_sideset(&config, 1, false, false);
 
   /* Since we don't need an RX fifo, well make a bit TX fifo */
 
-  rp2040_sm_config_set_fifo_join(&config,
-                                 RP2040_PIO_FIFO_JOIN_TX);
+  j721e_sm_config_set_fifo_join(&config,
+                                 J721E_PIO_FIFO_JOIN_TX);
 
   /* Configure a single mandatory side-set pin */
 
-  rp2040_sm_config_set_sideset(&config, 1, false, false);
+  j721e_sm_config_set_sideset(&config, 1, false, false);
 
   /* Configure our chosen GPIO pin (in "port") as side-set output */
 
-  rp2040_sm_config_set_sideset_pins(&config, dev_data->port);
+  j721e_sm_config_set_sideset_pins(&config, dev_data->port);
 
   /* Load the configuration into the state machine. */
 
-  rp2040_pio_sm_init(priv->pio,
+  j721e_pio_sm_init(priv->pio,
                      priv->pio_sm,
                      priv->pio_location,
                      &config);
 
   /* Enable the state machine */
 
-  rp2040_pio_sm_set_enabled(priv->pio, priv->pio_sm, true);
+  j721e_pio_sm_set_enabled(priv->pio, priv->pio_sm, true);
 
   /* Turn on the power pin if any */
 
   if (priv->power_pin >= 0)
     {
-      rp2040_gpio_init(priv->power_pin);
-      rp2040_gpio_setdir(priv->power_pin, true);
-      rp2040_gpio_put(priv->power_pin, true);
+      j721e_gpio_init(priv->power_pin);
+      j721e_gpio_setdir(priv->power_pin, true);
+      j721e_gpio_put(priv->power_pin, true);
     }
 
   ret = OK;
@@ -345,13 +345,13 @@ static int my_close(struct file *filep)
 
   nxmutex_lock(&dev_data->lock);
 
-  ledinfo("rp2040_ws2812 close dev: 0x%p\n", dev_data);
+  ledinfo("j721e_ws2812 close dev: 0x%p\n", dev_data);
 
   priv->open_count -= 1;
 
   if (priv->open_count == 0  &&  priv->power_pin >= 0)
     {
-      rp2040_gpio_put(priv->power_pin, false);
+      j721e_gpio_put(priv->power_pin, false);
     }
 
   nxmutex_unlock(&dev_data->lock);
@@ -391,7 +391,7 @@ static ssize_t my_write(struct file *filep,
 
   nxmutex_lock(&dev_data->lock);
 
-  ledinfo("rp2040_ws2812 write dev: 0x%p\n", dev_data);
+  ledinfo("j721e_ws2812 write dev: 0x%p\n", dev_data);
 
   if (len > 0)
     {
@@ -406,7 +406,7 @@ static ssize_t my_write(struct file *filep,
 
           if (position >= (4 * dev_data->nleds))
             {
-              ledinfo("rp2040_ws2812 write off end: %d\n", position);
+              ledinfo("j721e_ws2812 write off end: %d\n", position);
               break;
             }
 
@@ -484,7 +484,7 @@ static ssize_t my_read(struct file *filep,
 
       if (position >= (4 * dev_data->nleds))
         {
-          ledinfo("rp2040_ws2812 read off end: %d\n", position);
+          ledinfo("j721e_ws2812 read off end: %d\n", position);
           break;
         }
 
@@ -517,7 +517,7 @@ static ssize_t my_read(struct file *filep,
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_ws2812_setup
+ * Name: j721e_ws2812_setup
  *
  * Description:
  *   Initialize and register the ws2812 driver.
@@ -530,11 +530,11 @@ static ssize_t my_read(struct file *filep,
  *   Whether ws2812s have white LEDs
  *
  * Returned Value:
- *   An opaque pointer that can be passed to rp2040_ws2812_teardown on
+ *   An opaque pointer that can be passed to j721e_ws2812_teardown on
  *   success or NULL (with errno set) on failure
  ****************************************************************************/
 
-void * rp2040_ws2812_setup(const char *path,
+void * j721e_ws2812_setup(const char *path,
                            int         port,
                            int         power_pin,
                            uint16_t    pixel_count,
@@ -558,7 +558,7 @@ void * rp2040_ws2812_setup(const char *path,
 
   if (priv == NULL)
     {
-      lederr("rp2040_ws2812 open: out of memory\n");
+      lederr("j721e_ws2812 open: out of memory\n");
 
       kmm_free(dev_data);
       set_errno(ENOMEM);
@@ -592,7 +592,7 @@ void * rp2040_ws2812_setup(const char *path,
 }
 
 /****************************************************************************
- * Name: rp2040_ws2812_release
+ * Name: j721e_ws2812_release
  *
  * Description:
  *   This function releases the internal memory structures created when
@@ -600,14 +600,14 @@ void * rp2040_ws2812_setup(const char *path,
  *   is opened.
  *
  * Input Parameters:
- *   driver      - Opaque pointer returned by rp2040_ws2812_setup.
+ *   driver      - Opaque pointer returned by j721e_ws2812_setup.
  *
  * Returned Value:
  *   OK on success or an ERROR on failure
  *
  ****************************************************************************/
 
-int rp2040_ws2812_release(void * driver)
+int j721e_ws2812_release(void * driver)
 {
   struct ws2812_dev_s *dev_data = driver;
   struct instance     *priv     = (struct instance *)dev_data->private;
@@ -620,8 +620,8 @@ int rp2040_ws2812_release(void * driver)
     {
       dev_data->private = NULL;
 
-      rp2040_pio_sm_set_enabled(priv->pio, priv->pio_sm, false);
-      rp2040_pio_sm_unclaim(priv->pio, priv->pio_sm);
+      j721e_pio_sm_set_enabled(priv->pio, priv->pio_sm, false);
+      j721e_pio_sm_unclaim(priv->pio, priv->pio_sm);
 
       nxmutex_unlock(&dev_data->lock);
 

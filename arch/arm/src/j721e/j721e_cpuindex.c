@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_cpuindex.c
+ * arch/arm/src/j721e/j721e_cpuindex.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -27,7 +27,7 @@
 #include <nuttx/arch.h>
 
 #include "arm_internal.h"
-#include "hardware/rp2040_sio.h"
+#include "hardware/j721e_sio.h"
 
 #ifdef CONFIG_SMP
 
@@ -53,7 +53,7 @@
 
 int up_cpu_index(void)
 {
-  return getreg32(RP2040_SIO_CPUID);
+  return getreg32(J721E_SIO_CPUID);
 }
 
 #endif /* CONFIG_SMP */

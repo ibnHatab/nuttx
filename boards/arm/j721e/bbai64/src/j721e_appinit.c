@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/rp2040/raspberrypi-pico/src/rp2040_appinit.c
+ * boards/arm/j721e/bbai64/src/j721e_appinit.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -27,7 +27,7 @@
 #include <sys/types.h>
 #include <nuttx/board.h>
 
-#include "rp2040_pico.h"
+#include "j721e_pico.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -71,6 +71,6 @@ int board_app_initialize(uintptr_t arg)
 #else
   /* Perform board-specific initialization */
 
-  return rp2040_bringup();
+  return j721e_bringup();
 #endif
 }

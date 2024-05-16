@@ -1,5 +1,5 @@
 ############################################################################
-# boards/arm/rp2040/raspberrypi-pico/scripts/Make.defs
+# boards/arm/j721e/bbai64/scripts/Make.defs
 #
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
@@ -20,13 +20,13 @@
 
 include $(TOPDIR)/.config
 include $(TOPDIR)/tools/Config.mk
-include $(TOPDIR)/tools/rp2040/Config.mk
+include $(TOPDIR)/tools/j721e/Config.mk
 include $(TOPDIR)/arch/arm/src/armv6-m/Toolchain.defs
 
-ifeq ($(CONFIG_RP2040_FLASH_BOOT),y)
-  LDSCRIPT = raspberrypi-pico-flash.ld
+ifeq ($(CONFIG_J721E_FLASH_BOOT),y)
+  LDSCRIPT = bbai64-flash.ld
 else
-  LDSCRIPT = raspberrypi-pico-sram.ld
+  LDSCRIPT = bbai64-sram.ld
 endif
 
 ARCHSCRIPT += $(BOARD_DIR)$(DELIM)scripts$(DELIM)$(LDSCRIPT)

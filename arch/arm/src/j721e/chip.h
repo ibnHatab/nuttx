@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/chip.h
+ * arch/arm/src/j721e/chip.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_CHIP_H
-#define __ARCH_ARM_SRC_RP2040_CHIP_H
+#ifndef __ARCH_ARM_SRC_J721E_CHIP_H
+#define __ARCH_ARM_SRC_J721E_CHIP_H
 
 /****************************************************************************
  * Included Files
@@ -33,7 +33,7 @@
 
 /* Include the chip capabilities file */
 
-#include <arch/rp2040/chip.h>
+#include <arch/j721e/chip.h>
 
 /* Define the number of interrupt vectors that need to be supported for
  * this chip
@@ -45,10 +45,10 @@
  * include this file for the proper setup.
  */
 
-#include "hardware/rp2040_memorymap.h"
+#include "hardware/j721e_memorymap.h"
 
 #if defined(CONFIG_SMP) && CONFIG_ARCH_INTERRUPTSTACK > 3
-#  include "hardware/rp2040_sio.h"
+#  include "hardware/j721e_sio.h"
 #endif
 
 /****************************************************************************
@@ -58,4 +58,4 @@
 #ifdef __ASSEMBLY__
 
 #endif /* __ASSEMBLY__  */
-#endif /* __ARCH_ARM_SRC_RP2040_CHIP_H */
+#endif /* __ARCH_ARM_SRC_J721E_CHIP_H */

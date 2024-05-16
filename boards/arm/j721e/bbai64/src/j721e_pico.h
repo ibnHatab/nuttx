@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/rp2040/raspberrypi-pico/src/rp2040_pico.h
+ * boards/arm/j721e/bbai64/src/j721e_pico.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __BOARDS_ARM_RP2040_RASPBERRYPI_PICO_SRC_RP2040_PICO_H
-#define __BOARDS_ARM_RP2040_RASPBERRYPI_PICO_SRC_RP2040_PICO_H
+#ifndef __BOARDS_ARM_J721E_BBAI64_SRC_J721E_PICO_H
+#define __BOARDS_ARM_J721E_BBAI64_SRC_J721E_PICO_H
 
 /****************************************************************************
  * Included Files
@@ -44,10 +44,10 @@
 #define MAX_IRQBUTTON     BUTTON_USER2
 #define NUM_IRQBUTTONS    (BUTTON_USER1 - BUTTON_USER2 + 1)
 
-int rp2040_bringup(void);
+int j721e_bringup(void);
 
 #ifdef CONFIG_DEV_GPIO
-int rp2040_dev_gpio_init(void);
+int j721e_dev_gpio_init(void);
 #endif
 
-#endif /* __BOARDS_ARM_RP2040_RASPBERRYPI_PICO_SRC_RP2040_PICO_H */
+#endif /* __BOARDS_ARM_J721E_BBAI64_SRC_J721E_PICO_H */

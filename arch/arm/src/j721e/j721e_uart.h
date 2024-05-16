@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_uart.h
+ * arch/arm/src/j721e/j721e_uart.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_RP2040_UART_H
-#define __ARCH_ARM_SRC_RP2040_RP2040_UART_H
+#ifndef __ARCH_ARM_SRC_J721E_J721E_UART_H
+#define __ARCH_ARM_SRC_J721E_J721E_UART_H
 
 /****************************************************************************
  * Included Files
@@ -27,7 +27,7 @@
 
 #include <nuttx/config.h>
 #include "chip.h"
-#include "hardware/rp2040_uart01.h"
+#include "hardware/j721e_uart01.h"
 
 /****************************************************************************
  * Public Function Prototypes
@@ -44,8 +44,8 @@ extern "C"
 #define EXTERN extern
 #endif
 
-void rp2040_lowsetup(void);
-void rp2040_setbaud(uintptr_t uartbase, uint32_t basefreq, uint32_t baud);
+void j721e_lowsetup(void);
+void j721e_setbaud(uintptr_t uartbase, uint32_t basefreq, uint32_t baud);
 
 #undef EXTERN
 #if defined(__cplusplus)
@@ -53,4 +53,4 @@ void rp2040_setbaud(uintptr_t uartbase, uint32_t basefreq, uint32_t baud);
 #endif
 
 #endif /* __ASSEMBLY__ */
-#endif /* __ARCH_ARM_SRC_RP2040_RP2040_UART_H */
+#endif /* __ARCH_ARM_SRC_J721E_J721E_UART_H */

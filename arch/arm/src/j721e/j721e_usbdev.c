@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_usbdev.c
+ * arch/arm/src/j721e/j721e_usbdev.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -42,9 +42,9 @@
 
 #include "chip.h"
 #include "arm_internal.h"
-#include "rp2040_usbdev.h"
+#include "j721e_usbdev.h"
 
-#include "hardware/rp2040_resets.h"
+#include "hardware/j721e_resets.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -64,90 +64,90 @@
 
 /* Trace error codes */
 
-#define RP2040_TRACEERR_ALLOCFAIL         0x0001
-#define RP2040_TRACEERR_BINDFAILED        0x0002
-#define RP2040_TRACEERR_DRIVER            0x0003
-#define RP2040_TRACEERR_EPREAD            0x0004
-#define RP2040_TRACEERR_EWRITE            0x0005
-#define RP2040_TRACEERR_INVALIDPARMS      0x0006
-#define RP2040_TRACEERR_IRQREGISTRATION   0x0007
-#define RP2040_TRACEERR_NULLPACKET        0x0008
-#define RP2040_TRACEERR_NULLREQUEST       0x0009
-#define RP2040_TRACEERR_REQABORTED        0x000a
-#define RP2040_TRACEERR_STALLEDCLRFEATURE 0x000b
-#define RP2040_TRACEERR_STALLEDISPATCH    0x000c
-#define RP2040_TRACEERR_STALLEDGETST      0x000d
-#define RP2040_TRACEERR_STALLEDGETSTEP    0x000e
-#define RP2040_TRACEERR_STALLEDGETSTRECIP 0x000f
-#define RP2040_TRACEERR_STALLEDREQUEST    0x0010
-#define RP2040_TRACEERR_STALLEDSETFEATURE 0x0011
-#define RP2040_TRACEERR_TXREQLOST         0x0012
-#define RP2040_TRACEERR_RXREQLOST         0x0013
+#define J721E_TRACEERR_ALLOCFAIL         0x0001
+#define J721E_TRACEERR_BINDFAILED        0x0002
+#define J721E_TRACEERR_DRIVER            0x0003
+#define J721E_TRACEERR_EPREAD            0x0004
+#define J721E_TRACEERR_EWRITE            0x0005
+#define J721E_TRACEERR_INVALIDPARMS      0x0006
+#define J721E_TRACEERR_IRQREGISTRATION   0x0007
+#define J721E_TRACEERR_NULLPACKET        0x0008
+#define J721E_TRACEERR_NULLREQUEST       0x0009
+#define J721E_TRACEERR_REQABORTED        0x000a
+#define J721E_TRACEERR_STALLEDCLRFEATURE 0x000b
+#define J721E_TRACEERR_STALLEDISPATCH    0x000c
+#define J721E_TRACEERR_STALLEDGETST      0x000d
+#define J721E_TRACEERR_STALLEDGETSTEP    0x000e
+#define J721E_TRACEERR_STALLEDGETSTRECIP 0x000f
+#define J721E_TRACEERR_STALLEDREQUEST    0x0010
+#define J721E_TRACEERR_STALLEDSETFEATURE 0x0011
+#define J721E_TRACEERR_TXREQLOST         0x0012
+#define J721E_TRACEERR_RXREQLOST         0x0013
 
 /* Trace interrupt codes */
 
-#define RP2040_TRACEINTID_GETSTATUS       1
-#define RP2040_TRACEINTID_GETIFDEV        2
-#define RP2040_TRACEINTID_CLEARFEATURE    3
-#define RP2040_TRACEINTID_SETFEATURE      4
-#define RP2040_TRACEINTID_TESTMODE        5
-#define RP2040_TRACEINTID_SETADDRESS      6
-#define RP2040_TRACEINTID_GETSETDESC      7
-#define RP2040_TRACEINTID_GETSETIFCONFIG  8
-#define RP2040_TRACEINTID_SYNCHFRAME      9
-#define RP2040_TRACEINTID_DISPATCH       10
-#define RP2040_TRACEINTID_GETENDPOINT    11
-#define RP2040_TRACEINTID_HANDLEZLP      12
-#define RP2040_TRACEINTID_USBINTERRUPT   13
-#define RP2040_TRACEINTID_INTR_BUSRESET  14
-#define RP2040_TRACEINTID_INTR_BUFFSTAT  15
-#define RP2040_TRACEINTID_INTR_SETUP     16
-#define RP2040_TRACEINTID_EPOUTQEMPTY    17
+#define J721E_TRACEINTID_GETSTATUS       1
+#define J721E_TRACEINTID_GETIFDEV        2
+#define J721E_TRACEINTID_CLEARFEATURE    3
+#define J721E_TRACEINTID_SETFEATURE      4
+#define J721E_TRACEINTID_TESTMODE        5
+#define J721E_TRACEINTID_SETADDRESS      6
+#define J721E_TRACEINTID_GETSETDESC      7
+#define J721E_TRACEINTID_GETSETIFCONFIG  8
+#define J721E_TRACEINTID_SYNCHFRAME      9
+#define J721E_TRACEINTID_DISPATCH       10
+#define J721E_TRACEINTID_GETENDPOINT    11
+#define J721E_TRACEINTID_HANDLEZLP      12
+#define J721E_TRACEINTID_USBINTERRUPT   13
+#define J721E_TRACEINTID_INTR_BUSRESET  14
+#define J721E_TRACEINTID_INTR_BUFFSTAT  15
+#define J721E_TRACEINTID_INTR_SETUP     16
+#define J721E_TRACEINTID_EPOUTQEMPTY    17
 
 #ifdef CONFIG_USBDEV_TRACE_STRINGS
 const struct trace_msg_t g_usb_trace_strings_deverror[] =
 {
-  TRACE_STR(RP2040_TRACEERR_ALLOCFAIL),
-  TRACE_STR(RP2040_TRACEERR_BINDFAILED),
-  TRACE_STR(RP2040_TRACEERR_DRIVER),
-  TRACE_STR(RP2040_TRACEERR_EPREAD),
-  TRACE_STR(RP2040_TRACEERR_EWRITE),
-  TRACE_STR(RP2040_TRACEERR_INVALIDPARMS),
-  TRACE_STR(RP2040_TRACEERR_IRQREGISTRATION),
-  TRACE_STR(RP2040_TRACEERR_NULLPACKET),
-  TRACE_STR(RP2040_TRACEERR_NULLREQUEST),
-  TRACE_STR(RP2040_TRACEERR_REQABORTED),
-  TRACE_STR(RP2040_TRACEERR_STALLEDCLRFEATURE),
-  TRACE_STR(RP2040_TRACEERR_STALLEDISPATCH),
-  TRACE_STR(RP2040_TRACEERR_STALLEDGETST),
-  TRACE_STR(RP2040_TRACEERR_STALLEDGETSTEP),
-  TRACE_STR(RP2040_TRACEERR_STALLEDGETSTRECIP),
-  TRACE_STR(RP2040_TRACEERR_STALLEDREQUEST),
-  TRACE_STR(RP2040_TRACEERR_STALLEDSETFEATURE),
-  TRACE_STR(RP2040_TRACEERR_TXREQLOST),
-  TRACE_STR(RP2040_TRACEERR_RXREQLOST),
+  TRACE_STR(J721E_TRACEERR_ALLOCFAIL),
+  TRACE_STR(J721E_TRACEERR_BINDFAILED),
+  TRACE_STR(J721E_TRACEERR_DRIVER),
+  TRACE_STR(J721E_TRACEERR_EPREAD),
+  TRACE_STR(J721E_TRACEERR_EWRITE),
+  TRACE_STR(J721E_TRACEERR_INVALIDPARMS),
+  TRACE_STR(J721E_TRACEERR_IRQREGISTRATION),
+  TRACE_STR(J721E_TRACEERR_NULLPACKET),
+  TRACE_STR(J721E_TRACEERR_NULLREQUEST),
+  TRACE_STR(J721E_TRACEERR_REQABORTED),
+  TRACE_STR(J721E_TRACEERR_STALLEDCLRFEATURE),
+  TRACE_STR(J721E_TRACEERR_STALLEDISPATCH),
+  TRACE_STR(J721E_TRACEERR_STALLEDGETST),
+  TRACE_STR(J721E_TRACEERR_STALLEDGETSTEP),
+  TRACE_STR(J721E_TRACEERR_STALLEDGETSTRECIP),
+  TRACE_STR(J721E_TRACEERR_STALLEDREQUEST),
+  TRACE_STR(J721E_TRACEERR_STALLEDSETFEATURE),
+  TRACE_STR(J721E_TRACEERR_TXREQLOST),
+  TRACE_STR(J721E_TRACEERR_RXREQLOST),
   TRACE_STR_END
 };
 
 const struct trace_msg_t g_usb_trace_strings_intdecode[] =
 {
-  TRACE_STR(RP2040_TRACEINTID_GETSTATUS),
-  TRACE_STR(RP2040_TRACEINTID_GETIFDEV),
-  TRACE_STR(RP2040_TRACEINTID_CLEARFEATURE),
-  TRACE_STR(RP2040_TRACEINTID_SETFEATURE),
-  TRACE_STR(RP2040_TRACEINTID_TESTMODE),
-  TRACE_STR(RP2040_TRACEINTID_SETADDRESS),
-  TRACE_STR(RP2040_TRACEINTID_GETSETDESC),
-  TRACE_STR(RP2040_TRACEINTID_GETSETIFCONFIG),
-  TRACE_STR(RP2040_TRACEINTID_SYNCHFRAME),
-  TRACE_STR(RP2040_TRACEINTID_DISPATCH),
-  TRACE_STR(RP2040_TRACEINTID_GETENDPOINT),
-  TRACE_STR(RP2040_TRACEINTID_HANDLEZLP),
-  TRACE_STR(RP2040_TRACEINTID_USBINTERRUPT),
-  TRACE_STR(RP2040_TRACEINTID_INTR_BUSRESET),
-  TRACE_STR(RP2040_TRACEINTID_INTR_BUFFSTAT),
-  TRACE_STR(RP2040_TRACEINTID_INTR_SETUP),
-  TRACE_STR(RP2040_TRACEINTID_EPOUTQEMPTY),
+  TRACE_STR(J721E_TRACEINTID_GETSTATUS),
+  TRACE_STR(J721E_TRACEINTID_GETIFDEV),
+  TRACE_STR(J721E_TRACEINTID_CLEARFEATURE),
+  TRACE_STR(J721E_TRACEINTID_SETFEATURE),
+  TRACE_STR(J721E_TRACEINTID_TESTMODE),
+  TRACE_STR(J721E_TRACEINTID_SETADDRESS),
+  TRACE_STR(J721E_TRACEINTID_GETSETDESC),
+  TRACE_STR(J721E_TRACEINTID_GETSETIFCONFIG),
+  TRACE_STR(J721E_TRACEINTID_SYNCHFRAME),
+  TRACE_STR(J721E_TRACEINTID_DISPATCH),
+  TRACE_STR(J721E_TRACEINTID_GETENDPOINT),
+  TRACE_STR(J721E_TRACEINTID_HANDLEZLP),
+  TRACE_STR(J721E_TRACEINTID_USBINTERRUPT),
+  TRACE_STR(J721E_TRACEINTID_INTR_BUSRESET),
+  TRACE_STR(J721E_TRACEINTID_INTR_BUFFSTAT),
+  TRACE_STR(J721E_TRACEINTID_INTR_SETUP),
+  TRACE_STR(J721E_TRACEINTID_EPOUTQEMPTY),
   TRACE_STR_END
 };
 #endif
@@ -156,13 +156,13 @@ const struct trace_msg_t g_usb_trace_strings_intdecode[] =
 
 /* Hardware dependent sizes and numbers */
 
-#define RP2040_EP0MAXPACKET     64        /* EP0 max packet size */
-#define RP2040_BULKMAXPACKET    64        /* Bulk endpoint max packet */
-#define RP2040_INTRMAXPACKET    64        /* Interrupt endpoint max packet */
-#define RP2040_ISOMAXPACKET     1023      /* Isochronous max packet size */
+#define J721E_EP0MAXPACKET     64        /* EP0 max packet size */
+#define J721E_BULKMAXPACKET    64        /* Bulk endpoint max packet */
+#define J721E_INTRMAXPACKET    64        /* Interrupt endpoint max packet */
+#define J721E_ISOMAXPACKET     1023      /* Isochronous max packet size */
 
 /* USB endpoint number conversion macros
- * EPINDEX: eplist[] index (the endpoint list in rp2040_usbdev_s)
+ * EPINDEX: eplist[] index (the endpoint list in j721e_usbdev_s)
  *   0 - Endpoint  0 IN
  *   1 - Endpoint  0 OUT
  *   2 - Endpoint  1 (IN or OUT - depends on the endpoint configuration)
@@ -172,7 +172,7 @@ const struct trace_msg_t g_usb_trace_strings_intdecode[] =
  *  15 - Endpoint 14 (IN or OUT - depends on the endpoint configuration)
  *  16 - Endpoint 15 (IN or OUT - depends on the endpoint configuration)
  *
- * DPINDEX: RP2040 DPSRAM control index
+ * DPINDEX: J721E DPSRAM control index
  *   0 - Endpoint  0 IN
  *   1 - Endpoint  0 OUT
  *   2 - Endpoint  1 IN
@@ -184,18 +184,18 @@ const struct trace_msg_t g_usb_trace_strings_intdecode[] =
  *  31 - Endpoint 15 OUT
  */
 
-#define RP2040_EPINDEX(eplog)   (USB_EPNO(eplog) == 0 ? \
+#define J721E_EPINDEX(eplog)   (USB_EPNO(eplog) == 0 ? \
                                  (USB_ISEPIN(eplog) ? 0 : 1) : \
                                  (USB_EPNO(eplog) + 1))
-#define RP2040_DPINDEX(eplog)   (USB_EPNO(eplog) * 2 + USB_ISEPOUT(eplog))
-#define RP2040_DPTOEP(index)    ((index) < 2 ? (index) : (index) / 2 + 1)
+#define J721E_DPINDEX(eplog)   (USB_EPNO(eplog) * 2 + USB_ISEPOUT(eplog))
+#define J721E_DPTOEP(index)    ((index) < 2 ? (index) : (index) / 2 + 1)
 
-#define RP2040_NENDPOINTS       (16 + 1)  /* EP0 IN, EP0 OUT, EP1..EP15 */
+#define J721E_NENDPOINTS       (16 + 1)  /* EP0 IN, EP0 OUT, EP1..EP15 */
 
 /* Request queue operations *************************************************/
 
-#define rp2040_rqempty(ep)      ((ep)->head == NULL)
-#define rp2040_rqpeek(ep)       ((ep)->head)
+#define j721e_rqempty(ep)      ((ep)->head == NULL)
+#define j721e_rqpeek(ep)       ((ep)->head)
 
 /****************************************************************************
  * Private Types
@@ -203,37 +203,37 @@ const struct trace_msg_t g_usb_trace_strings_intdecode[] =
 
 /* USB Zero Length Packet type */
 
-enum rp2040_zlp_e
+enum j721e_zlp_e
 {
-  RP2040_ZLP_NONE = 0,        /* Don't send/receive Zero Length Packet */
-  RP2040_ZLP_IN_REPLY,        /* Receive ZLP to reply IN transfer */
-  RP2040_ZLP_OUT_REPLY,       /* Send ZLP to reply OUT transfer */
+  J721E_ZLP_NONE = 0,        /* Don't send/receive Zero Length Packet */
+  J721E_ZLP_IN_REPLY,        /* Receive ZLP to reply IN transfer */
+  J721E_ZLP_OUT_REPLY,       /* Send ZLP to reply OUT transfer */
 };
 
 /* A container for a request so that the request make be retained in a list */
 
-struct rp2040_req_s
+struct j721e_req_s
 {
   struct usbdev_req_s req;        /* Standard USB request */
-  struct rp2040_req_s *flink;     /* Supports a singly linked list */
+  struct j721e_req_s *flink;     /* Supports a singly linked list */
 };
 
 /* This is the internal representation of an endpoint */
 
-struct rp2040_ep_s
+struct j721e_ep_s
 {
   /* Common endpoint fields.  This must be the first thing defined in the
    * structure so that it is possible to simply cast from struct usbdev_ep_s
-   * to struct rp2040_ep_s.
+   * to struct j721e_ep_s.
    */
 
   struct usbdev_ep_s ep;          /* Standard endpoint structure */
 
-  /* RP2040-specific fields */
+  /* J721E-specific fields */
 
-  struct rp2040_usbdev_s *dev;    /* Reference to private driver data */
-  struct rp2040_req_s *head;      /* Request list for this endpoint */
-  struct rp2040_req_s *tail;
+  struct j721e_usbdev_s *dev;    /* Reference to private driver data */
+  struct j721e_req_s *head;      /* Request list for this endpoint */
+  struct j721e_req_s *tail;
   uint8_t *data_buf;              /* DPSRAM buffer address */
   uint32_t ep_ctrl;               /* DPSRAM EP control register address */
   uint32_t buf_ctrl;              /* DPSRAM buffer control register address */
@@ -248,11 +248,11 @@ struct rp2040_ep_s
 
 /* This structure encapsulates the overall driver state */
 
-struct rp2040_usbdev_s
+struct j721e_usbdev_s
 {
   /* Common device fields.  This must be the first thing defined in the
    * structure so that it is possible to simply cast from struct usbdev_s
-   * to struct rp2040_usbdev_s.
+   * to struct j721e_usbdev_s.
    */
 
   struct usbdev_s usbdev;
@@ -261,11 +261,11 @@ struct rp2040_usbdev_s
 
   struct usbdevclass_driver_s *driver;
 
-  /* RP2040-specific fields */
+  /* J721E-specific fields */
 
   uint16_t next_offset;       /* Unused DPSRAM buffer offset */
   uint8_t  dev_addr;          /* USB device address */
-  enum rp2040_zlp_e zlp_stat; /* Pending EP0 ZLP status */
+  enum j721e_zlp_e zlp_stat; /* Pending EP0 ZLP status */
   uint16_t used;              /* used epphy */
   bool stalled;
   bool selfpowered;           /* 1: Device is self powered */
@@ -292,7 +292,7 @@ struct rp2040_usbdev_s
 
   /* The endpoint list */
 
-  struct rp2040_ep_s eplist[RP2040_NENDPOINTS];
+  struct j721e_ep_s eplist[J721E_NENDPOINTS];
 };
 
 /****************************************************************************
@@ -302,73 +302,73 @@ struct rp2040_usbdev_s
 /* Request queue operations *************************************************/
 
 static struct
-rp2040_req_s *rp2040_rqdequeue(struct rp2040_ep_s *privep);
-static void rp2040_rqenqueue(struct rp2040_ep_s *privep,
-                             struct rp2040_req_s *req);
+j721e_req_s *j721e_rqdequeue(struct j721e_ep_s *privep);
+static void j721e_rqenqueue(struct j721e_ep_s *privep,
+                             struct j721e_req_s *req);
 
 /* Low level data transfers and request operations */
 
-static void rp2040_update_buffer_control(struct rp2040_ep_s *privep,
+static void j721e_update_buffer_control(struct j721e_ep_s *privep,
                                          uint32_t and_mask,
                                          uint32_t or_mask);
-static int rp2040_epwrite(struct rp2040_ep_s *privep, uint8_t *buf,
+static int j721e_epwrite(struct j721e_ep_s *privep, uint8_t *buf,
                           uint16_t nbytes);
-static int rp2040_epread(struct rp2040_ep_s *privep, uint16_t nbytes);
-static void rp2040_abortrequest(struct rp2040_ep_s *privep,
-                                struct rp2040_req_s *privreq,
+static int j721e_epread(struct j721e_ep_s *privep, uint16_t nbytes);
+static void j721e_abortrequest(struct j721e_ep_s *privep,
+                                struct j721e_req_s *privreq,
                                 int16_t result);
-static void rp2040_reqcomplete(struct rp2040_ep_s *privep, int16_t result);
-static void rp2040_txcomplete(struct rp2040_ep_s *privep);
-static int rp2040_wrrequest(struct rp2040_ep_s *privep);
-static void rp2040_rxcomplete(struct rp2040_ep_s *privep);
-static int rp2040_rdrequest(struct rp2040_ep_s *privep);
+static void j721e_reqcomplete(struct j721e_ep_s *privep, int16_t result);
+static void j721e_txcomplete(struct j721e_ep_s *privep);
+static int j721e_wrrequest(struct j721e_ep_s *privep);
+static void j721e_rxcomplete(struct j721e_ep_s *privep);
+static int j721e_rdrequest(struct j721e_ep_s *privep);
 
-static void rp2040_handle_zlp(struct rp2040_usbdev_s *priv);
+static void j721e_handle_zlp(struct j721e_usbdev_s *priv);
 
-static void rp2040_cancelrequests(struct rp2040_ep_s *privep);
-static struct rp2040_ep_s *
-rp2040_epfindbyaddr(struct rp2040_usbdev_s *priv, uint16_t eplog);
-static void rp2040_dispatchrequest(struct rp2040_usbdev_s *priv);
-static void rp2040_ep0setup(struct rp2040_usbdev_s *priv);
+static void j721e_cancelrequests(struct j721e_ep_s *privep);
+static struct j721e_ep_s *
+j721e_epfindbyaddr(struct j721e_usbdev_s *priv, uint16_t eplog);
+static void j721e_dispatchrequest(struct j721e_usbdev_s *priv);
+static void j721e_ep0setup(struct j721e_usbdev_s *priv);
 
 /* Interrupt handling */
 
-static void rp2040_usbintr_setup(struct rp2040_usbdev_s *priv);
-static void rp2040_usbintr_ep0out(struct rp2040_usbdev_s *priv,
-                                  struct rp2040_ep_s *privep);
-static bool rp2040_usbintr_buffstat(struct rp2040_usbdev_s *priv);
-static void rp2040_usbintr_busreset(struct rp2040_usbdev_s *priv);
-static int rp2040_usbinterrupt(int irq, void *context, void *arg);
+static void j721e_usbintr_setup(struct j721e_usbdev_s *priv);
+static void j721e_usbintr_ep0out(struct j721e_usbdev_s *priv,
+                                  struct j721e_ep_s *privep);
+static bool j721e_usbintr_buffstat(struct j721e_usbdev_s *priv);
+static void j721e_usbintr_busreset(struct j721e_usbdev_s *priv);
+static int j721e_usbinterrupt(int irq, void *context, void *arg);
 
 /* Endpoint methods */
 
-static int rp2040_epconfigure(struct usbdev_ep_s *ep,
+static int j721e_epconfigure(struct usbdev_ep_s *ep,
                               const struct usb_epdesc_s *desc,
                               bool last);
 
-static int rp2040_epdisable(struct usbdev_ep_s *ep);
-static struct usbdev_req_s *rp2040_epallocreq(struct usbdev_ep_s
+static int j721e_epdisable(struct usbdev_ep_s *ep);
+static struct usbdev_req_s *j721e_epallocreq(struct usbdev_ep_s
                                                   *ep);
-static void rp2040_epfreereq(struct usbdev_ep_s *ep,
+static void j721e_epfreereq(struct usbdev_ep_s *ep,
                              struct usbdev_req_s *req);
-static int rp2040_epsubmit(struct usbdev_ep_s *ep,
+static int j721e_epsubmit(struct usbdev_ep_s *ep,
                            struct usbdev_req_s *privreq);
-static int rp2040_epcancel(struct usbdev_ep_s *ep,
+static int j721e_epcancel(struct usbdev_ep_s *ep,
                            struct usbdev_req_s *privreq);
-static int rp2040_epstall_exec(struct usbdev_ep_s *ep);
-static int rp2040_epstall(struct usbdev_ep_s *ep, bool resume);
+static int j721e_epstall_exec(struct usbdev_ep_s *ep);
+static int j721e_epstall(struct usbdev_ep_s *ep, bool resume);
 
 /* USB device controller methods */
 
-static struct usbdev_ep_s *rp2040_allocep(struct usbdev_s *dev,
+static struct usbdev_ep_s *j721e_allocep(struct usbdev_s *dev,
                                           uint8_t epno, bool in,
                                           uint8_t eptype);
-static void rp2040_freeep(struct usbdev_s *dev,
+static void j721e_freeep(struct usbdev_s *dev,
                           struct usbdev_ep_s *ep);
-static int rp2040_getframe(struct usbdev_s *dev);
-static int rp2040_wakeup(struct usbdev_s *dev);
-static int rp2040_selfpowered(struct usbdev_s *dev, bool selfpowered);
-static int rp2040_pullup(struct usbdev_s *dev, bool enable);
+static int j721e_getframe(struct usbdev_s *dev);
+static int j721e_wakeup(struct usbdev_s *dev);
+static int j721e_selfpowered(struct usbdev_s *dev, bool selfpowered);
+static int j721e_pullup(struct usbdev_s *dev, bool enable);
 
 /****************************************************************************
  * Private Data
@@ -378,35 +378,35 @@ static int rp2040_pullup(struct usbdev_s *dev, bool enable);
 
 static const struct usbdev_epops_s g_epops =
 {
-  .configure   = rp2040_epconfigure,
-  .disable     = rp2040_epdisable,
-  .allocreq    = rp2040_epallocreq,
-  .freereq     = rp2040_epfreereq,
-  .submit      = rp2040_epsubmit,
-  .cancel      = rp2040_epcancel,
-  .stall       = rp2040_epstall,
+  .configure   = j721e_epconfigure,
+  .disable     = j721e_epdisable,
+  .allocreq    = j721e_epallocreq,
+  .freereq     = j721e_epfreereq,
+  .submit      = j721e_epsubmit,
+  .cancel      = j721e_epcancel,
+  .stall       = j721e_epstall,
 };
 
 /* USB controller device methods */
 
 static const struct usbdev_ops_s g_devops =
 {
-  .allocep     = rp2040_allocep,
-  .freeep      = rp2040_freeep,
-  .getframe    = rp2040_getframe,
-  .wakeup      = rp2040_wakeup,
-  .selfpowered = rp2040_selfpowered,
-  .pullup      = rp2040_pullup,
+  .allocep     = j721e_allocep,
+  .freeep      = j721e_freeep,
+  .getframe    = j721e_getframe,
+  .wakeup      = j721e_wakeup,
+  .selfpowered = j721e_selfpowered,
+  .pullup      = j721e_pullup,
 };
 
-static struct rp2040_usbdev_s g_usbdev;
+static struct j721e_usbdev_s g_usbdev;
 
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_rqdequeue
+ * Name: j721e_rqdequeue
  *
  * Description:
  *   Remove a request from an endpoint request queue
@@ -414,9 +414,9 @@ static struct rp2040_usbdev_s g_usbdev;
  ****************************************************************************/
 
 static struct
-rp2040_req_s *rp2040_rqdequeue(struct rp2040_ep_s *privep)
+j721e_req_s *j721e_rqdequeue(struct j721e_ep_s *privep)
 {
-  struct rp2040_req_s *ret = privep->head;
+  struct j721e_req_s *ret = privep->head;
 
   if (ret)
     {
@@ -433,15 +433,15 @@ rp2040_req_s *rp2040_rqdequeue(struct rp2040_ep_s *privep)
 }
 
 /****************************************************************************
- * Name: rp2040_rqenqueue
+ * Name: j721e_rqenqueue
  *
  * Description:
  *   Add a request from an endpoint request queue
  *
  ****************************************************************************/
 
-static void rp2040_rqenqueue(struct rp2040_ep_s *privep,
-                             struct rp2040_req_s *req)
+static void j721e_rqenqueue(struct j721e_ep_s *privep,
+                             struct j721e_req_s *req)
 {
   req->flink = NULL;
   if (!privep->head)
@@ -457,14 +457,14 @@ static void rp2040_rqenqueue(struct rp2040_ep_s *privep,
 }
 
 /****************************************************************************
- * Name: rp2040_update_buffer_control
+ * Name: j721e_update_buffer_control
  *
  * Description:
  *   Update DPSRAM buffer control register
  *
  ****************************************************************************/
 
-static void rp2040_update_buffer_control(struct rp2040_ep_s *privep,
+static void j721e_update_buffer_control(struct j721e_ep_s *privep,
                                          uint32_t and_mask,
                                          uint32_t or_mask)
 {
@@ -484,14 +484,14 @@ static void rp2040_update_buffer_control(struct rp2040_ep_s *privep,
 }
 
 /****************************************************************************
- * Name: rp2040_epwrite
+ * Name: j721e_epwrite
  *
  * Description:
  *   Endpoint write (IN)
  *
  ****************************************************************************/
 
-static int rp2040_epwrite(struct rp2040_ep_s *privep, uint8_t *buf,
+static int j721e_epwrite(struct j721e_ep_s *privep, uint8_t *buf,
                           uint16_t nbytes)
 {
   uint32_t val;
@@ -502,64 +502,64 @@ static int rp2040_epwrite(struct rp2040_ep_s *privep, uint8_t *buf,
   memcpy(privep->data_buf, buf, nbytes);
 
   val = nbytes |
-        RP2040_USBCTRL_DPSRAM_EP_BUFF_CTRL_AVAIL |
-        RP2040_USBCTRL_DPSRAM_EP_BUFF_CTRL_FULL |
+        J721E_USBCTRL_DPSRAM_EP_BUFF_CTRL_AVAIL |
+        J721E_USBCTRL_DPSRAM_EP_BUFF_CTRL_FULL |
         (privep->next_pid ?
-         RP2040_USBCTRL_DPSRAM_EP_BUFF_CTRL_DATA1_PID : 0);
+         J721E_USBCTRL_DPSRAM_EP_BUFF_CTRL_DATA1_PID : 0);
 
   privep->next_pid = 1 - privep->next_pid;    /* Invert DATA0 <-> DATA1 */
 
   /* Start the transfer */
 
   flags = spin_lock_irqsave(NULL);
-  rp2040_update_buffer_control(privep, 0, val);
+  j721e_update_buffer_control(privep, 0, val);
   spin_unlock_irqrestore(NULL, flags);
 
   return nbytes;
 }
 
 /****************************************************************************
- * Name: rp2040_epread
+ * Name: j721e_epread
  *
  * Description:
  *   Endpoint read (OUT)
  *
  ****************************************************************************/
 
-static int rp2040_epread(struct rp2040_ep_s *privep, uint16_t nbytes)
+static int j721e_epread(struct j721e_ep_s *privep, uint16_t nbytes)
 {
   uint32_t val;
   irqstate_t flags;
 
   val = nbytes |
-        RP2040_USBCTRL_DPSRAM_EP_BUFF_CTRL_AVAIL |
+        J721E_USBCTRL_DPSRAM_EP_BUFF_CTRL_AVAIL |
         (privep->next_pid ?
-         RP2040_USBCTRL_DPSRAM_EP_BUFF_CTRL_DATA1_PID : 0);
+         J721E_USBCTRL_DPSRAM_EP_BUFF_CTRL_DATA1_PID : 0);
 
   privep->next_pid = 1 - privep->next_pid;    /* Invert DATA0 <-> DATA1 */
 
   /* Start the transfer */
 
   flags = spin_lock_irqsave(NULL);
-  rp2040_update_buffer_control(privep, 0, val);
+  j721e_update_buffer_control(privep, 0, val);
   spin_unlock_irqrestore(NULL, flags);
 
   return OK;
 }
 
 /****************************************************************************
- * Name: rp2040_abortrequest
+ * Name: j721e_abortrequest
  *
  * Description:
  *   Discard a request
  *
  ****************************************************************************/
 
-static void rp2040_abortrequest(struct rp2040_ep_s *privep,
-                                struct rp2040_req_s *privreq,
+static void j721e_abortrequest(struct j721e_ep_s *privep,
+                                struct j721e_req_s *privreq,
                                 int16_t result)
 {
-  usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_REQABORTED),
+  usbtrace(TRACE_DEVERROR(J721E_TRACEERR_REQABORTED),
           (uint16_t)privep->epphy);
 
   /* Save the result in the request structure */
@@ -572,23 +572,23 @@ static void rp2040_abortrequest(struct rp2040_ep_s *privep,
 }
 
 /****************************************************************************
- * Name: rp2040_reqcomplete
+ * Name: j721e_reqcomplete
  *
  * Description:
  *   Handle termination of a request.
  *
  ****************************************************************************/
 
-static void rp2040_reqcomplete(struct rp2040_ep_s *privep, int16_t result)
+static void j721e_reqcomplete(struct j721e_ep_s *privep, int16_t result)
 {
-  struct rp2040_req_s *privreq;
+  struct j721e_req_s *privreq;
   int stalled = privep->stalled;
   irqstate_t flags;
 
   /* Remove the completed request at the head of the endpoint request list */
 
   flags = enter_critical_section();
-  privreq = rp2040_rqdequeue(privep);
+  privreq = j721e_rqdequeue(privep);
   leave_critical_section(flags);
 
   if (privreq)
@@ -618,59 +618,59 @@ static void rp2040_reqcomplete(struct rp2040_ep_s *privep, int16_t result)
 }
 
 /****************************************************************************
- * Name: rp2040_txcomplete
+ * Name: j721e_txcomplete
  *
  * Description:
  *   Transfer is completed.
  *
  ****************************************************************************/
 
-static void rp2040_txcomplete(struct rp2040_ep_s *privep)
+static void j721e_txcomplete(struct j721e_ep_s *privep)
 {
-  struct rp2040_req_s *privreq;
+  struct j721e_req_s *privreq;
 
-  privreq = rp2040_rqpeek(privep);
+  privreq = j721e_rqpeek(privep);
   if (!privreq)
     {
-      usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_TXREQLOST), privep->epphy);
+      usbtrace(TRACE_DEVERROR(J721E_TRACEERR_TXREQLOST), privep->epphy);
     }
   else
     {
       privreq->req.xfrd += getreg32(privep->buf_ctrl)
-                           & RP2040_USBCTRL_DPSRAM_EP_BUFF_CTRL_LEN_MASK;
+                           & J721E_USBCTRL_DPSRAM_EP_BUFF_CTRL_LEN_MASK;
 
       if (privreq->req.xfrd >= privreq->req.len && !privep->txnullpkt)
         {
           usbtrace(TRACE_COMPLETE(privep->epphy), privreq->req.xfrd);
           privep->txnullpkt = 0;
-          rp2040_reqcomplete(privep, OK);
+          j721e_reqcomplete(privep, OK);
         }
     }
 
-  rp2040_wrrequest(privep);
+  j721e_wrrequest(privep);
 }
 
 /****************************************************************************
- * Name: rp2040_wrrequest
+ * Name: j721e_wrrequest
  *
  * Description:
  *   Send from the next queued write request
  *
  ****************************************************************************/
 
-static int rp2040_wrrequest(struct rp2040_ep_s *privep)
+static int j721e_wrrequest(struct j721e_ep_s *privep)
 {
-  struct rp2040_req_s *privreq;
+  struct j721e_req_s *privreq;
   uint8_t *buf;
   int nbytes;
   int bytesleft;
 
   /* Check the request from the head of the endpoint request queue */
 
-  privreq = rp2040_rqpeek(privep);
+  privreq = j721e_rqpeek(privep);
   if (!privreq)
     {
-      usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_NULLREQUEST), 0);
+      usbtrace(TRACE_DEVERROR(J721E_TRACEERR_NULLREQUEST), 0);
       return OK;
     }
 
@@ -680,11 +680,11 @@ static int rp2040_wrrequest(struct rp2040_ep_s *privep)
     {
       if (privep->epphy == 0)
         {
-          rp2040_epwrite(privep, NULL, 0);
+          j721e_epwrite(privep, NULL, 0);
         }
       else
         {
-          usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_NULLPACKET), 0);
+          usbtrace(TRACE_DEVERROR(J721E_TRACEERR_NULLPACKET), 0);
         }
 
       return OK;
@@ -722,32 +722,32 @@ static int rp2040_wrrequest(struct rp2040_ep_s *privep)
       /* Send the largest number of bytes that we can in this packet */
 
       buf = privreq->req.buf + privreq->req.xfrd;
-      rp2040_epwrite(privep, buf, nbytes);
+      j721e_epwrite(privep, buf, nbytes);
     }
 
   return OK;
 }
 
 /****************************************************************************
- * Name: rp2040_rxcomplete
+ * Name: j721e_rxcomplete
  *
  * Description:
  *   Notify the upper layer and continue to next receive request.
  *
  ****************************************************************************/
 
-static void rp2040_rxcomplete(struct rp2040_ep_s *privep)
+static void j721e_rxcomplete(struct j721e_ep_s *privep)
 {
-  struct rp2040_req_s *privreq;
+  struct j721e_req_s *privreq;
   uint16_t nrxbytes;
 
   nrxbytes = getreg32(privep->buf_ctrl)
-             & RP2040_USBCTRL_DPSRAM_EP_BUFF_CTRL_LEN_MASK;
+             & J721E_USBCTRL_DPSRAM_EP_BUFF_CTRL_LEN_MASK;
 
-  privreq = rp2040_rqpeek(privep);
+  privreq = j721e_rqpeek(privep);
   if (!privreq)
     {
-      usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_RXREQLOST), privep->epphy);
+      usbtrace(TRACE_DEVERROR(J721E_TRACEERR_RXREQLOST), privep->epphy);
       return;
     }
 
@@ -759,30 +759,30 @@ static void rp2040_rxcomplete(struct rp2040_ep_s *privep)
       nrxbytes < privep->ep.maxpacket)
     {
       usbtrace(TRACE_COMPLETE(privep->epphy), privreq->req.xfrd);
-      rp2040_reqcomplete(privep, OK);
+      j721e_reqcomplete(privep, OK);
     }
 
-  rp2040_rdrequest(privep);
+  j721e_rdrequest(privep);
 }
 
 /****************************************************************************
- * Name: rp2040_rdrequest
+ * Name: j721e_rdrequest
  *
  * Description:
  *   Receive to the next queued read request
  *
  ****************************************************************************/
 
-static int rp2040_rdrequest(struct rp2040_ep_s *privep)
+static int j721e_rdrequest(struct j721e_ep_s *privep)
 {
-  struct rp2040_req_s *privreq;
+  struct j721e_req_s *privreq;
 
   /* Check the request from the head of the endpoint request queue */
 
-  privreq = rp2040_rqpeek(privep);
+  privreq = j721e_rqpeek(privep);
   if (!privreq)
     {
-      usbtrace(TRACE_INTDECODE(RP2040_TRACEINTID_EPOUTQEMPTY), 0);
+      usbtrace(TRACE_INTDECODE(J721E_TRACEINTID_EPOUTQEMPTY), 0);
       return OK;
     }
 
@@ -790,79 +790,79 @@ static int rp2040_rdrequest(struct rp2040_ep_s *privep)
 
   usbtrace(TRACE_READ(privep->epphy), privreq->req.len);
 
-  return rp2040_epread(privep, privreq->req.len);
+  return j721e_epread(privep, privreq->req.len);
 }
 
 /****************************************************************************
- * Name: rp2040_handle_zlp
+ * Name: j721e_handle_zlp
  *
  * Description:
  *   Handle Zero Length Packet to reply to the control transfer
  *
  ****************************************************************************/
 
-static void rp2040_handle_zlp(struct rp2040_usbdev_s *priv)
+static void j721e_handle_zlp(struct j721e_usbdev_s *priv)
 {
-  struct rp2040_ep_s *privep = NULL;
+  struct j721e_ep_s *privep = NULL;
 
   switch (priv->zlp_stat)
     {
-      case RP2040_ZLP_NONE:
+      case J721E_ZLP_NONE:
         return;
 
-      case RP2040_ZLP_IN_REPLY:
+      case J721E_ZLP_IN_REPLY:
 
         /* Reply to control IN  : receive ZLP from EP0 (0x00) */
 
-        privep = &priv->eplist[RP2040_EPINDEX(0x00)];
+        privep = &priv->eplist[J721E_EPINDEX(0x00)];
         break;
 
-      case RP2040_ZLP_OUT_REPLY:
+      case J721E_ZLP_OUT_REPLY:
 
         /* Reply to control OUT : send ZLP to EP0 (0x80) */
 
-        privep = &priv->eplist[RP2040_EPINDEX(0x80)];
+        privep = &priv->eplist[J721E_EPINDEX(0x80)];
         break;
 
       default:
         DEBUGPANIC();
     }
 
-  usbtrace(TRACE_INTDECODE(RP2040_TRACEINTID_HANDLEZLP), privep->ep.eplog);
+  usbtrace(TRACE_INTDECODE(J721E_TRACEINTID_HANDLEZLP), privep->ep.eplog);
   privep->next_pid = 1;   /* ZLP is always sent by DATA1 packet */
 
-  if (priv->zlp_stat == RP2040_ZLP_IN_REPLY)
+  if (priv->zlp_stat == J721E_ZLP_IN_REPLY)
     {
-      rp2040_epread(privep, 0);
+      j721e_epread(privep, 0);
     }
   else
     {
-      rp2040_epwrite(privep, NULL, 0);
+      j721e_epwrite(privep, NULL, 0);
     }
 
-  priv->zlp_stat = RP2040_ZLP_NONE;
+  priv->zlp_stat = J721E_ZLP_NONE;
 }
 
 /****************************************************************************
- * Name: rp2040_cancelrequests
+ * Name: j721e_cancelrequests
  *
  * Description:
  *   Cancel all pending requests for an endpoint
  *
  ****************************************************************************/
 
-static void rp2040_cancelrequests(struct rp2040_ep_s *privep)
+static void j721e_cancelrequests(struct j721e_ep_s *privep)
 {
-  while (!rp2040_rqempty(privep))
+  while (!j721e_rqempty(privep))
     {
       usbtrace(TRACE_COMPLETE(privep->epphy),
-               (rp2040_rqpeek(privep))->req.xfrd);
-      rp2040_reqcomplete(privep, -ESHUTDOWN);
+               (j721e_rqpeek(privep))->req.xfrd);
+      j721e_reqcomplete(privep, -ESHUTDOWN);
     }
 }
 
 /****************************************************************************
- * Name: rp2040_epfindbyaddr
+ * Name: j721e_epfindbyaddr
  *
  * Description:
  *   Find the physical endpoint structure corresponding to a logic endpoint
@@ -870,25 +870,25 @@ static void rp2040_cancelrequests(struct rp2040_ep_s *privep)
  *
  ****************************************************************************/
 
-static struct rp2040_ep_s *
-rp2040_epfindbyaddr(struct rp2040_usbdev_s *priv, uint16_t eplog)
+static struct j721e_ep_s *
+j721e_epfindbyaddr(struct j721e_usbdev_s *priv, uint16_t eplog)
 {
-  return &priv->eplist[RP2040_EPINDEX(eplog)];
+  return &priv->eplist[J721E_EPINDEX(eplog)];
 }
 
 /****************************************************************************
- * Name: rp2040_dispatchrequest
+ * Name: j721e_dispatchrequest
  *
  * Description:
  *   Provide unhandled setup actions to the class driver
  *
  ****************************************************************************/
 
-static void rp2040_dispatchrequest(struct rp2040_usbdev_s *priv)
+static void j721e_dispatchrequest(struct j721e_usbdev_s *priv)
 {
   int ret;
 
-  usbtrace(TRACE_INTDECODE(RP2040_TRACEINTID_DISPATCH), 0);
+  usbtrace(TRACE_INTDECODE(J721E_TRACEINTID_DISPATCH), 0);
   if (priv && priv->driver)
     {
       ret = CLASS_SETUP(priv->driver, &priv->usbdev, &priv->ctrl,
@@ -897,35 +897,35 @@ static void rp2040_dispatchrequest(struct rp2040_usbdev_s *priv)
         {
           /* Stall on failure */
 
-          usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_STALLEDISPATCH),
+          usbtrace(TRACE_DEVERROR(J721E_TRACEERR_STALLEDISPATCH),
                    priv->ctrl.req);
           priv->stalled = true;
         }
 
       if (!priv->stalled && USB_REQ_ISOUT(priv->ctrl.type))
         {
-          priv->zlp_stat = RP2040_ZLP_NONE; /* already sent */
+          priv->zlp_stat = J721E_ZLP_NONE; /* already sent */
         }
     }
 }
 
 /****************************************************************************
- * Name: rp2040_ep0setup
+ * Name: j721e_ep0setup
  *
  * Description:
  *   USB control EP setup event
  *
  ****************************************************************************/
 
-static void rp2040_ep0setup(struct rp2040_usbdev_s *priv)
+static void j721e_ep0setup(struct j721e_usbdev_s *priv)
 {
-  struct rp2040_ep_s *ep0 = &priv->eplist[0];
-  struct rp2040_ep_s *privep;
+  struct j721e_ep_s *ep0 = &priv->eplist[0];
+  struct j721e_ep_s *privep;
   uint16_t index;
   uint16_t value;
   uint16_t len;
 
-  usbtrace(TRACE_INTDECODE(RP2040_TRACEINTID_INTR_SETUP), 0);
+  usbtrace(TRACE_INTDECODE(J721E_TRACEINTID_INTR_SETUP), 0);
 
   /* Assume NOT stalled */
 
@@ -945,7 +945,7 @@ static void rp2040_ep0setup(struct rp2040_usbdev_s *priv)
 
   if ((priv->ctrl.type & USB_REQ_TYPE_MASK) != USB_REQ_TYPE_STANDARD)
     {
-      rp2040_dispatchrequest(priv);
+      j721e_dispatchrequest(priv);
     }
   else
     {
@@ -966,13 +966,13 @@ static void rp2040_ep0setup(struct rp2040_usbdev_s *priv)
                * len:   2; data = status
                */
 
-              usbtrace(TRACE_INTDECODE(RP2040_TRACEINTID_GETSTATUS),
+              usbtrace(TRACE_INTDECODE(J721E_TRACEINTID_GETSTATUS),
                        priv->ctrl.req);
 
               if (len != 2 || (priv->ctrl.type & USB_REQ_DIR_IN) == 0 ||
                   value != 0)
                 {
-                  usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_STALLEDGETST),
+                  usbtrace(TRACE_DEVERROR(J721E_TRACEERR_STALLEDGETST),
                            priv->ctrl.req);
                   priv->stalled = true;
                 }
@@ -983,14 +983,14 @@ static void rp2040_ep0setup(struct rp2040_usbdev_s *priv)
                       case USB_REQ_RECIPIENT_ENDPOINT:
                         {
                           usbtrace(TRACE_INTDECODE(
-                                   RP2040_TRACEINTID_GETENDPOINT),
+                                   J721E_TRACEINTID_GETENDPOINT),
                                    0);
-                          privep = rp2040_epfindbyaddr(priv, index);
+                          privep = j721e_epfindbyaddr(priv, index);
                           if (!privep)
                             {
                               usbtrace(
                                 TRACE_DEVERROR(
-                                RP2040_TRACEERR_STALLEDGETSTEP),
+                                J721E_TRACEERR_STALLEDGETSTEP),
                                 priv->ctrl.type);
                               priv->stalled = true;
                             }
@@ -1000,14 +1000,14 @@ static void rp2040_ep0setup(struct rp2040_usbdev_s *priv)
                       case USB_REQ_RECIPIENT_DEVICE:
                       case USB_REQ_RECIPIENT_INTERFACE:
                         usbtrace(TRACE_INTDECODE(
-                                 RP2040_TRACEINTID_GETIFDEV),
+                                 J721E_TRACEINTID_GETIFDEV),
                                  0);
                         break;
 
                       default:
                         {
                           usbtrace(TRACE_DEVERROR(
-                                   RP2040_TRACEERR_STALLEDGETSTRECIP),
+                                   J721E_TRACEERR_STALLEDGETSTRECIP),
                                    priv->ctrl.type);
                           priv->stalled = true;
                         }
@@ -1027,23 +1027,23 @@ static void rp2040_ep0setup(struct rp2040_usbdev_s *priv)
                * len:   zero, data = none
                */
 
-              usbtrace(TRACE_INTDECODE(RP2040_TRACEINTID_CLEARFEATURE),
+              usbtrace(TRACE_INTDECODE(J721E_TRACEINTID_CLEARFEATURE),
                        (uint16_t)priv->ctrl.req);
               if ((priv->ctrl.type & USB_REQ_RECIPIENT_MASK) !=
                   USB_REQ_RECIPIENT_ENDPOINT)
                 {
-                  rp2040_dispatchrequest(priv);
+                  j721e_dispatchrequest(priv);
                 }
               else if (value == USB_FEATURE_ENDPOINTHALT &&
                        len == 0 &&
-                       (privep = rp2040_epfindbyaddr(priv, index)) != NULL)
+                       (privep = j721e_epfindbyaddr(priv, index)) != NULL)
                 {
-                  rp2040_epstall(&privep->ep, true);
-                  rp2040_epwrite(ep0, NULL, 0);
+                  j721e_epstall(&privep->ep, true);
+                  j721e_epwrite(ep0, NULL, 0);
                 }
               else
                 {
-                  usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_STALLEDCLRFEATURE),
+                  usbtrace(TRACE_DEVERROR(J721E_TRACEERR_STALLEDCLRFEATURE),
                            priv->ctrl.type);
                   priv->stalled = true;
                 }
@@ -1061,27 +1061,27 @@ static void rp2040_ep0setup(struct rp2040_usbdev_s *priv)
                * len:   0; data = none
                */
 
-              usbtrace(TRACE_INTDECODE(RP2040_TRACEINTID_SETFEATURE),
+              usbtrace(TRACE_INTDECODE(J721E_TRACEINTID_SETFEATURE),
                        priv->ctrl.req);
               if (priv->ctrl.type == USB_REQ_RECIPIENT_DEVICE &&
                   value == USB_FEATURE_TESTMODE)
                 {
-                  usbtrace(TRACE_INTDECODE(RP2040_TRACEINTID_TESTMODE),
+                  usbtrace(TRACE_INTDECODE(J721E_TRACEINTID_TESTMODE),
                            index);
                 }
               else if (priv->ctrl.type != USB_REQ_RECIPIENT_ENDPOINT)
                 {
-                  rp2040_dispatchrequest(priv);
+                  j721e_dispatchrequest(priv);
                 }
               else if (value == USB_FEATURE_ENDPOINTHALT && len == 0 &&
-                       (privep = rp2040_epfindbyaddr(priv, index)) != NULL)
+                       (privep = j721e_epfindbyaddr(priv, index)) != NULL)
                 {
-                  rp2040_epstall(&privep->ep, true);
-                  rp2040_epwrite(ep0, NULL, 0);
+                  j721e_epstall(&privep->ep, true);
+                  j721e_epwrite(ep0, NULL, 0);
                 }
               else
                 {
-                  usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_STALLEDSETFEATURE),
+                  usbtrace(TRACE_DEVERROR(J721E_TRACEERR_STALLEDSETFEATURE),
                            priv->ctrl.type);
                   priv->stalled = true;
                 }
@@ -1096,7 +1096,7 @@ static void rp2040_ep0setup(struct rp2040_usbdev_s *priv)
                * len:   0; data = none
                */
 
-              usbtrace(TRACE_INTDECODE(RP2040_TRACEINTID_SETADDRESS), value);
+              usbtrace(TRACE_INTDECODE(J721E_TRACEINTID_SETADDRESS), value);
               priv->dev_addr = value & 0xff;
             }
             break;
@@ -1116,9 +1116,9 @@ static void rp2040_ep0setup(struct rp2040_usbdev_s *priv)
              */
 
             {
-              usbtrace(TRACE_INTDECODE(RP2040_TRACEINTID_GETSETDESC),
+              usbtrace(TRACE_INTDECODE(J721E_TRACEINTID_GETSETDESC),
                        priv->ctrl.req);
-              rp2040_dispatchrequest(priv);
+              j721e_dispatchrequest(priv);
             }
             break;
 
@@ -1151,9 +1151,9 @@ static void rp2040_ep0setup(struct rp2040_usbdev_s *priv)
              */
 
             {
-              usbtrace(TRACE_INTDECODE(RP2040_TRACEINTID_GETSETIFCONFIG),
+              usbtrace(TRACE_INTDECODE(J721E_TRACEINTID_GETSETIFCONFIG),
                        priv->ctrl.req);
-              rp2040_dispatchrequest(priv);
+              j721e_dispatchrequest(priv);
             }
             break;
 
@@ -1165,13 +1165,13 @@ static void rp2040_ep0setup(struct rp2040_usbdev_s *priv)
                */
 
             {
-              usbtrace(TRACE_INTDECODE(RP2040_TRACEINTID_SYNCHFRAME), 0);
+              usbtrace(TRACE_INTDECODE(J721E_TRACEINTID_SYNCHFRAME), 0);
               break;
             }
 
           default:
             {
-              usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_STALLEDREQUEST),
+              usbtrace(TRACE_DEVERROR(J721E_TRACEERR_STALLEDREQUEST),
                        priv->ctrl.req);
               priv->stalled = true;
             }
@@ -1183,30 +1183,30 @@ static void rp2040_ep0setup(struct rp2040_usbdev_s *priv)
 
   if (priv->stalled)
     {
-      rp2040_epstall(&priv->eplist[0].ep, false);
-      rp2040_epstall(&priv->eplist[1].ep, false);
+      j721e_epstall(&priv->eplist[0].ep, false);
+      j721e_epstall(&priv->eplist[1].ep, false);
     }
-  else if (priv->zlp_stat != RP2040_ZLP_NONE)
+  else if (priv->zlp_stat != J721E_ZLP_NONE)
     {
-      rp2040_handle_zlp(priv);
+      j721e_handle_zlp(priv);
     }
 }
 
 /****************************************************************************
- * Name: rp2040_usbintr_setup
+ * Name: j721e_usbintr_setup
  *
  * Description:
  *   Handle USB SETUP_REQ interrupt
  *
  ****************************************************************************/
 
-static void rp2040_usbintr_setup(struct rp2040_usbdev_s *priv)
+static void j721e_usbintr_setup(struct j721e_usbdev_s *priv)
 {
   uint16_t len;
 
   /* Read USB control request data */
 
-  memcpy(&priv->ctrl, (void *)RP2040_USBCTRL_DPSRAM_SETUP_PACKET,
+  memcpy(&priv->ctrl, (void *)J721E_USBCTRL_DPSRAM_SETUP_PACKET,
          USB_SIZEOF_CTRLREQ);
   len = GETUINT16(priv->ctrl.len);
 
@@ -1219,40 +1219,40 @@ static void rp2040_usbintr_setup(struct rp2040_usbdev_s *priv)
 
   /* ZLP type in status stage */
 
-  priv->zlp_stat = USB_REQ_ISIN(priv->ctrl.type) ? RP2040_ZLP_IN_REPLY :
-                                                   RP2040_ZLP_OUT_REPLY;
+  priv->zlp_stat = USB_REQ_ISIN(priv->ctrl.type) ? J721E_ZLP_IN_REPLY :
+                                                   J721E_ZLP_OUT_REPLY;
 
   if (USB_REQ_ISOUT(priv->ctrl.type) && len != priv->ep0datlen)
     {
       /* Receive the subsequent OUT data for the setup */
 
       priv->ep0reqlen = len;
-      rp2040_epread(&priv->eplist[RP2040_EPINDEX(0x00)], len);
+      j721e_epread(&priv->eplist[J721E_EPINDEX(0x00)], len);
     }
   else
     {
       /* Start the setup */
 
       priv->ep0reqlen = 0;
-      rp2040_ep0setup(priv);
+      j721e_ep0setup(priv);
     }
 }
 
 /****************************************************************************
- * Name: rp2040_usbintr_ep0out
+ * Name: j721e_usbintr_ep0out
  *
  * Description:
  *   Handle the end of EP0OUT data transfer
  *
  ****************************************************************************/
 
-static void rp2040_usbintr_ep0out(struct rp2040_usbdev_s *priv,
-                                  struct rp2040_ep_s *privep)
+static void j721e_usbintr_ep0out(struct j721e_usbdev_s *priv,
+                                  struct j721e_ep_s *privep)
 {
   int len;
 
   len = getreg32(privep->buf_ctrl)
-        & RP2040_USBCTRL_DPSRAM_EP_BUFF_CTRL_LEN_MASK;
+        & J721E_USBCTRL_DPSRAM_EP_BUFF_CTRL_LEN_MASK;
 
   if (len == 0)
     {
@@ -1266,72 +1266,72 @@ static void rp2040_usbintr_ep0out(struct rp2040_usbdev_s *priv,
 
   if (priv->ep0datlen == priv->ep0reqlen)
     {
-      priv->zlp_stat = RP2040_ZLP_NONE;
-      rp2040_ep0setup(priv);
+      priv->zlp_stat = J721E_ZLP_NONE;
+      j721e_ep0setup(priv);
       priv->ep0datlen = 0;
     }
   else
     {
-      rp2040_epread(privep, RP2040_EP0MAXPACKET);
+      j721e_epread(privep, J721E_EP0MAXPACKET);
     }
 }
 
 /****************************************************************************
- * Name: rp2040_usbintr_buffstat
+ * Name: j721e_usbintr_buffstat
  *
  * Description:
  *   Handle USB BUFF_STATUS interrupt
  *
  ****************************************************************************/
 
-static bool rp2040_usbintr_buffstat(struct rp2040_usbdev_s *priv)
+static bool j721e_usbintr_buffstat(struct j721e_usbdev_s *priv)
 {
-  uint32_t stat = getreg32(RP2040_USBCTRL_REGS_BUFF_STATUS);
+  uint32_t stat = getreg32(J721E_USBCTRL_REGS_BUFF_STATUS);
   uint32_t bit;
   int i;
-  struct rp2040_ep_s *privep;
+  struct j721e_ep_s *privep;
 
   if (stat == 0)
     {
       return false;
     }
 
-  usbtrace(TRACE_INTDECODE(RP2040_TRACEINTID_INTR_BUFFSTAT), stat & 0xffff);
+  usbtrace(TRACE_INTDECODE(J721E_TRACEINTID_INTR_BUFFSTAT), stat & 0xffff);
 
   bit = 1;
   for (i = 0; i < 32 && stat != 0; i++)
     {
       if (stat & bit)
         {
-          clrbits_reg32(bit, RP2040_USBCTRL_REGS_BUFF_STATUS);
-          privep = &priv->eplist[RP2040_DPTOEP(i)];
+          clrbits_reg32(bit, J721E_USBCTRL_REGS_BUFF_STATUS);
+          privep = &priv->eplist[J721E_DPTOEP(i)];
 
           if (i == 1)
             {
-              rp2040_usbintr_ep0out(priv, privep);
+              j721e_usbintr_ep0out(priv, privep);
             }
           else
             {
               if (i == 0 && priv->dev_addr != 0)
                 {
-                  putreg32(priv->dev_addr, RP2040_USBCTRL_REGS_ADDR_ENDP);
+                  putreg32(priv->dev_addr, J721E_USBCTRL_REGS_ADDR_ENDP);
                   priv->dev_addr = 0;
                 }
 
               if (privep->in)
                 {
-                  if (!rp2040_rqempty(privep))
+                  if (!j721e_rqempty(privep))
                     {
-                      rp2040_txcomplete(privep);
+                      j721e_txcomplete(privep);
                     }
                   else if (privep->pending_stall)
                     {
-                      rp2040_epstall_exec(&privep->ep);
+                      j721e_epstall_exec(&privep->ep);
                     }
                 }
               else
                 {
-                  rp2040_rxcomplete(privep);
+                  j721e_rxcomplete(privep);
                 }
             }
 
@@ -1345,81 +1345,81 @@ static bool rp2040_usbintr_buffstat(struct rp2040_usbdev_s *priv)
 }
 
 /****************************************************************************
- * Name: rp2040_usbintr_busreset
+ * Name: j721e_usbintr_busreset
  *
  * Description:
  *   Handle USB BUS_RESET interrupt
  *
  ****************************************************************************/
 
-static void rp2040_usbintr_busreset(struct rp2040_usbdev_s *priv)
+static void j721e_usbintr_busreset(struct j721e_usbdev_s *priv)
 {
   int i;
 
-  usbtrace(TRACE_INTDECODE(RP2040_TRACEINTID_INTR_BUSRESET), 0);
+  usbtrace(TRACE_INTDECODE(J721E_TRACEINTID_INTR_BUSRESET), 0);
 
-  putreg32(0, RP2040_USBCTRL_REGS_ADDR_ENDP);
+  putreg32(0, J721E_USBCTRL_REGS_ADDR_ENDP);
   priv->dev_addr = 0;
-  priv->zlp_stat = RP2040_ZLP_NONE;
-  priv->next_offset = RP2040_USBCTRL_DPSRAM_DATA_BUF_OFFSET;
+  priv->zlp_stat = J721E_ZLP_NONE;
+  priv->next_offset = J721E_USBCTRL_DPSRAM_DATA_BUF_OFFSET;
 
-  for (i = 0; i < RP2040_NENDPOINTS; i++)
+  for (i = 0; i < J721E_NENDPOINTS; i++)
     {
-      struct rp2040_ep_s *privep = &g_usbdev.eplist[i];
+      struct j721e_ep_s *privep = &g_usbdev.eplist[i];
 
-      rp2040_cancelrequests(privep);
+      j721e_cancelrequests(privep);
     }
 
-  rp2040_pullup(&g_usbdev.usbdev, false);
+  j721e_pullup(&g_usbdev.usbdev, false);
   if (g_usbdev.driver)
     {
       CLASS_DISCONNECT(priv->driver, &priv->usbdev);
     }
 
-  clrbits_reg32(RP2040_USBCTRL_REGS_SIE_STATUS_BUS_RESET,
-                RP2040_USBCTRL_REGS_SIE_STATUS);
+  clrbits_reg32(J721E_USBCTRL_REGS_SIE_STATUS_BUS_RESET,
+                J721E_USBCTRL_REGS_SIE_STATUS);
 }
 
 /****************************************************************************
- * Name: rp2040_usbinterrupt
+ * Name: j721e_usbinterrupt
  *
  * Description:
  *   USB interrupt handler
  *
  ****************************************************************************/
 
-static int rp2040_usbinterrupt(int irq, void *context, void *arg)
+static int j721e_usbinterrupt(int irq, void *context, void *arg)
 {
-  struct rp2040_usbdev_s *priv = (struct rp2040_usbdev_s *)arg;
+  struct j721e_usbdev_s *priv = (struct j721e_usbdev_s *)arg;
   uint32_t stat;
 
-  stat = getreg32(RP2040_USBCTRL_REGS_INTS);
+  stat = getreg32(J721E_USBCTRL_REGS_INTS);
 
-  usbtrace(TRACE_INTENTRY(RP2040_TRACEINTID_USBINTERRUPT), 0);
+  usbtrace(TRACE_INTENTRY(J721E_TRACEINTID_USBINTERRUPT), 0);
 
-  if (stat & RP2040_USBCTRL_REGS_INTR_BUFF_STATUS)
+  if (stat & J721E_USBCTRL_REGS_INTR_BUFF_STATUS)
     {
-      while (rp2040_usbintr_buffstat(priv))
+      while (j721e_usbintr_buffstat(priv))
         ;
     }
 
-  if (stat & RP2040_USBCTRL_REGS_INTR_SETUP_REQ)
+  if (stat & J721E_USBCTRL_REGS_INTR_SETUP_REQ)
     {
-      clrbits_reg32(RP2040_USBCTRL_REGS_SIE_STATUS_SETUP_REC,
-                    RP2040_USBCTRL_REGS_SIE_STATUS);
+      clrbits_reg32(J721E_USBCTRL_REGS_SIE_STATUS_SETUP_REC,
+                    J721E_USBCTRL_REGS_SIE_STATUS);
 
-      rp2040_usbintr_setup(priv);
+      j721e_usbintr_setup(priv);
     }
 
-  if (stat & RP2040_USBCTRL_REGS_INTR_BUS_RESET)
+  if (stat & J721E_USBCTRL_REGS_INTR_BUS_RESET)
     {
-      clrbits_reg32(RP2040_USBCTRL_REGS_SIE_STATUS_BUS_RESET,
-                    RP2040_USBCTRL_REGS_SIE_STATUS);
+      clrbits_reg32(J721E_USBCTRL_REGS_SIE_STATUS_BUS_RESET,
+                    J721E_USBCTRL_REGS_SIE_STATUS);
 
-      rp2040_usbintr_busreset(priv);
+      j721e_usbintr_busreset(priv);
     }
 
-  usbtrace(TRACE_INTEXIT(RP2040_TRACEINTID_USBINTERRUPT), 0);
+  usbtrace(TRACE_INTEXIT(J721E_TRACEINTID_USBINTERRUPT), 0);
 
   return OK;
 }
@@ -1429,7 +1429,7 @@ static int rp2040_usbinterrupt(int irq, void *context, void *arg)
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_epconfigure
+ * Name: j721e_epconfigure
  *
  * Description:
  *   Configure endpoint, making it usable
@@ -1443,11 +1443,11 @@ static int rp2040_usbinterrupt(int irq, void *context, void *arg)
  *
  ****************************************************************************/
 
-static int rp2040_epconfigure(struct usbdev_ep_s *ep,
+static int j721e_epconfigure(struct usbdev_ep_s *ep,
                               const struct usb_epdesc_s *desc, bool last)
 {
-  struct rp2040_ep_s *privep = (struct rp2040_ep_s *)ep;
-  struct rp2040_usbdev_s *priv = privep->dev;
+  struct j721e_ep_s *privep = (struct j721e_ep_s *)ep;
+  struct j721e_usbdev_s *priv = privep->dev;
   int eptype;
   uint16_t maxpacket;
 
@@ -1471,18 +1471,18 @@ static int rp2040_epconfigure(struct usbdev_ep_s *ep,
        * (No need for EP0 because it has the dedicated buffer)
        */
 
-      privep->data_buf = (uint8_t *)(RP2040_USBCTRL_DPSRAM_BASE +
+      privep->data_buf = (uint8_t *)(J721E_USBCTRL_DPSRAM_BASE +
                                      priv->next_offset);
       priv->next_offset =
                      (priv->next_offset + privep->ep.maxpacket + 63) & ~63;
 
       /* Enable EP */
 
-      putreg32(RP2040_USBCTRL_DPSRAM_EP_CTRL_ENABLE |
-               RP2040_USBCTRL_DPSRAM_EP_CTRL_INT_1BUF |
-               (eptype << RP2040_USBCTRL_DPSRAM_EP_CTRL_EP_TYPE_SHIFT) |
+      putreg32(J721E_USBCTRL_DPSRAM_EP_CTRL_ENABLE |
+               J721E_USBCTRL_DPSRAM_EP_CTRL_INT_1BUF |
+               (eptype << J721E_USBCTRL_DPSRAM_EP_CTRL_EP_TYPE_SHIFT) |
                ((uint32_t)privep->data_buf &
-                RP2040_USBCTRL_DPSRAM_EP_CTRL_EP_ADDR_MASK),
+                J721E_USBCTRL_DPSRAM_EP_CTRL_EP_ADDR_MASK),
                privep->ep_ctrl);
     }
 
@@ -1490,22 +1490,22 @@ static int rp2040_epconfigure(struct usbdev_ep_s *ep,
 }
 
 /****************************************************************************
- * Name: rp2040_epdisable
+ * Name: j721e_epdisable
  *
  * Description:
  *   The endpoint will no longer be used
  *
  ****************************************************************************/
 
-static int rp2040_epdisable(struct usbdev_ep_s *ep)
+static int j721e_epdisable(struct usbdev_ep_s *ep)
 {
-  struct rp2040_ep_s *privep = (struct rp2040_ep_s *)ep;
+  struct j721e_ep_s *privep = (struct j721e_ep_s *)ep;
   irqstate_t flags;
 
 #ifdef CONFIG_DEBUG_FEATURES
   if (!ep)
     {
-      usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_INVALIDPARMS), 0);
+      usbtrace(TRACE_DEVERROR(J721E_TRACEERR_INVALIDPARMS), 0);
       return -EINVAL;
     }
 #endif
@@ -1522,7 +1522,7 @@ static int rp2040_epdisable(struct usbdev_ep_s *ep)
 
   /* Cancel all queued requests */
 
-  rp2040_cancelrequests(privep);
+  j721e_cancelrequests(privep);
 
   leave_critical_section(flags);
 
@@ -1530,16 +1530,16 @@ static int rp2040_epdisable(struct usbdev_ep_s *ep)
 }
 
 /****************************************************************************
- * Name: rp2040_epallocreq
+ * Name: j721e_epallocreq
  *
  * Description:
  *   Allocate an I/O request
  *
  ****************************************************************************/
 
-static struct usbdev_req_s *rp2040_epallocreq(struct usbdev_ep_s *ep)
+static struct usbdev_req_s *j721e_epallocreq(struct usbdev_ep_s *ep)
 {
-  struct rp2040_req_s *privreq;
+  struct j721e_req_s *privreq;
 
 #ifdef CONFIG_DEBUG_FEATURES
   if (!ep)
@@ -1548,66 +1548,66 @@ static struct usbdev_req_s *rp2040_epallocreq(struct usbdev_ep_s *ep)
     }
 #endif
 
-  usbtrace(TRACE_EPALLOCREQ, ((struct rp2040_ep_s *)ep)->epphy);
+  usbtrace(TRACE_EPALLOCREQ, ((struct j721e_ep_s *)ep)->epphy);
 
-  privreq = (struct rp2040_req_s *)
-            kmm_malloc(sizeof(struct rp2040_req_s));
+  privreq = (struct j721e_req_s *)
+            kmm_malloc(sizeof(struct j721e_req_s));
 
   if (!privreq)
     {
-      usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_ALLOCFAIL), 0);
+      usbtrace(TRACE_DEVERROR(J721E_TRACEERR_ALLOCFAIL), 0);
       return NULL;
     }
 
-  memset(privreq, 0, sizeof(struct rp2040_req_s));
+  memset(privreq, 0, sizeof(struct j721e_req_s));
   return &privreq->req;
 }
 
 /****************************************************************************
- * Name: rp2040_epfreereq
+ * Name: j721e_epfreereq
  *
  * Description:
  *   Free an I/O request
  *
  ****************************************************************************/
 
-static void rp2040_epfreereq(struct usbdev_ep_s *ep,
+static void j721e_epfreereq(struct usbdev_ep_s *ep,
                              struct usbdev_req_s *req)
 {
-  struct rp2040_req_s *privreq = (struct rp2040_req_s *)req;
+  struct j721e_req_s *privreq = (struct j721e_req_s *)req;
 
 #ifdef CONFIG_DEBUG_FEATURES
   if (!ep || !req)
     {
-      usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_INVALIDPARMS), 0);
+      usbtrace(TRACE_DEVERROR(J721E_TRACEERR_INVALIDPARMS), 0);
       return;
     }
 #endif
 
-  usbtrace(TRACE_EPFREEREQ, ((struct rp2040_ep_s *)ep)->epphy);
+  usbtrace(TRACE_EPFREEREQ, ((struct j721e_ep_s *)ep)->epphy);
   kmm_free(privreq);
 }
 
 /****************************************************************************
- * Name: rp2040_epsubmit
+ * Name: j721e_epsubmit
  *
  * Description:
  *   Submit an I/O request to the endpoint
  *
  ****************************************************************************/
 
-static int rp2040_epsubmit(struct usbdev_ep_s *ep,
+static int j721e_epsubmit(struct usbdev_ep_s *ep,
                            struct usbdev_req_s *req)
 {
-  struct rp2040_req_s *privreq = (struct rp2040_req_s *)req;
-  struct rp2040_ep_s *privep = (struct rp2040_ep_s *)ep;
+  struct j721e_req_s *privreq = (struct j721e_req_s *)req;
+  struct j721e_ep_s *privep = (struct j721e_ep_s *)ep;
   irqstate_t flags;
   int ret = OK;
 
 #ifdef CONFIG_DEBUG_FEATURES
   if (!req || !req->callback || !req->buf || !ep)
     {
-      usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_INVALIDPARMS), 0);
+      usbtrace(TRACE_DEVERROR(J721E_TRACEERR_INVALIDPARMS), 0);
       return -EINVAL;
     }
 #endif
@@ -1621,7 +1621,7 @@ static int rp2040_epsubmit(struct usbdev_ep_s *ep,
 
   if (privep->stalled && privep->in)
     {
-      rp2040_abortrequest(privep, privreq, -EBUSY);
+      j721e_abortrequest(privep, privreq, -EBUSY);
       ret = -EBUSY;
     }
 
@@ -1631,14 +1631,14 @@ static int rp2040_epsubmit(struct usbdev_ep_s *ep,
     {
       /* Add the new request to the request queue for the IN endpoint */
 
-      bool empty = rp2040_rqempty(privep);
+      bool empty = j721e_rqempty(privep);
 
-      rp2040_rqenqueue(privep, privreq);
+      j721e_rqenqueue(privep, privreq);
       usbtrace(TRACE_INREQQUEUED(privep->epphy), privreq->req.len);
 
       if (empty)
         {
-          rp2040_wrrequest(privep);
+          j721e_wrrequest(privep);
         }
     }
 
@@ -1648,17 +1648,17 @@ static int rp2040_epsubmit(struct usbdev_ep_s *ep,
     {
       /* Add the new request to the request queue for the OUT endpoint */
 
-      bool empty = rp2040_rqempty(privep);
+      bool empty = j721e_rqempty(privep);
 
       privep->txnullpkt = 0;
-      rp2040_rqenqueue(privep, privreq);
+      j721e_rqenqueue(privep, privreq);
       usbtrace(TRACE_OUTREQQUEUED(privep->epphy), privreq->req.len);
 
       /* This there a incoming data pending the availability of a request? */
 
       if (empty)
         {
-          ret = rp2040_rdrequest(privep);
+          ret = j721e_rdrequest(privep);
         }
     }
 
@@ -1667,23 +1667,23 @@ static int rp2040_epsubmit(struct usbdev_ep_s *ep,
 }
 
 /****************************************************************************
- * Name: rp2040_epcancel
+ * Name: j721e_epcancel
  *
  * Description:
  *   Cancel an I/O request previously sent to an endpoint
  *
  ****************************************************************************/
 
-static int rp2040_epcancel(struct usbdev_ep_s *ep,
+static int j721e_epcancel(struct usbdev_ep_s *ep,
                            struct usbdev_req_s *req)
 {
-  struct rp2040_ep_s *privep = (struct rp2040_ep_s *)ep;
+  struct j721e_ep_s *privep = (struct j721e_ep_s *)ep;
   irqstate_t flags;
 
 #ifdef CONFIG_DEBUG_FEATURES
   if (!ep || !req)
     {
-      usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_INVALIDPARMS), 0);
+      usbtrace(TRACE_DEVERROR(J721E_TRACEERR_INVALIDPARMS), 0);
       return -EINVAL;
     }
 #endif
@@ -1693,22 +1693,22 @@ static int rp2040_epcancel(struct usbdev_ep_s *ep,
   /* Remove request from req_queue */
 
   flags = enter_critical_section();
-  rp2040_cancelrequests(privep);
+  j721e_cancelrequests(privep);
   leave_critical_section(flags);
   return OK;
 }
 
 /****************************************************************************
- * Name: rp2040_epstall_exec
+ * Name: j721e_epstall_exec
  *
  * Description:
  *   Stall endpoint immediately
  *
  ****************************************************************************/
 
-static int rp2040_epstall_exec(struct usbdev_ep_s *ep)
+static int j721e_epstall_exec(struct usbdev_ep_s *ep)
 {
-  struct rp2040_ep_s *privep = (struct rp2040_ep_s *)ep;
+  struct j721e_ep_s *privep = (struct j721e_ep_s *)ep;
   irqstate_t flags;
 
   usbtrace(TRACE_EPSTALL, privep->epphy);
@@ -1718,14 +1718,14 @@ static int rp2040_epstall_exec(struct usbdev_ep_s *ep)
   if (privep->epphy == 0)
     {
       setbits_reg32(privep->in ?
-                     RP2040_USBCTRL_REGS_EP_STALL_ARM_EP0_IN :
-                     RP2040_USBCTRL_REGS_EP_STALL_ARM_EP0_OUT,
-                    RP2040_USBCTRL_REGS_EP_STALL_ARM);
+                     J721E_USBCTRL_REGS_EP_STALL_ARM_EP0_IN :
+                     J721E_USBCTRL_REGS_EP_STALL_ARM_EP0_OUT,
+                    J721E_USBCTRL_REGS_EP_STALL_ARM);
     }
 
-  rp2040_update_buffer_control(privep,
+  j721e_update_buffer_control(privep,
                     0,
-                    RP2040_USBCTRL_DPSRAM_EP_BUFF_CTRL_STALL);
+                    J721E_USBCTRL_DPSRAM_EP_BUFF_CTRL_STALL);
 
   privep->pending_stall = false;
 
@@ -1734,17 +1734,17 @@ static int rp2040_epstall_exec(struct usbdev_ep_s *ep)
 }
 
 /****************************************************************************
- * Name: rp2040_epstall
+ * Name: j721e_epstall
  *
  * Description:
  *   Stall or resume and endpoint
  *
  ****************************************************************************/
 
-static int rp2040_epstall(struct usbdev_ep_s *ep, bool resume)
+static int j721e_epstall(struct usbdev_ep_s *ep, bool resume)
 {
-  struct rp2040_ep_s *privep = (struct rp2040_ep_s *)ep;
-  struct rp2040_usbdev_s *priv = privep->dev;
+  struct j721e_ep_s *privep = (struct j721e_ep_s *)ep;
+  struct j721e_usbdev_s *priv = privep->dev;
   irqstate_t flags;
 
   flags = spin_lock_irqsave(NULL);
@@ -1756,23 +1756,23 @@ static int rp2040_epstall(struct usbdev_ep_s *ep, bool resume)
       if (privep->epphy == 0)
         {
           clrbits_reg32(privep->in ?
-                         RP2040_USBCTRL_REGS_EP_STALL_ARM_EP0_IN :
-                         RP2040_USBCTRL_REGS_EP_STALL_ARM_EP0_OUT,
-                        RP2040_USBCTRL_REGS_EP_STALL_ARM);
+                         J721E_USBCTRL_REGS_EP_STALL_ARM_EP0_IN :
+                         J721E_USBCTRL_REGS_EP_STALL_ARM_EP0_OUT,
+                        J721E_USBCTRL_REGS_EP_STALL_ARM);
         }
 
-      rp2040_update_buffer_control(privep,
-                        ~(RP2040_USBCTRL_DPSRAM_EP_BUFF_CTRL_STALL),
+      j721e_update_buffer_control(privep,
+                        ~(J721E_USBCTRL_DPSRAM_EP_BUFF_CTRL_STALL),
                         0);
 
       privep->next_pid = 0;
-      priv->zlp_stat = RP2040_ZLP_NONE;
+      priv->zlp_stat = J721E_ZLP_NONE;
     }
   else
     {
       privep->stalled = true;
 
-      if (privep->epphy == 0 && !rp2040_rqempty(privep))
+      if (privep->epphy == 0 && !j721e_rqempty(privep))
         {
           /* EP0 IN Transfer ongoing : postpone the stall until the end */
 
@@ -1782,10 +1782,10 @@ static int rp2040_epstall(struct usbdev_ep_s *ep, bool resume)
         {
           /* Stall immediately */
 
-          rp2040_epstall_exec(ep);
+          j721e_epstall_exec(ep);
         }
 
-      priv->zlp_stat = RP2040_ZLP_NONE;
+      priv->zlp_stat = J721E_ZLP_NONE;
     }
 
   spin_unlock_irqrestore(NULL, flags);
@@ -1798,7 +1798,7 @@ static int rp2040_epstall(struct usbdev_ep_s *ep, bool resume)
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_allocep
+ * Name: j721e_allocep
  *
  * Description:
  *   Allocate an endpoint matching the parameters
@@ -1816,12 +1816,12 @@ static int rp2040_epstall(struct usbdev_ep_s *ep, bool resume)
  *
  ****************************************************************************/
 
-static struct usbdev_ep_s *rp2040_allocep(struct usbdev_s *dev,
+static struct usbdev_ep_s *j721e_allocep(struct usbdev_s *dev,
                                           uint8_t eplog, bool in,
                                           uint8_t eptype)
 {
-  struct rp2040_usbdev_s *priv = (struct rp2040_usbdev_s *)dev;
-  struct rp2040_ep_s *privep;
+  struct j721e_usbdev_s *priv = (struct j721e_usbdev_s *)dev;
+  struct j721e_ep_s *privep;
   int epphy;
   int epindex;
   int dpindex;
@@ -1831,8 +1831,8 @@ static struct usbdev_ep_s *rp2040_allocep(struct usbdev_s *dev,
   /* Ignore any direction bits in the logical address */
 
   epphy = USB_EPNO(eplog);
-  epindex = RP2040_EPINDEX(eplog);
-  dpindex = RP2040_DPINDEX(eplog);
+  epindex = J721E_EPINDEX(eplog);
+  dpindex = J721E_DPINDEX(eplog);
 
   if ((priv->used & 1 << epphy) && (epphy != 0))
     {
@@ -1850,34 +1850,34 @@ static struct usbdev_ep_s *rp2040_allocep(struct usbdev_s *dev,
 
   privep->next_pid = 0;
   privep->stalled = false;
-  privep->buf_ctrl = RP2040_USBCTRL_DPSRAM_EP_BUF_CTRL(dpindex);
+  privep->buf_ctrl = J721E_USBCTRL_DPSRAM_EP_BUF_CTRL(dpindex);
 
   if (epphy == 0)
     {
-      privep->data_buf = (uint8_t *)RP2040_USBCTRL_DPSRAM_EP0_BUF_0;
+      privep->data_buf = (uint8_t *)J721E_USBCTRL_DPSRAM_EP0_BUF_0;
       privep->ep_ctrl = 0;
     }
   else
     {
-      privep->ep_ctrl = RP2040_USBCTRL_DPSRAM_EP_CTRL(dpindex);
+      privep->ep_ctrl = J721E_USBCTRL_DPSRAM_EP_CTRL(dpindex);
     }
 
   return &privep->ep;
 }
 
 /****************************************************************************
- * Name: rp2040_freeep
+ * Name: j721e_freeep
  *
  * Description:
  *   Free the previously allocated endpoint
  *
  ****************************************************************************/
 
-static void rp2040_freeep(struct usbdev_s *dev,
+static void j721e_freeep(struct usbdev_s *dev,
                           struct usbdev_ep_s *ep)
 {
-  struct rp2040_usbdev_s *priv = (struct rp2040_usbdev_s *)dev;
-  struct rp2040_ep_s *privep = (struct rp2040_ep_s *)ep;
+  struct j721e_usbdev_s *priv = (struct j721e_usbdev_s *)dev;
+  struct j721e_ep_s *privep = (struct j721e_ep_s *)ep;
 
   usbtrace(TRACE_DEVFREEEP, (uint16_t)privep->epphy);
 
@@ -1885,65 +1885,65 @@ static void rp2040_freeep(struct usbdev_s *dev,
 }
 
 /****************************************************************************
- * Name: rp2040_getframe
+ * Name: j721e_getframe
  *
  * Description:
  *   Returns the current frame number
  *
  ****************************************************************************/
 
-static int rp2040_getframe(struct usbdev_s *dev)
+static int j721e_getframe(struct usbdev_s *dev)
 {
   usbtrace(TRACE_DEVGETFRAME, 0);
 
 #ifdef CONFIG_DEBUG_FEATURES
   if (!dev)
     {
-      usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_INVALIDPARMS), 0);
+      usbtrace(TRACE_DEVERROR(J721E_TRACEERR_INVALIDPARMS), 0);
       return -ENODEV;
     }
 #endif
 
-  return (int)(getreg32(RP2040_USBCTRL_REGS_SOF_RD) &
-               RP2040_USBCTRL_REGS_SOF_RD_COUNT_MASK);
+  return (int)(getreg32(J721E_USBCTRL_REGS_SOF_RD) &
+               J721E_USBCTRL_REGS_SOF_RD_COUNT_MASK);
 }
 
 /****************************************************************************
- * Name: rp2040_wakeup
+ * Name: j721e_wakeup
  *
  * Description:
  *   Tries to wake up the host connected to this device
  *
  ****************************************************************************/
 
-static int rp2040_wakeup(struct usbdev_s *dev)
+static int j721e_wakeup(struct usbdev_s *dev)
 {
   usbtrace(TRACE_DEVWAKEUP, 0);
 
-  setbits_reg32(RP2040_USBCTRL_REGS_SIE_CTRL_RESUME,
-                RP2040_USBCTRL_REGS_SIE_CTRL);
+  setbits_reg32(J721E_USBCTRL_REGS_SIE_CTRL_RESUME,
+                J721E_USBCTRL_REGS_SIE_CTRL);
 
   return OK;
 }
 
 /****************************************************************************
- * Name: rp2040_selfpowered
+ * Name: j721e_selfpowered
  *
  * Description:
  *   Sets/clears the device selfpowered feature
  *
  ****************************************************************************/
 
-static int rp2040_selfpowered(struct usbdev_s *dev, bool selfpowered)
+static int j721e_selfpowered(struct usbdev_s *dev, bool selfpowered)
 {
-  struct rp2040_usbdev_s *priv = (struct rp2040_usbdev_s *)dev;
+  struct j721e_usbdev_s *priv = (struct j721e_usbdev_s *)dev;
 
   usbtrace(TRACE_DEVSELFPOWERED, (uint16_t)selfpowered);
 
 #ifdef CONFIG_DEBUG_FEATURES
   if (!dev)
     {
-      usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_INVALIDPARMS), 0);
+      usbtrace(TRACE_DEVERROR(J721E_TRACEERR_INVALIDPARMS), 0);
       return -ENODEV;
     }
 #endif
@@ -1953,26 +1953,26 @@ static int rp2040_selfpowered(struct usbdev_s *dev, bool selfpowered)
 }
 
 /****************************************************************************
- * Name: rp2040_pullup
+ * Name: j721e_pullup
  *
  * Description:
  *    Software-controlled connect to/disconnect from USB host
  *
  ****************************************************************************/
 
-static int rp2040_pullup(struct usbdev_s *dev, bool enable)
+static int j721e_pullup(struct usbdev_s *dev, bool enable)
 {
   usbtrace(TRACE_DEVPULLUP, (uint16_t)enable);
 
   if (enable)
     {
-      setbits_reg32(RP2040_USBCTRL_REGS_SIE_CTRL_PULLUP_EN,
-                    RP2040_USBCTRL_REGS_SIE_CTRL);
+      setbits_reg32(J721E_USBCTRL_REGS_SIE_CTRL_PULLUP_EN,
+                    J721E_USBCTRL_REGS_SIE_CTRL);
     }
   else
     {
-      clrbits_reg32(RP2040_USBCTRL_REGS_SIE_CTRL_PULLUP_EN,
-                    RP2040_USBCTRL_REGS_SIE_CTRL);
+      clrbits_reg32(J721E_USBCTRL_REGS_SIE_CTRL_PULLUP_EN,
+                    J721E_USBCTRL_REGS_SIE_CTRL);
     }
 
   return OK;
@@ -2002,19 +2002,19 @@ void arm_usbinitialize(void)
 
   usbtrace(TRACE_DEVINIT, 0);
 
-  putreg32(0, RP2040_USBCTRL_REGS_ADDR_ENDP);
+  putreg32(0, J721E_USBCTRL_REGS_ADDR_ENDP);
 
   /* Initialize driver instance */
 
-  memset(&g_usbdev, 0, sizeof(struct rp2040_usbdev_s));
+  memset(&g_usbdev, 0, sizeof(struct j721e_usbdev_s));
 
   g_usbdev.usbdev.ops = &g_devops;
   g_usbdev.usbdev.ep0 = &g_usbdev.eplist[0].ep;
 
   g_usbdev.dev_addr = 0;
-  g_usbdev.next_offset = RP2040_USBCTRL_DPSRAM_DATA_BUF_OFFSET;
+  g_usbdev.next_offset = J721E_USBCTRL_DPSRAM_DATA_BUF_OFFSET;
 
-  for (i = 0; i < RP2040_NENDPOINTS; i++)
+  for (i = 0; i < J721E_NENDPOINTS; i++)
     {
       g_usbdev.eplist[i].ep.ops = &g_epops;
       g_usbdev.eplist[i].ep.maxpacket = 64;
@@ -2025,10 +2025,10 @@ void arm_usbinitialize(void)
       g_usbdev.eplist[i].ep.eplog = 0;
     }
 
-  if (irq_attach(RP2040_USBCTRL_IRQ, rp2040_usbinterrupt, &g_usbdev) != 0)
+  if (irq_attach(J721E_USBCTRL_IRQ, j721e_usbinterrupt, &g_usbdev) != 0)
     {
-      usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_IRQREGISTRATION),
-               (uint16_t)RP2040_USBCTRL_IRQ);
+      usbtrace(TRACE_DEVERROR(J721E_TRACEERR_IRQREGISTRATION),
+               (uint16_t)J721E_USBCTRL_IRQ);
       return;
     }
 }
@@ -2052,13 +2052,13 @@ int usbdev_register(struct usbdevclass_driver_s *driver)
   if (!driver || !driver->ops->bind || !driver->ops->unbind ||
       !driver->ops->setup)
     {
-      usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_INVALIDPARMS), 0);
+      usbtrace(TRACE_DEVERROR(J721E_TRACEERR_INVALIDPARMS), 0);
       return -EINVAL;
     }
 
   if (g_usbdev.driver)
     {
-      usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_DRIVER), 0);
+      usbtrace(TRACE_DEVERROR(J721E_TRACEERR_DRIVER), 0);
       return -EBUSY;
     }
 #endif
@@ -2067,46 +2067,46 @@ int usbdev_register(struct usbdevclass_driver_s *driver)
 
   g_usbdev.driver = driver;
 
-  setbits_reg32(RP2040_RESETS_RESET_USBCTRL, RP2040_RESETS_RESET);
-  clrbits_reg32(RP2040_RESETS_RESET_USBCTRL, RP2040_RESETS_RESET);
+  setbits_reg32(J721E_RESETS_RESET_USBCTRL, J721E_RESETS_RESET);
+  clrbits_reg32(J721E_RESETS_RESET_USBCTRL, J721E_RESETS_RESET);
 
-  memset((void *)RP2040_USBCTRL_DPSRAM_BASE, 0, 0x1000);
+  memset((void *)J721E_USBCTRL_DPSRAM_BASE, 0, 0x1000);
 
-  putreg32(RP2040_USBCTRL_REGS_USB_MUXING_SOFTCON |
-           RP2040_USBCTRL_REGS_USB_MUXING_TO_PHY,
-           RP2040_USBCTRL_REGS_USB_MUXING);
-  putreg32(RP2040_USBCTRL_REGS_USB_PWR_VBUS_DETECT |
-           RP2040_USBCTRL_REGS_USB_PWR_VBUS_DETECT_OVERRIDE_EN,
-           RP2040_USBCTRL_REGS_USB_PWR);
+  putreg32(J721E_USBCTRL_REGS_USB_MUXING_SOFTCON |
+           J721E_USBCTRL_REGS_USB_MUXING_TO_PHY,
+           J721E_USBCTRL_REGS_USB_MUXING);
+  putreg32(J721E_USBCTRL_REGS_USB_PWR_VBUS_DETECT |
+           J721E_USBCTRL_REGS_USB_PWR_VBUS_DETECT_OVERRIDE_EN,
+           J721E_USBCTRL_REGS_USB_PWR);
 
-  rp2040_allocep(&g_usbdev.usbdev, 0x00, 0, USB_EP_ATTR_XFER_CONTROL);
-  rp2040_allocep(&g_usbdev.usbdev, 0x80, 1, USB_EP_ATTR_XFER_CONTROL);
+  j721e_allocep(&g_usbdev.usbdev, 0x00, 0, USB_EP_ATTR_XFER_CONTROL);
+  j721e_allocep(&g_usbdev.usbdev, 0x80, 1, USB_EP_ATTR_XFER_CONTROL);
 
   /* Then bind the class driver */
 
   ret = CLASS_BIND(driver, &g_usbdev.usbdev);
   if (ret)
     {
-      usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_BINDFAILED), (uint16_t)-ret);
+      usbtrace(TRACE_DEVERROR(J721E_TRACEERR_BINDFAILED), (uint16_t)-ret);
       g_usbdev.driver = NULL;
       return ret;
     }
 
   g_usbdev.usbdev.speed = USB_SPEED_FULL;
 
-  putreg32(RP2040_USBCTRL_REGS_MAIN_CTRL_CONTROLLER_EN,
-           RP2040_USBCTRL_REGS_MAIN_CTRL);
+  putreg32(J721E_USBCTRL_REGS_MAIN_CTRL_CONTROLLER_EN,
+           J721E_USBCTRL_REGS_MAIN_CTRL);
 
   /* Enable interrupt */
 
-  putreg32(RP2040_USBCTRL_REGS_SIE_CTRL_EP0_INT_1BUF,
-           RP2040_USBCTRL_REGS_SIE_CTRL);
-  putreg32(RP2040_USBCTRL_REGS_INTR_BUFF_STATUS |
-           RP2040_USBCTRL_REGS_INTR_BUS_RESET |
-           RP2040_USBCTRL_REGS_INTR_SETUP_REQ,
-           RP2040_USBCTRL_REGS_INTE);
+  putreg32(J721E_USBCTRL_REGS_SIE_CTRL_EP0_INT_1BUF,
+           J721E_USBCTRL_REGS_SIE_CTRL);
+  putreg32(J721E_USBCTRL_REGS_INTR_BUFF_STATUS |
+           J721E_USBCTRL_REGS_INTR_BUS_RESET |
+           J721E_USBCTRL_REGS_INTR_SETUP_REQ,
+           J721E_USBCTRL_REGS_INTE);
 
-  up_enable_irq(RP2040_USBCTRL_IRQ);
+  up_enable_irq(J721E_USBCTRL_IRQ);
 
   return OK;
 }
@@ -2124,13 +2124,13 @@ int usbdev_register(struct usbdevclass_driver_s *driver)
 
 int usbdev_unregister(struct usbdevclass_driver_s *driver)
 {
-  struct rp2040_usbdev_s *priv = &g_usbdev;
+  struct j721e_usbdev_s *priv = &g_usbdev;
   irqstate_t flags;
 
 #ifdef CONFIG_DEBUG_FEATURES
   if (driver != priv->driver)
     {
-      usbtrace(TRACE_DEVERROR(RP2040_TRACEERR_INVALIDPARMS), 0);
+      usbtrace(TRACE_DEVERROR(J721E_TRACEERR_INVALIDPARMS), 0);
       return -EINVAL;
     }
 #endif
@@ -2145,11 +2145,11 @@ int usbdev_unregister(struct usbdevclass_driver_s *driver)
 
   /* Disable interrupts */
 
-  up_disable_irq(RP2040_USBCTRL_IRQ);
+  up_disable_irq(J721E_USBCTRL_IRQ);
 
   /* Disconnect device */
 
-  rp2040_pullup(&priv->usbdev, false);
+  j721e_pullup(&priv->usbdev, false);
 
   /* Unhook the driver */
 

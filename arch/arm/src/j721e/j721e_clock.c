@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_clock.c
+ * arch/arm/src/j721e/j721e_clock.c
  *
  * Based upon the software originally developed by
  *   Raspberry Pi (Trading) Ltd.
@@ -52,12 +52,12 @@
 #include "arm_internal.h"
 #include "chip.h"
 
-#include "rp2040_clock.h"
-#include "rp2040_xosc.h"
-#include "rp2040_pll.h"
-#include "hardware/rp2040_clocks.h"
-#include "hardware/rp2040_resets.h"
-#include "hardware/rp2040_watchdog.h"
+#include "j721e_clock.h"
+#include "j721e_xosc.h"
+#include "j721e_pll.h"
+#include "hardware/j721e_clocks.h"
+#include "hardware/j721e_resets.h"
+#include "hardware/j721e_watchdog.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -69,7 +69,7 @@
  * Private Data
  ****************************************************************************/
 
-static uint32_t rp2040_clock_freq[RP2040_CLOCKS_NDX_MAX];
+static uint32_t j721e_clock_freq[J721E_CLOCKS_NDX_MAX];
 
 /****************************************************************************
  * Private Functions
@@ -77,35 +77,35 @@ static uint32_t rp2040_clock_freq[RP2040_CLOCKS_NDX_MAX];
 
 static inline bool has_glitchless_mux(int clk_index)
 {
-  return clk_index == RP2040_CLOCKS_NDX_SYS ||
-         clk_index == RP2040_CLOCKS_NDX_REF;
+  return clk_index == J721E_CLOCKS_NDX_SYS ||
+         clk_index == J721E_CLOCKS_NDX_REF;
 }
 
-#if defined(CONFIG_RP2040_CLK_GPOUT_ENABLE)
-static bool rp2040_clock_configure_gpout(int clk_index,
+#if defined(CONFIG_J721E_CLK_GPOUT_ENABLE)
+static bool j721e_clock_configure_gpout(int clk_index,
                                         uint32_t src,
                                         uint32_t div_int,
                                         uint32_t div_frac)
 {
-  if (clk_index > RP2040_CLOCKS_NDX_GPOUT3 ||
-      clk_index < RP2040_CLOCKS_NDX_GPOUT0 ||
-      (src >> RP2040_CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_SHIFT) > 0xa)
+  if (clk_index > J721E_CLOCKS_NDX_GPOUT3 ||
+      clk_index < J721E_CLOCKS_NDX_GPOUT0 ||
+      (src >> J721E_CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_SHIFT) > 0xa)
     {
       return false;
     }
 
-  putreg32((div_int << RP2040_CLOCKS_CLK_GPOUT0_DIV_INT_SHIFT) |
-            (div_frac & RP2040_CLOCKS_CLK_GPOUT0_DIV_FRAC_MASK),
-           (RP2040_CLOCKS_CLK_NDX_DIV(clk_index)));
-  putreg32((src << RP2040_CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_SHIFT) |
-            RP2040_CLOCKS_CLK_GPOUT0_CTRL_ENABLE,
-           (RP2040_CLOCKS_CLK_NDX_CTRL(clk_index)));
+  putreg32((div_int << J721E_CLOCKS_CLK_GPOUT0_DIV_INT_SHIFT) |
+            (div_frac & J721E_CLOCKS_CLK_GPOUT0_DIV_FRAC_MASK),
+           (J721E_CLOCKS_CLK_NDX_DIV(clk_index)));
+  putreg32((src << J721E_CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_SHIFT) |
+            J721E_CLOCKS_CLK_GPOUT0_CTRL_ENABLE,
+           (J721E_CLOCKS_CLK_NDX_CTRL(clk_index)));
 
   return true;
 }
 #endif
 
-bool rp2040_clock_configure(int clk_index,
+bool j721e_clock_configure(int clk_index,
                             uint32_t src, uint32_t auxsrc,
                             uint32_t src_freq, uint32_t freq)
 {
@@ -129,13 +129,13 @@ bool rp2040_clock_configure(int clk_index,
    * to a faster source and increasing divisor to compensate.
    */
 
-  if (div > getreg32(RP2040_CLOCKS_CLK_NDX_DIV(clk_index)))
+  if (div > getreg32(J721E_CLOCKS_CLK_NDX_DIV(clk_index)))
     {
-      putreg32(div, RP2040_CLOCKS_CLK_NDX_DIV(clk_index));
+      putreg32(div, J721E_CLOCKS_CLK_NDX_DIV(clk_index));
     }
 
   if (has_glitchless_mux(clk_index) &&
-      src == RP2040_CLOCKS_CLK_SYS_CTRL_SRC_CLKSRC_CLK_SYS_AUX)
+      src == J721E_CLOCKS_CLK_SYS_CTRL_SRC_CLKSRC_CLK_SYS_AUX)
     {
       /* If switching a glitchless slice (ref or sys) to an aux source,
        * switch away from aux *first* to avoid passing glitches when
@@ -143,9 +143,9 @@ bool rp2040_clock_configure(int clk_index,
        * Assume (!!!) glitchless source 0 is no faster than the aux source.
        */
 
-      clrbits_reg32(RP2040_CLOCKS_CLK_REF_CTRL_SRC_MASK,
-                    RP2040_CLOCKS_CLK_NDX_CTRL(clk_index));
-      while (!(getreg32(RP2040_CLOCKS_CLK_NDX_SELECTED(clk_index)) & 1u))
+      clrbits_reg32(J721E_CLOCKS_CLK_REF_CTRL_SRC_MASK,
+                    J721E_CLOCKS_CLK_NDX_CTRL(clk_index));
+      while (!(getreg32(J721E_CLOCKS_CLK_NDX_SELECTED(clk_index)) & 1u))
         ;
     }
   else
@@ -155,10 +155,10 @@ bool rp2040_clock_configure(int clk_index,
        * idea to do this on one of the glitchless clocks (clk_sys, clk_ref).
        */
 
-      clrbits_reg32(RP2040_CLOCKS_CLK_GPOUT0_CTRL_ENABLE,
-                    RP2040_CLOCKS_CLK_NDX_CTRL(clk_index));
+      clrbits_reg32(J721E_CLOCKS_CLK_GPOUT0_CTRL_ENABLE,
+                    J721E_CLOCKS_CLK_NDX_CTRL(clk_index));
 
-      if (rp2040_clock_freq[clk_index] > 0)
+      if (j721e_clock_freq[clk_index] > 0)
         {
           /* Delay for 3 cycles of the target clock, for ENABLE propagation.
            * Note XOSC_COUNT is not helpful here because XOSC is not
@@ -167,8 +167,8 @@ bool rp2040_clock_configure(int clk_index,
 
           volatile unsigned int delay_cyc;
 
-          delay_cyc = rp2040_clock_freq[RP2040_CLOCKS_NDX_SYS] /
-                      rp2040_clock_freq[clk_index] + 1;
+          delay_cyc = j721e_clock_freq[J721E_CLOCKS_NDX_SYS] /
+                      j721e_clock_freq[clk_index] + 1;
 
           while (--delay_cyc > 0);
         }
@@ -176,30 +176,30 @@ bool rp2040_clock_configure(int clk_index,
 
   /* Set aux mux first, and then glitchless mux if this clock has one */
 
-  modbits_reg32(auxsrc, RP2040_CLOCKS_CLK_SYS_CTRL_AUXSRC_MASK,
-                RP2040_CLOCKS_CLK_NDX_CTRL(clk_index));
+  modbits_reg32(auxsrc, J721E_CLOCKS_CLK_SYS_CTRL_AUXSRC_MASK,
+                J721E_CLOCKS_CLK_NDX_CTRL(clk_index));
 
   if (has_glitchless_mux(clk_index))
     {
-      modbits_reg32(src, RP2040_CLOCKS_CLK_REF_CTRL_SRC_MASK,
-                    RP2040_CLOCKS_CLK_NDX_CTRL(clk_index));
-      while (!(getreg32(RP2040_CLOCKS_CLK_NDX_SELECTED(clk_index))
+      modbits_reg32(src, J721E_CLOCKS_CLK_REF_CTRL_SRC_MASK,
+                    J721E_CLOCKS_CLK_NDX_CTRL(clk_index));
+      while (!(getreg32(J721E_CLOCKS_CLK_NDX_SELECTED(clk_index))
                & (1u << src)))
         ;
     }
 
-  setbits_reg32(RP2040_CLOCKS_CLK_GPOUT0_CTRL_ENABLE,
-                RP2040_CLOCKS_CLK_NDX_CTRL(clk_index));
+  setbits_reg32(J721E_CLOCKS_CLK_GPOUT0_CTRL_ENABLE,
+                J721E_CLOCKS_CLK_NDX_CTRL(clk_index));
 
   /* Now that the source is configured, we can trust that the user-supplied
    * divisor is a safe value.
    */
 
-  putreg32(div, RP2040_CLOCKS_CLK_NDX_DIV(clk_index));
+  putreg32(div, J721E_CLOCKS_CLK_NDX_DIV(clk_index));
 
   /* Store the configured frequency */
 
-  rp2040_clock_freq[clk_index] = freq;
+  j721e_clock_freq[clk_index] = freq;
 
   return true;
 }
@@ -208,28 +208,28 @@ void clocks_init(void)
 {
   /* Start tick in watchdog */
 
-  putreg32((BOARD_XOSC_FREQ / MHZ) | RP2040_WATCHDOG_TICK_ENABLE,
-           RP2040_WATCHDOG_TICK);
+  putreg32((BOARD_XOSC_FREQ / MHZ) | J721E_WATCHDOG_TICK_ENABLE,
+           J721E_WATCHDOG_TICK);
 
   /* Disable resus that may be enabled from previous software */
 
-  putreg32(0, RP2040_CLOCKS_CLK_SYS_RESUS_CTRL);
+  putreg32(0, J721E_CLOCKS_CLK_SYS_RESUS_CTRL);
 
   /* Enable the xosc */
 
-  rp2040_xosc_init();
+  j721e_xosc_init();
 
   /* Before we touch PLLs, switch sys and ref cleanly away from their
    * aux sources.
    */
 
-  clrbits_reg32(RP2040_CLOCKS_CLK_SYS_CTRL_SRC,
-                RP2040_CLOCKS_CLK_SYS_CTRL);
-  while (getreg32(RP2040_CLOCKS_CLK_SYS_SELECTED) != 1)
+  clrbits_reg32(J721E_CLOCKS_CLK_SYS_CTRL_SRC,
+                J721E_CLOCKS_CLK_SYS_CTRL);
+  while (getreg32(J721E_CLOCKS_CLK_SYS_SELECTED) != 1)
     ;
-  clrbits_reg32(RP2040_CLOCKS_CLK_REF_CTRL_SRC_MASK,
-                RP2040_CLOCKS_CLK_REF_CTRL);
-  while (getreg32(RP2040_CLOCKS_CLK_REF_SELECTED) != 1)
+  clrbits_reg32(J721E_CLOCKS_CLK_REF_CTRL_SRC_MASK,
+                J721E_CLOCKS_CLK_REF_CTRL);
+  while (getreg32(J721E_CLOCKS_CLK_REF_SELECTED) != 1)
     ;
 
   /* Configure PLLs
@@ -238,148 +238,148 @@ void clocks_init(void)
    * PLL USB: 12 / 1 = 12MHz * 40  = 480 MHz / 5 / 2 =  48MHz
    */
 
-  setbits_reg32(RP2040_RESETS_RESET_PLL_SYS | RP2040_RESETS_RESET_PLL_USB,
-                RP2040_RESETS_RESET);
-  clrbits_reg32(RP2040_RESETS_RESET_PLL_SYS | RP2040_RESETS_RESET_PLL_USB,
-                RP2040_RESETS_RESET);
-  while (~getreg32(RP2040_RESETS_RESET_DONE) &
-         (RP2040_RESETS_RESET_PLL_SYS | RP2040_RESETS_RESET_PLL_USB))
+  setbits_reg32(J721E_RESETS_RESET_PLL_SYS | J721E_RESETS_RESET_PLL_USB,
+                J721E_RESETS_RESET);
+  clrbits_reg32(J721E_RESETS_RESET_PLL_SYS | J721E_RESETS_RESET_PLL_USB,
+                J721E_RESETS_RESET);
+  while (~getreg32(J721E_RESETS_RESET_DONE) &
+         (J721E_RESETS_RESET_PLL_SYS | J721E_RESETS_RESET_PLL_USB))
     ;
 
-  rp2040_pll_init(RP2040_PLL_SYS_BASE, 1, 1500 * MHZ, 6, 2);
-  rp2040_pll_init(RP2040_PLL_USB_BASE, 1, 480 * MHZ, 5, 2);
+  j721e_pll_init(J721E_PLL_SYS_BASE, 1, 1500 * MHZ, 6, 2);
+  j721e_pll_init(J721E_PLL_USB_BASE, 1, 480 * MHZ, 5, 2);
 
   /* Configure clocks */
 
   /* CLK_REF = XOSC (12MHz) / 1 = 12MHz */
 
-  rp2040_clock_configure(RP2040_CLOCKS_NDX_REF,
-                         RP2040_CLOCKS_CLK_REF_CTRL_SRC_XOSC_CLKSRC,
+  j721e_clock_configure(J721E_CLOCKS_NDX_REF,
+                         J721E_CLOCKS_CLK_REF_CTRL_SRC_XOSC_CLKSRC,
                          0,
                          BOARD_XOSC_FREQ,
                          BOARD_REF_FREQ);
 
   /* CLK SYS = PLL SYS (125MHz) / 1 = 125MHz */
 
-  rp2040_clock_configure(RP2040_CLOCKS_NDX_SYS,
-                         RP2040_CLOCKS_CLK_SYS_CTRL_SRC_CLKSRC_CLK_SYS_AUX,
-                         RP2040_CLOCKS_CLK_SYS_CTRL_AUXSRC_CLKSRC_PLL_SYS,
+  j721e_clock_configure(J721E_CLOCKS_NDX_SYS,
+                         J721E_CLOCKS_CLK_SYS_CTRL_SRC_CLKSRC_CLK_SYS_AUX,
+                         J721E_CLOCKS_CLK_SYS_CTRL_AUXSRC_CLKSRC_PLL_SYS,
                          BOARD_PLL_SYS_FREQ,
                          BOARD_SYS_FREQ);
 
   /* CLK USB = PLL USB (48MHz) / 1 = 48MHz */
 
-  rp2040_clock_configure(RP2040_CLOCKS_NDX_USB,
+  j721e_clock_configure(J721E_CLOCKS_NDX_USB,
                          0,
-                         RP2040_CLOCKS_CLK_USB_CTRL_AUXSRC_CLKSRC_PLL_USB,
+                         J721E_CLOCKS_CLK_USB_CTRL_AUXSRC_CLKSRC_PLL_USB,
                          BOARD_PLL_USB_FREQ,
                          BOARD_USB_FREQ);
 
   /* CLK ADC = PLL USB (48MHZ) / 1 = 48MHz */
 
-  rp2040_clock_configure(RP2040_CLOCKS_NDX_ADC,
+  j721e_clock_configure(J721E_CLOCKS_NDX_ADC,
                          0,
-                         RP2040_CLOCKS_CLK_ADC_CTRL_AUXSRC_CLKSRC_PLL_USB,
+                         J721E_CLOCKS_CLK_ADC_CTRL_AUXSRC_CLKSRC_PLL_USB,
                          BOARD_PLL_USB_FREQ,
                          BOARD_ADC_FREQ);
 
   /* CLK RTC = PLL USB (48MHz) / 1024 = 46875Hz */
 
-  rp2040_clock_configure(RP2040_CLOCKS_NDX_RTC,
+  j721e_clock_configure(J721E_CLOCKS_NDX_RTC,
                          0,
-                         RP2040_CLOCKS_CLK_RTC_CTRL_AUXSRC_CLKSRC_PLL_USB,
+                         J721E_CLOCKS_CLK_RTC_CTRL_AUXSRC_CLKSRC_PLL_USB,
                          BOARD_PLL_USB_FREQ,
                          BOARD_RTC_FREQ);
 
   /* CLK PERI = clk_sys. */
 
-  rp2040_clock_configure(RP2040_CLOCKS_NDX_PERI,
+  j721e_clock_configure(J721E_CLOCKS_NDX_PERI,
                          0,
-                         RP2040_CLOCKS_CLK_PERI_CTRL_AUXSRC_CLK_SYS,
+                         J721E_CLOCKS_CLK_PERI_CTRL_AUXSRC_CLK_SYS,
                          BOARD_SYS_FREQ,
                          BOARD_PERI_FREQ);
 
-#if defined(CONFIG_RP2040_CLK_GPOUT_ENABLE)
+#if defined(CONFIG_J721E_CLK_GPOUT_ENABLE)
   uint32_t src;
 
-  #if defined(CONFIG_RP2040_CLK_GPOUT0)
-    #if defined(CONFIG_RP2040_CLK_GPOUT0_SRC_REF)
-      src = RP2040_CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_CLK_REF;
-    #elif defined(CONFIG_RP2040_CLK_GPOUT0_SRC_SYS)
-      src = RP2040_CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_CLK_SYS;
-    #elif defined(CONFIG_RP2040_CLK_GPOUT0_SRC_USB)
-      src = RP2040_CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_CLK_USB;
-    #elif defined(CONFIG_RP2040_CLK_GPOUT0_SRC_ADC)
-      src = RP2040_CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_CLK_ADC;
-    #elif defined(CONFIG_RP2040_CLK_GPOUT0_SRC_RTC)
-      src = RP2040_CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_CLK_RTC;
+  #if defined(CONFIG_J721E_CLK_GPOUT0)
+    #if defined(CONFIG_J721E_CLK_GPOUT0_SRC_REF)
+      src = J721E_CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_CLK_REF;
+    #elif defined(CONFIG_J721E_CLK_GPOUT0_SRC_SYS)
+      src = J721E_CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_CLK_SYS;
+    #elif defined(CONFIG_J721E_CLK_GPOUT0_SRC_USB)
+      src = J721E_CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_CLK_USB;
+    #elif defined(CONFIG_J721E_CLK_GPOUT0_SRC_ADC)
+      src = J721E_CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_CLK_ADC;
+    #elif defined(CONFIG_J721E_CLK_GPOUT0_SRC_RTC)
+      src = J721E_CLOCKS_CLK_GPOUT0_CTRL_AUXSRC_CLK_RTC;
     #else
       src = 0;
     #endif
-    rp2040_clock_configure_gpout(RP2040_CLOCKS_NDX_GPOUT0,
+    j721e_clock_configure_gpout(J721E_CLOCKS_NDX_GPOUT0,
                                  src,
-                                 CONFIG_RP2040_CLK_GPOUT0_DIVINT,
-                                 CONFIG_RP2040_CLK_GPOUT0_DIVFRAC);
+                                 CONFIG_J721E_CLK_GPOUT0_DIVINT,
+                                 CONFIG_J721E_CLK_GPOUT0_DIVFRAC);
   #endif
 
-  #if defined(CONFIG_RP2040_CLK_GPOUT1)
-    #if defined(CONFIG_RP2040_CLK_GPOUT1_SRC_REF)
-      src = RP2040_CLOCKS_CLK_GPOUT1_CTRL_AUXSRC_CLK_REF;
-    #elif defined(CONFIG_RP2040_CLK_GPOUT1_SRC_SYS)
-      src = RP2040_CLOCKS_CLK_GPOUT1_CTRL_AUXSRC_CLK_SYS;
-    #elif defined(CONFIG_RP2040_CLK_GPOUT1_SRC_USB)
-      src = RP2040_CLOCKS_CLK_GPOUT1_CTRL_AUXSRC_CLK_USB;
-    #elif defined(CONFIG_RP2040_CLK_GPOUT1_SRC_ADC)
-      src = RP2040_CLOCKS_CLK_GPOUT1_CTRL_AUXSRC_CLK_ADC;
-    #elif defined(CONFIG_RP2040_CLK_GPOUT1_SRC_RTC)
-      src = RP2040_CLOCKS_CLK_GPOUT1_CTRL_AUXSRC_CLK_RTC;
+  #if defined(CONFIG_J721E_CLK_GPOUT1)
+    #if defined(CONFIG_J721E_CLK_GPOUT1_SRC_REF)
+      src = J721E_CLOCKS_CLK_GPOUT1_CTRL_AUXSRC_CLK_REF;
+    #elif defined(CONFIG_J721E_CLK_GPOUT1_SRC_SYS)
+      src = J721E_CLOCKS_CLK_GPOUT1_CTRL_AUXSRC_CLK_SYS;
+    #elif defined(CONFIG_J721E_CLK_GPOUT1_SRC_USB)
+      src = J721E_CLOCKS_CLK_GPOUT1_CTRL_AUXSRC_CLK_USB;
+    #elif defined(CONFIG_J721E_CLK_GPOUT1_SRC_ADC)
+      src = J721E_CLOCKS_CLK_GPOUT1_CTRL_AUXSRC_CLK_ADC;
+    #elif defined(CONFIG_J721E_CLK_GPOUT1_SRC_RTC)
+      src = J721E_CLOCKS_CLK_GPOUT1_CTRL_AUXSRC_CLK_RTC;
     #else
       src = 0;
     #endif
-    rp2040_clock_configure_gpout(RP2040_CLOCKS_NDX_GPOUT1,
+    j721e_clock_configure_gpout(J721E_CLOCKS_NDX_GPOUT1,
                                  src,
-                                 CONFIG_RP2040_CLK_GPOUT1_DIVINT,
-                                 CONFIG_RP2040_CLK_GPOUT1_DIVFRAC);
+                                 CONFIG_J721E_CLK_GPOUT1_DIVINT,
+                                 CONFIG_J721E_CLK_GPOUT1_DIVFRAC);
   #endif
 
-  #if defined(CONFIG_RP2040_CLK_GPOUT2)
-    #if defined(CONFIG_RP2040_CLK_GPOUT2_SRC_REF)
-      src = RP2040_CLOCKS_CLK_GPOUT2_CTRL_AUXSRC_CLK_REF;
-    #elif defined(CONFIG_RP2040_CLK_GPOUT2_SRC_SYS)
-      src = RP2040_CLOCKS_CLK_GPOUT2_CTRL_AUXSRC_CLK_SYS;
-    #elif defined(CONFIG_RP2040_CLK_GPOUT2_SRC_USB)
-      src = RP2040_CLOCKS_CLK_GPOUT2_CTRL_AUXSRC_CLK_USB;
-    #elif defined(CONFIG_RP2040_CLK_GPOUT2_SRC_ADC)
-      src = RP2040_CLOCKS_CLK_GPOUT2_CTRL_AUXSRC_CLK_ADC;
-    #elif defined(CONFIG_RP2040_CLK_GPOUT2_SRC_RTC)
-      src = RP2040_CLOCKS_CLK_GPOUT2_CTRL_AUXSRC_CLK_RTC;
+  #if defined(CONFIG_J721E_CLK_GPOUT2)
+    #if defined(CONFIG_J721E_CLK_GPOUT2_SRC_REF)
+      src = J721E_CLOCKS_CLK_GPOUT2_CTRL_AUXSRC_CLK_REF;
+    #elif defined(CONFIG_J721E_CLK_GPOUT2_SRC_SYS)
+      src = J721E_CLOCKS_CLK_GPOUT2_CTRL_AUXSRC_CLK_SYS;
+    #elif defined(CONFIG_J721E_CLK_GPOUT2_SRC_USB)
+      src = J721E_CLOCKS_CLK_GPOUT2_CTRL_AUXSRC_CLK_USB;
+    #elif defined(CONFIG_J721E_CLK_GPOUT2_SRC_ADC)
+      src = J721E_CLOCKS_CLK_GPOUT2_CTRL_AUXSRC_CLK_ADC;
+    #elif defined(CONFIG_J721E_CLK_GPOUT2_SRC_RTC)
+      src = J721E_CLOCKS_CLK_GPOUT2_CTRL_AUXSRC_CLK_RTC;
     #else
       src = 0;
     #endif
-    rp2040_clock_configure_gpout(RP2040_CLOCKS_NDX_GPOUT2,
+    j721e_clock_configure_gpout(J721E_CLOCKS_NDX_GPOUT2,
                                  src,
-                                 CONFIG_RP2040_CLK_GPOUT2_DIVINT,
-                                 CONFIG_RP2040_CLK_GPOUT2_DIVFRAC);
+                                 CONFIG_J721E_CLK_GPOUT2_DIVINT,
+                                 CONFIG_J721E_CLK_GPOUT2_DIVFRAC);
   #endif
 
-  #if defined(CONFIG_RP2040_CLK_GPOUT3)
-    #if defined(CONFIG_RP2040_CLK_GPOUT3_SRC_REF)
-      src = RP2040_CLOCKS_CLK_GPOUT3_CTRL_AUXSRC_CLK_REF;
-    #elif defined(CONFIG_RP2040_CLK_GPOUT3_SRC_SYS)
-      src = RP2040_CLOCKS_CLK_GPOUT3_CTRL_AUXSRC_CLK_SYS;
-    #elif defined(CONFIG_RP2040_CLK_GPOUT3_SRC_USB)
-      src = RP2040_CLOCKS_CLK_GPOUT3_CTRL_AUXSRC_CLK_USB;
-    #elif defined(CONFIG_RP2040_CLK_GPOUT3_SRC_ADC)
-      src = RP2040_CLOCKS_CLK_GPOUT3_CTRL_AUXSRC_CLK_ADC;
-    #elif defined(CONFIG_RP2040_CLK_GPOUT3_SRC_RTC)
-      src = RP2040_CLOCKS_CLK_GPOUT3_CTRL_AUXSRC_CLK_RTC;
+  #if defined(CONFIG_J721E_CLK_GPOUT3)
+    #if defined(CONFIG_J721E_CLK_GPOUT3_SRC_REF)
+      src = J721E_CLOCKS_CLK_GPOUT3_CTRL_AUXSRC_CLK_REF;
+    #elif defined(CONFIG_J721E_CLK_GPOUT3_SRC_SYS)
+      src = J721E_CLOCKS_CLK_GPOUT3_CTRL_AUXSRC_CLK_SYS;
+    #elif defined(CONFIG_J721E_CLK_GPOUT3_SRC_USB)
+      src = J721E_CLOCKS_CLK_GPOUT3_CTRL_AUXSRC_CLK_USB;
+    #elif defined(CONFIG_J721E_CLK_GPOUT3_SRC_ADC)
+      src = J721E_CLOCKS_CLK_GPOUT3_CTRL_AUXSRC_CLK_ADC;
+    #elif defined(CONFIG_J721E_CLK_GPOUT3_SRC_RTC)
+      src = J721E_CLOCKS_CLK_GPOUT3_CTRL_AUXSRC_CLK_RTC;
     #else
       src = 0;
     #endif
-    rp2040_clock_configure_gpout(RP2040_CLOCKS_NDX_GPOUT3,
+    j721e_clock_configure_gpout(J721E_CLOCKS_NDX_GPOUT3,
                                  src,
-                                 CONFIG_RP2040_CLK_GPOUT3_DIVINT,
-                                 CONFIG_RP2040_CLK_GPOUT3_DIVFRAC);
+                                 CONFIG_J721E_CLK_GPOUT3_DIVINT,
+                                 CONFIG_J721E_CLK_GPOUT3_DIVFRAC);
   #endif
 
 #endif
@@ -390,7 +390,7 @@ void clocks_init(void)
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_clockconfig
+ * Name: j721e_clockconfig
  *
  * Description:
  *   Called to establish the clock settings based on the values in board.h.
@@ -403,7 +403,7 @@ void clocks_init(void)
  *
  ****************************************************************************/
 
-void rp2040_clockconfig(void)
+void j721e_clockconfig(void)
 {
   /* Reset all peripherals to put system into a known state,
    * - except for QSPI pads and the XIP IO bank, as this is fatal if running
@@ -412,33 +412,33 @@ void rp2040_clockconfig(void)
    *   this boot
    */
 
-  setbits_reg32(RESETS_RESET_BITS & ~(RP2040_RESETS_RESET_IO_QSPI |
-                                      RP2040_RESETS_RESET_PADS_QSPI |
-                                      RP2040_RESETS_RESET_PLL_USB |
-                                      RP2040_RESETS_RESET_PLL_SYS),
-                RP2040_RESETS_RESET);
+  setbits_reg32(RESETS_RESET_BITS & ~(J721E_RESETS_RESET_IO_QSPI |
+                                      J721E_RESETS_RESET_PADS_QSPI |
+                                      J721E_RESETS_RESET_PLL_USB |
+                                      J721E_RESETS_RESET_PLL_SYS),
+                J721E_RESETS_RESET);
 
   /* Remove reset from peripherals which are clocked only by clk_sys and
    * clk_ref. Other peripherals stay in reset until we've configured clocks.
    */
 
-  clrbits_reg32(RESETS_RESET_BITS & ~(RP2040_RESETS_RESET_ADC |
-                                      RP2040_RESETS_RESET_RTC |
-                                      RP2040_RESETS_RESET_SPI0 |
-                                      RP2040_RESETS_RESET_SPI1 |
-                                      RP2040_RESETS_RESET_UART0 |
-                                      RP2040_RESETS_RESET_UART1 |
-                                      RP2040_RESETS_RESET_USBCTRL),
-                RP2040_RESETS_RESET);
+  clrbits_reg32(RESETS_RESET_BITS & ~(J721E_RESETS_RESET_ADC |
+                                      J721E_RESETS_RESET_RTC |
+                                      J721E_RESETS_RESET_SPI0 |
+                                      J721E_RESETS_RESET_SPI1 |
+                                      J721E_RESETS_RESET_UART0 |
+                                      J721E_RESETS_RESET_UART1 |
+                                      J721E_RESETS_RESET_USBCTRL),
+                J721E_RESETS_RESET);
 
-  while (~getreg32(RP2040_RESETS_RESET_DONE) &
-         (RESETS_RESET_BITS & ~(RP2040_RESETS_RESET_ADC |
-                                RP2040_RESETS_RESET_RTC |
-                                RP2040_RESETS_RESET_SPI0 |
-                                RP2040_RESETS_RESET_SPI1 |
-                                RP2040_RESETS_RESET_UART0 |
-                                RP2040_RESETS_RESET_UART1 |
-                                RP2040_RESETS_RESET_USBCTRL)))
+  while (~getreg32(J721E_RESETS_RESET_DONE) &
+         (RESETS_RESET_BITS & ~(J721E_RESETS_RESET_ADC |
+                                J721E_RESETS_RESET_RTC |
+                                J721E_RESETS_RESET_SPI0 |
+                                J721E_RESETS_RESET_SPI1 |
+                                J721E_RESETS_RESET_UART0 |
+                                J721E_RESETS_RESET_UART1 |
+                                J721E_RESETS_RESET_USBCTRL)))
     ;
 
   /* After calling preinit we have enough runtime to do the exciting maths
@@ -449,7 +449,7 @@ void rp2040_clockconfig(void)
 
   /* Peripheral clocks should now all be running */
 
-  clrbits_reg32(RESETS_RESET_BITS, RP2040_RESETS_RESET);
-  while (~getreg32(RP2040_RESETS_RESET_DONE) & RESETS_RESET_BITS)
+  clrbits_reg32(RESETS_RESET_BITS, J721E_RESETS_RESET);
+  while (~getreg32(J721E_RESETS_RESET_DONE) & RESETS_RESET_BITS)
     ;
 }

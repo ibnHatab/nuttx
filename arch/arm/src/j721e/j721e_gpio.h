@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_gpio.h
+ * arch/arm/src/j721e/j721e_gpio.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_ARM_SRC_RP2040_RP2040_GPIO_H
-#define __ARCH_ARM_SRC_RP2040_RP2040_GPIO_H
+#ifndef __ARCH_ARM_SRC_J721E_J721E_GPIO_H
+#define __ARCH_ARM_SRC_J721E_J721E_GPIO_H
 
 /****************************************************************************
  * Included Files
@@ -31,43 +31,43 @@
 #include <assert.h>
 #include <debug.h>
 
-#include "hardware/rp2040_sio.h"
-#include "hardware/rp2040_io_bank0.h"
-#include "hardware/rp2040_pads_bank0.h"
+#include "hardware/j721e_sio.h"
+#include "hardware/j721e_io_bank0.h"
+#include "hardware/j721e_pads_bank0.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define RP2040_GPIO_NUM    30       /* Number of GPIO pins */
+#define J721E_GPIO_NUM    30       /* Number of GPIO pins */
 
 /* GPIO function types ******************************************************/
 
-#define RP2040_GPIO_FUNC_JTAG       RP2040_IO_BANK0_GPIO_CTRL_FUNCSEL_JTAG
-#define RP2040_GPIO_FUNC_SPI        RP2040_IO_BANK0_GPIO_CTRL_FUNCSEL_SPI
-#define RP2040_GPIO_FUNC_UART       RP2040_IO_BANK0_GPIO_CTRL_FUNCSEL_UART
-#define RP2040_GPIO_FUNC_I2C        RP2040_IO_BANK0_GPIO_CTRL_FUNCSEL_I2C
-#define RP2040_GPIO_FUNC_PWM        RP2040_IO_BANK0_GPIO_CTRL_FUNCSEL_PWM
-#define RP2040_GPIO_FUNC_SIO        RP2040_IO_BANK0_GPIO_CTRL_FUNCSEL_SIO
-#define RP2040_GPIO_FUNC_PIO0       RP2040_IO_BANK0_GPIO_CTRL_FUNCSEL_PIO0
-#define RP2040_GPIO_FUNC_PIO1       RP2040_IO_BANK0_GPIO_CTRL_FUNCSEL_PIO1
-#define RP2040_GPIO_FUNC_CLOCKS     RP2040_IO_BANK0_GPIO_CTRL_FUNCSEL_CLOCKS
-#define RP2040_GPIO_FUNC_USB        RP2040_IO_BANK0_GPIO_CTRL_FUNCSEL_USB
-#define RP2040_GPIO_FUNC_NULL       RP2040_IO_BANK0_GPIO_CTRL_FUNCSEL_NULL
+#define J721E_GPIO_FUNC_JTAG       J721E_IO_BANK0_GPIO_CTRL_FUNCSEL_JTAG
+#define J721E_GPIO_FUNC_SPI        J721E_IO_BANK0_GPIO_CTRL_FUNCSEL_SPI
+#define J721E_GPIO_FUNC_UART       J721E_IO_BANK0_GPIO_CTRL_FUNCSEL_UART
+#define J721E_GPIO_FUNC_I2C        J721E_IO_BANK0_GPIO_CTRL_FUNCSEL_I2C
+#define J721E_GPIO_FUNC_PWM        J721E_IO_BANK0_GPIO_CTRL_FUNCSEL_PWM
+#define J721E_GPIO_FUNC_SIO        J721E_IO_BANK0_GPIO_CTRL_FUNCSEL_SIO
+#define J721E_GPIO_FUNC_PIO0       J721E_IO_BANK0_GPIO_CTRL_FUNCSEL_PIO0
+#define J721E_GPIO_FUNC_PIO1       J721E_IO_BANK0_GPIO_CTRL_FUNCSEL_PIO1
+#define J721E_GPIO_FUNC_CLOCKS     J721E_IO_BANK0_GPIO_CTRL_FUNCSEL_CLOCKS
+#define J721E_GPIO_FUNC_USB        J721E_IO_BANK0_GPIO_CTRL_FUNCSEL_USB
+#define J721E_GPIO_FUNC_NULL       J721E_IO_BANK0_GPIO_CTRL_FUNCSEL_NULL
 
 /* GPIO function pins *******************************************************/
 
-#define RP2040_GPIO_PIN_CLK_GPOUT0  (21)
-#define RP2040_GPIO_PIN_CLK_GPOUT1  (23)
-#define RP2040_GPIO_PIN_CLK_GPOUT2  (24)
-#define RP2040_GPIO_PIN_CLK_GPOUT3  (25)
+#define J721E_GPIO_PIN_CLK_GPOUT0  (21)
+#define J721E_GPIO_PIN_CLK_GPOUT1  (23)
+#define J721E_GPIO_PIN_CLK_GPOUT2  (24)
+#define J721E_GPIO_PIN_CLK_GPOUT3  (25)
 
 /* GPIO interrupt modes *****************************************************/
 
-#define RP2040_GPIO_INTR_LEVEL_LOW  0
-#define RP2040_GPIO_INTR_LEVEL_HIGH 1
-#define RP2040_GPIO_INTR_EDGE_LOW   2
-#define RP2040_GPIO_INTR_EDGE_HIGH  3
+#define J721E_GPIO_INTR_LEVEL_LOW  0
+#define J721E_GPIO_INTR_LEVEL_HIGH 1
+#define J721E_GPIO_INTR_EDGE_LOW   2
+#define J721E_GPIO_INTR_EDGE_HIGH  3
 
 /****************************************************************************
  * Public Types
@@ -92,99 +92,99 @@ extern "C"
  * Inline Functions
  ****************************************************************************/
 
-static inline void rp2040_gpio_put(uint32_t gpio, int set)
+static inline void j721e_gpio_put(uint32_t gpio, int set)
 {
   uint32_t value = 1 << gpio;
 
-  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
+  DEBUGASSERT(gpio < J721E_GPIO_NUM);
 
   if (set)
     {
-      putreg32(value, RP2040_SIO_GPIO_OUT_SET);
+      putreg32(value, J721E_SIO_GPIO_OUT_SET);
     }
   else
     {
-      putreg32(value, RP2040_SIO_GPIO_OUT_CLR);
+      putreg32(value, J721E_SIO_GPIO_OUT_CLR);
     }
 }
 
-static inline bool rp2040_gpio_get(uint32_t gpio)
+static inline bool j721e_gpio_get(uint32_t gpio)
 {
   uint32_t value = 1 << gpio;
 
-  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
+  DEBUGASSERT(gpio < J721E_GPIO_NUM);
 
-  return (getreg32(RP2040_SIO_GPIO_IN) & value) != 0;
+  return (getreg32(J721E_SIO_GPIO_IN) & value) != 0;
 }
 
-static inline void rp2040_gpio_setdir(uint32_t gpio, int out)
+static inline void j721e_gpio_setdir(uint32_t gpio, int out)
 {
   uint32_t value = 1 << gpio;
 
-  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
+  DEBUGASSERT(gpio < J721E_GPIO_NUM);
 
   if (out)
     {
-      putreg32(value, RP2040_SIO_GPIO_OE_SET);
+      putreg32(value, J721E_SIO_GPIO_OE_SET);
     }
   else
     {
-      putreg32(value, RP2040_SIO_GPIO_OE_CLR);
+      putreg32(value, J721E_SIO_GPIO_OE_CLR);
     }
 }
 
 /****************************************************************************
- * Name: rp2040_gpio_set_input_hysteresis_enabled
+ * Name: j721e_gpio_set_input_hysteresis_enabled
  *
  * Description:
  *   Set whether the pin's input hysteresis will be enabled.
  *
  ****************************************************************************/
 
-static inline void rp2040_gpio_set_input_hysteresis_enabled(uint32_t gpio,
+static inline void j721e_gpio_set_input_hysteresis_enabled(uint32_t gpio,
                                                             bool enabled)
 {
-  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
+  DEBUGASSERT(gpio < J721E_GPIO_NUM);
 
-  modbits_reg32(enabled ? RP2040_PADS_BANK0_GPIO_SCHMITT : 0,
-                RP2040_PADS_BANK0_GPIO_SCHMITT,
-                RP2040_PADS_BANK0_GPIO(gpio));
+  modbits_reg32(enabled ? J721E_PADS_BANK0_GPIO_SCHMITT : 0,
+                J721E_PADS_BANK0_GPIO_SCHMITT,
+                J721E_PADS_BANK0_GPIO(gpio));
 }
 
 /****************************************************************************
- * Name: rp2040_gpio_set_slew_fast
+ * Name: j721e_gpio_set_slew_fast
  *
  * Description:
  *   Set whether the pin's fast slew rate will be enabled.
  *
  ****************************************************************************/
 
-static inline void rp2040_gpio_set_slew_fast(uint32_t gpio,
+static inline void j721e_gpio_set_slew_fast(uint32_t gpio,
                                              bool enabled)
 {
-  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
+  DEBUGASSERT(gpio < J721E_GPIO_NUM);
 
-  modbits_reg32(enabled ? RP2040_PADS_BANK0_GPIO_SLEWFAST : 0,
-                RP2040_PADS_BANK0_GPIO_SLEWFAST,
-                RP2040_PADS_BANK0_GPIO(gpio));
+  modbits_reg32(enabled ? J721E_PADS_BANK0_GPIO_SLEWFAST : 0,
+                J721E_PADS_BANK0_GPIO_SLEWFAST,
+                J721E_PADS_BANK0_GPIO(gpio));
 }
 
 /****************************************************************************
- * Name: rp2040_gpio_set_drive_strength
+ * Name: j721e_gpio_set_drive_strength
  *
  * Description:
  *   Set the pin's drive strength.
  *
  ****************************************************************************/
 
-static inline void rp2040_gpio_set_drive_strength(uint32_t gpio,
+static inline void j721e_gpio_set_drive_strength(uint32_t gpio,
                                                   uint32_t drive_strength)
 {
-  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
+  DEBUGASSERT(gpio < J721E_GPIO_NUM);
 
   modbits_reg32(drive_strength,
-                RP2040_PADS_BANK0_GPIO_DRIVE_MASK,
-                RP2040_PADS_BANK0_GPIO(gpio));
+                J721E_PADS_BANK0_GPIO_DRIVE_MASK,
+                J721E_PADS_BANK0_GPIO(gpio));
 }
 
 /****************************************************************************
@@ -199,7 +199,7 @@ static inline void rp2040_gpio_set_drive_strength(uint32_t gpio,
  *
  ****************************************************************************/
 
-int rp2040_gpio_get_function_pin(uint32_t func, uint32_t port);
+int j721e_gpio_get_function_pin(uint32_t func, uint32_t port);
 
 /****************************************************************************
  * Name: r2040_gpio_set_function
@@ -209,7 +209,7 @@ int rp2040_gpio_get_function_pin(uint32_t func, uint32_t port);
  *
  ****************************************************************************/
 
-void rp2040_gpio_set_function(uint32_t gpio, uint32_t func);
+void j721e_gpio_set_function(uint32_t gpio, uint32_t func);
 
 /****************************************************************************
  * Name: r2040_gpio_set_pulls
@@ -219,7 +219,7 @@ void rp2040_gpio_set_function(uint32_t gpio, uint32_t func);
  *
  ****************************************************************************/
 
-void rp2040_gpio_set_pulls(uint32_t gpio, int up, int down);
+void j721e_gpio_set_pulls(uint32_t gpio, int up, int down);
 
 /****************************************************************************
  * Name: r2040_gpio_init
@@ -229,7 +229,7 @@ void rp2040_gpio_set_pulls(uint32_t gpio, int up, int down);
  *
  ****************************************************************************/
 
-void rp2040_gpio_init(uint32_t gpio);
+void j721e_gpio_init(uint32_t gpio);
 
 /****************************************************************************
  * Name: r2040_gpio_irq_attach
@@ -239,38 +239,38 @@ void rp2040_gpio_init(uint32_t gpio);
  *
  ****************************************************************************/
 
-int rp2040_gpio_irq_attach(uint32_t gpio, uint32_t intrmode,
+int j721e_gpio_irq_attach(uint32_t gpio, uint32_t intrmode,
                            xcpt_t isr, void *arg);
 
 /****************************************************************************
- * Name: rp2040_gpio_enable_irq
+ * Name: j721e_gpio_enable_irq
  *
  * Description:
  *   Enable the GPIO IRQ specified by 'gpio'
  *
  ****************************************************************************/
 
-void rp2040_gpio_enable_irq(uint32_t gpio);
+void j721e_gpio_enable_irq(uint32_t gpio);
 
 /****************************************************************************
- * Name: rp2040_gpio_disable_irq
+ * Name: j721e_gpio_disable_irq
  *
  * Description:
  *   Disable the GPIO IRQ specified by 'gpio'
  *
  ****************************************************************************/
 
-void rp2040_gpio_disable_irq(uint32_t gpio);
+void j721e_gpio_disable_irq(uint32_t gpio);
 
 /****************************************************************************
- * Name: rp2040_gpio_clear_interrupt
+ * Name: j721e_gpio_clear_interrupt
  *
  * Description:
  *   Clear the interrupt flags for a gpio pin.
  *
  ****************************************************************************/
 
-void rp2040_gpio_clear_interrupt(uint32_t gpio,
+void j721e_gpio_clear_interrupt(uint32_t gpio,
                                  bool     edge_low,
                                  bool     edge_high);
 
@@ -282,11 +282,11 @@ void rp2040_gpio_clear_interrupt(uint32_t gpio,
  *
  ****************************************************************************/
 
-void rp2040_gpio_initialize(void);
+void j721e_gpio_initialize(void);
 
 #undef EXTERN
 #if defined(__cplusplus)
 }
 #endif
 #endif /* __ASSEMBLY__ */
-#endif /* __ARCH_ARM_SRC_RP2040_RP2040_GPIO_H */
+#endif /* __ARCH_ARM_SRC_J721E_J721E_GPIO_H */

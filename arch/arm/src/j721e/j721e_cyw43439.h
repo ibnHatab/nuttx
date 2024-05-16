@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_cyw43439.h
+ * arch/arm/src/j721e/j721e_cyw43439.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __BOARDS_ARM_RP2040_COMMON_INCLUDE_RP2040_CYW43439_H
-#define __BOARDS_ARM_RP2040_COMMON_INCLUDE_RP2040_CYW43439_H
+#ifndef __BOARDS_ARM_J721E_COMMON_INCLUDE_J721E_CYW43439_H
+#define __BOARDS_ARM_J721E_COMMON_INCLUDE_J721E_CYW43439_H
 
 /****************************************************************************
  * Included Files
@@ -53,7 +53,7 @@ extern "C"
  * Public Types
  ****************************************************************************/
 
-typedef struct rp2040_gspi_s
+typedef struct j721e_gspi_s
 {
   uint32_t              pio;          /* The pio instance we are using.    */
   uint32_t              pio_sm;       /* The state machine we are using.   */
@@ -63,7 +63,7 @@ typedef struct rp2040_gspi_s
   uint8_t               gpio_data;    /* Data line -- idle high            */
   uint8_t               gpio_clock;   /* Clock line -- idle low            */
   uint8_t               gpio_intr;    /* May be shared with data           */
-} rp2040_gspi_t;
+} j721e_gspi_t;
 
 typedef struct cyw_pio_program_s
 {
@@ -77,7 +77,7 @@ typedef struct cyw_pio_program_s
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_cyw_setup
+ * Name: j721e_cyw_setup
  *
  * Description:
  *   Initialize the cyw43439 device.
@@ -87,24 +87,24 @@ typedef struct cyw_pio_program_s
  *
  ****************************************************************************/
 
-gspi_dev_t *rp2040_cyw_setup(uint8_t gpio_on,
+gspi_dev_t *j721e_cyw_setup(uint8_t gpio_on,
                              uint8_t gpio_select,
                              uint8_t gpio_data,
                              uint8_t gpio_clock,
                              uint8_t gpio_intr);
 
 /****************************************************************************
- * Name: rp2040_cyw_remove
+ * Name: j721e_cyw_remove
  *
  * Description:
  *   Deinitialize the cyw43439 device.
  *
  * Parameters:
- *   A pointer (as returned by rp2040_cyw_setup) to the device to remove.
+ *   A pointer (as returned by j721e_cyw_setup) to the device to remove.
  *
  ****************************************************************************/
 
-void rp2040_cyw_remove(gspi_dev_t *dev);
+void j721e_cyw_remove(gspi_dev_t *dev);
 
 #undef EXTERN
 #if defined(__cplusplus)
@@ -112,4 +112,4 @@ void rp2040_cyw_remove(gspi_dev_t *dev);
 #endif
 
 #endif /* __ASSEMBLY__ */
-#endif /* __BOARDS_ARM_RP2040_COMMON_INCLUDE_RP2040_CYW43439_H */
+#endif /* __BOARDS_ARM_J721E_COMMON_INCLUDE_J721E_CYW43439_H */

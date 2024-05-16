@@ -1,5 +1,5 @@
 /****************************************************************************
- * boards/arm/rp2040/raspberrypi-pico/include/rp2040_i2cdev.h
+ * boards/arm/j721e/bbai64/include/j721e_i2cdev.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __BOARDS_ARM_RP2040_RASPBERRYPI_PICO_INCLUDE_RP2040_I2CDEV_H
-#define __BOARDS_ARM_RP2040_RASPBERRYPI_PICO_INCLUDE_RP2040_I2CDEV_H
+#ifndef __BOARDS_ARM_J721E_BBAI64_INCLUDE_J721E_I2CDEV_H
+#define __BOARDS_ARM_J721E_BBAI64_INCLUDE_J721E_I2CDEV_H
 
 /****************************************************************************
  * Included Files
@@ -59,7 +59,7 @@ extern "C"
  *
  ****************************************************************************/
 
-#ifdef CONFIG_RP2040_I2C_DRIVER
+#ifdef CONFIG_J721E_I2C_DRIVER
 int board_i2cdev_initialize(int bus);
 #endif
 
@@ -69,4 +69,4 @@ int board_i2cdev_initialize(int bus);
 #endif
 
 #endif /* __ASSEMBLY__ */
-#endif /* __BOARDS_ARM_RP2040_RASPBERRYPI_PICO_INCLUDE_RP2040_I2CDEV_H */
+#endif /* __BOARDS_ARM_J721E_BBAI64_INCLUDE_J721E_I2CDEV_H */

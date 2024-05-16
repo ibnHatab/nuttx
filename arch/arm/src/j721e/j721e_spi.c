@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/rp2040_spi.c
+ * arch/arm/src/j721e/j721e_spi.c
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -42,14 +42,14 @@
 #include "arm_internal.h"
 #include "chip.h"
 
-#include "rp2040_spi.h"
-#include "hardware/rp2040_spi.h"
+#include "j721e_spi.h"
+#include "hardware/j721e_spi.h"
 
-#ifdef CONFIG_RP2040_SPI_DMA
-#include "rp2040_dmac.h"
+#ifdef CONFIG_J721E_SPI_DMA
+#include "j721e_dmac.h"
 #endif
 
-#ifdef CONFIG_RP2040_SPI
+#ifdef CONFIG_J721E_SPI
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -57,7 +57,7 @@
 
 /* 8 frame FIFOs for both transmit and receive */
 
-#define RP2040_SPI_FIFOSZ        8
+#define J721E_SPI_FIFOSZ        8
 
 /****************************************************************************
  * Private Types
@@ -65,12 +65,12 @@
 
 /* This structure describes the state of the SPI driver */
 
-struct rp2040_spidev_s
+struct j721e_spidev_s
 {
   struct spi_dev_s spidev;      /* Externally visible part of the SPI interface */
   uint32_t         spibase;     /* SPIn base address */
   uint32_t         spibasefreq;
-#ifdef CONFIG_RP2040_SPI_INTERRUPTS
+#ifdef CONFIG_J721E_SPI_INTERRUPTS
   uint8_t          spiirq;      /* SPI IRQ number */
 #endif
   mutex_t          lock;        /* Held while chip is selected for mutual exclusion */
@@ -80,7 +80,7 @@ struct rp2040_spidev_s
   uint8_t          mode;        /* Mode 0,1,2,3 */
   uint8_t          port;        /* Port number */
   int              initialized; /* Initialized flag */
-#ifdef CONFIG_RP2040_SPI_DMA
+#ifdef CONFIG_J721E_SPI_DMA
   bool             dmaenable;   /* Use DMA or not */
   DMA_HANDLE       rxdmach;     /* RX DMA channel handle */
   DMA_HANDLE       txdmach;     /* TX DMA channel handle */
@@ -96,24 +96,24 @@ struct rp2040_spidev_s
 
 /* Helpers */
 
-static inline uint32_t spi_getreg(struct rp2040_spidev_s *priv,
+static inline uint32_t spi_getreg(struct j721e_spidev_s *priv,
                                   uint8_t offset);
-static inline void spi_putreg(struct rp2040_spidev_s *priv,
+static inline void spi_putreg(struct j721e_spidev_s *priv,
                               uint8_t offset, uint32_t value);
 
 /* DMA support */
 
-#ifdef CONFIG_RP2040_SPI_DMA
+#ifdef CONFIG_J721E_SPI_DMA
 static void unused_code spi_dmaexchange(struct spi_dev_s *dev,
                                         const void *txbuffer,
                                         void *rxbuffer, size_t nwords);
 static void spi_dmatxcallback(DMA_HANDLE handle, uint8_t status, void *data);
 static void spi_dmarxcallback(DMA_HANDLE handle, uint8_t status, void *data);
-static void spi_dmatxsetup(struct rp2040_spidev_s *priv,
+static void spi_dmatxsetup(struct j721e_spidev_s *priv,
                            const void *txbuffer, size_t nwords);
-static void spi_dmarxsetup(struct rp2040_spidev_s *priv,
+static void spi_dmarxsetup(struct j721e_spidev_s *priv,
                            const void *rxbuffer, size_t nwords);
-static void spi_dmatrxwait(struct rp2040_spidev_s *priv);
+static void spi_dmatrxwait(struct j721e_spidev_s *priv);
 #ifndef CONFIG_SPI_EXCHANGE
 static void spi_dmasndblock(struct spi_dev_s *dev,
                             const void *buffer, size_t nwords);
@@ -145,20 +145,20 @@ static void spi_recvblock(struct spi_dev_s *dev, void *buffer,
  * Private Data
  ****************************************************************************/
 
-#ifdef CONFIG_RP2040_SPI0
+#ifdef CONFIG_J721E_SPI0
 static const struct spi_ops_s g_spi0ops =
 {
   .lock              = spi_lock,
-  .select            = rp2040_spi0select,   /* Provided externally */
+  .select            = j721e_spi0select,   /* Provided externally */
   .setfrequency      = spi_setfrequency,
   .setmode           = spi_setmode,
   .setbits           = spi_setbits,
 #ifdef CONFIG_SPI_HWFEATURES
   .hwfeatures        = 0,                   /* Not supported */
 #endif
-  .status            = rp2040_spi0status,   /* Provided externally */
+  .status            = j721e_spi0status,   /* Provided externally */
 #ifdef CONFIG_SPI_CMDDATA
-  .cmddata           = rp2040_spi0cmddata,  /* Provided externally */
+  .cmddata           = j721e_spi0cmddata,  /* Provided externally */
 #endif
   .send              = spi_send,
 #ifdef CONFIG_SPI_EXCHANGE
@@ -168,46 +168,46 @@ static const struct spi_ops_s g_spi0ops =
   .recvblock         = spi_recvblock,
 #endif
 #ifdef CONFIG_SPI_CALLBACK
-  .registercallback  = rp2040_spi0register, /* Provided externally */
+  .registercallback  = j721e_spi0register, /* Provided externally */
 #else
   .registercallback  = 0,                   /* Not implemented */
 #endif
 };
 
-static struct rp2040_spidev_s g_spi0dev =
+static struct j721e_spidev_s g_spi0dev =
 {
   .spidev            =
   {
     .ops             = &g_spi0ops,
   },
-  .spibase           = RP2040_SPI0_BASE,
+  .spibase           = J721E_SPI0_BASE,
   .spibasefreq       = 0,
   .port              = 0,
   .initialized       = 0,
-#ifdef CONFIG_RP2040_SPI_INTERRUPTS
-  .spiirq            = RP2040_SPI0_IRQ,
+#ifdef CONFIG_J721E_SPI_INTERRUPTS
+  .spiirq            = J721E_SPI0_IRQ,
 #endif
   .lock              = NXMUTEX_INITIALIZER,
-#ifdef CONFIG_RP2040_SPI_DMA
+#ifdef CONFIG_J721E_SPI_DMA
   .dmasem            = SEM_INITIALIZER(0),
 #endif
 };
 #endif
 
-#ifdef CONFIG_RP2040_SPI1
+#ifdef CONFIG_J721E_SPI1
 static const struct spi_ops_s g_spi1ops =
 {
   .lock              = spi_lock,
-  .select            = rp2040_spi1select,   /* Provided externally */
+  .select            = j721e_spi1select,   /* Provided externally */
   .setfrequency      = spi_setfrequency,
   .setmode           = spi_setmode,
   .setbits           = spi_setbits,
 #ifdef CONFIG_SPI_HWFEATURES
   .hwfeatures        = 0,                   /* Not supported */
 #endif
-  .status            = rp2040_spi1status,   /* Provided externally */
+  .status            = j721e_spi1status,   /* Provided externally */
 #ifdef CONFIG_SPI_CMDDATA
-  .cmddata           = rp2040_spi1cmddata,  /* Provided externally */
+  .cmddata           = j721e_spi1cmddata,  /* Provided externally */
 #endif
   .send              = spi_send,
 #ifdef CONFIG_SPI_EXCHANGE
@@ -217,33 +217,33 @@ static const struct spi_ops_s g_spi1ops =
   .recvblock         = spi_recvblock,
 #endif
 #ifdef CONFIG_SPI_CALLBACK
-  .registercallback  = rp2040_spi1register, /* Provided externally */
+  .registercallback  = j721e_spi1register, /* Provided externally */
 #else
   .registercallback  = 0,                   /* Not implemented */
 #endif
 };
 
-static struct rp2040_spidev_s g_spi1dev =
+static struct j721e_spidev_s g_spi1dev =
 {
   .spidev            =
   {
     .ops             = &g_spi1ops,
   },
-  .spibase           = RP2040_SPI1_BASE,
+  .spibase           = J721E_SPI1_BASE,
   .spibasefreq       = 0,
   .port              = 1,
   .initialized       = 0,
-#ifdef CONFIG_RP2040_SPI_INTERRUPTS
-  .spiirq            = RP2040_SPI1_IRQ,
+#ifdef CONFIG_J721E_SPI_INTERRUPTS
+  .spiirq            = J721E_SPI1_IRQ,
 #endif
   .lock              = NXMUTEX_INITIALIZER,
-#ifdef CONFIG_RP2040_SPI_DMA
+#ifdef CONFIG_J721E_SPI_DMA
   .dmasem            = SEM_INITIALIZER(0),
 #endif
 };
 #endif
 
-#ifdef CONFIG_RP2040_SPI_DMA
+#ifdef CONFIG_J721E_SPI_DMA
 /* Dummy data if no data transfer needed */
 
 uint32_t g_spitxdmadummy = 0xffffffff;
@@ -273,7 +273,7 @@ uint32_t g_spirxdmadummy = 0;
  *
  ****************************************************************************/
 
-static inline uint32_t spi_getreg(struct rp2040_spidev_s *priv,
+static inline uint32_t spi_getreg(struct j721e_spidev_s *priv,
                                   uint8_t offset)
 {
   return getreg32(priv->spibase + (uint32_t)offset);
@@ -295,7 +295,7 @@ static inline uint32_t spi_getreg(struct rp2040_spidev_s *priv,
  *
  ****************************************************************************/
 
-static inline void spi_putreg(struct rp2040_spidev_s *priv,
+static inline void spi_putreg(struct j721e_spidev_s *priv,
                               uint8_t offset, uint32_t value)
 {
   putreg32(value, priv->spibase + (uint32_t)offset);
@@ -324,7 +324,7 @@ static inline void spi_putreg(struct rp2040_spidev_s *priv,
 
 static int spi_lock(struct spi_dev_s *dev, bool lock)
 {
-  struct rp2040_spidev_s *priv = (struct rp2040_spidev_s *)dev;
+  struct j721e_spidev_s *priv = (struct j721e_spidev_s *)dev;
 
   if (lock)
     {
@@ -356,7 +356,7 @@ static int spi_lock(struct spi_dev_s *dev, bool lock)
 static uint32_t spi_setfrequency(struct spi_dev_s *dev,
                                  uint32_t frequency)
 {
-  struct rp2040_spidev_s *priv = (struct rp2040_spidev_s *)dev;
+  struct j721e_spidev_s *priv = (struct j721e_spidev_s *)dev;
   uint32_t divisor;
   uint32_t actual;
 
@@ -382,7 +382,7 @@ static uint32_t spi_setfrequency(struct spi_dev_s *dev,
 
   /* Save the new divisor value */
 
-  spi_putreg(priv, RP2040_SPI_SSPCPSR_OFFSET, divisor);
+  spi_putreg(priv, J721E_SPI_SSPCPSR_OFFSET, divisor);
 
   /* Calculate the new actual */
 
@@ -414,7 +414,7 @@ static uint32_t spi_setfrequency(struct spi_dev_s *dev,
 
 static void spi_setmode(struct spi_dev_s *dev, enum spi_mode_e mode)
 {
-  struct rp2040_spidev_s *priv = (struct rp2040_spidev_s *)dev;
+  struct j721e_spidev_s *priv = (struct j721e_spidev_s *)dev;
   uint32_t regval;
 
   /* Has the mode changed? */
@@ -423,8 +423,8 @@ static void spi_setmode(struct spi_dev_s *dev, enum spi_mode_e mode)
     {
       /* Yes... Set CR0 appropriately */
 
-      regval = spi_getreg(priv, RP2040_SPI_SSPCR0_OFFSET);
-      regval &= ~(RP2040_SPI_SSPCR0_SPO | RP2040_SPI_SSPCR0_SPH);
+      regval = spi_getreg(priv, J721E_SPI_SSPCR0_OFFSET);
+      regval &= ~(J721E_SPI_SSPCR0_SPO | J721E_SPI_SSPCR0_SPH);
 
       switch (mode)
         {
@@ -432,15 +432,15 @@ static void spi_setmode(struct spi_dev_s *dev, enum spi_mode_e mode)
             break;
 
           case SPIDEV_MODE1: /* CPOL=0; CPHA=1 */
-            regval |= RP2040_SPI_SSPCR0_SPH;
+            regval |= J721E_SPI_SSPCR0_SPH;
             break;
 
           case SPIDEV_MODE2: /* CPOL=1; CPHA=0 */
-            regval |= RP2040_SPI_SSPCR0_SPO;
+            regval |= J721E_SPI_SSPCR0_SPO;
             break;
 
           case SPIDEV_MODE3: /* CPOL=1; CPHA=1 */
-            regval |= (RP2040_SPI_SSPCR0_SPO | RP2040_SPI_SSPCR0_SPH);
+            regval |= (J721E_SPI_SSPCR0_SPO | J721E_SPI_SSPCR0_SPH);
             break;
 
           default:
@@ -450,7 +450,7 @@ static void spi_setmode(struct spi_dev_s *dev, enum spi_mode_e mode)
             return;
         }
 
-      spi_putreg(priv, RP2040_SPI_SSPCR0_OFFSET, regval);
+      spi_putreg(priv, J721E_SPI_SSPCR0_OFFSET, regval);
 
       /* Save the mode so that subsequent re-configurations will be faster */
 
@@ -475,7 +475,7 @@ static void spi_setmode(struct spi_dev_s *dev, enum spi_mode_e mode)
 
 static void spi_setbits(struct spi_dev_s *dev, int nbits)
 {
-  struct rp2040_spidev_s *priv = (struct rp2040_spidev_s *)dev;
+  struct j721e_spidev_s *priv = (struct j721e_spidev_s *)dev;
   uint32_t regval;
 
   /* Has the number of bits changed? */
@@ -486,25 +486,25 @@ static void spi_setbits(struct spi_dev_s *dev, int nbits)
     {
       /* Yes... Set CR0 appropriately */
 
-      regval = spi_getreg(priv, RP2040_SPI_SSPCR0_OFFSET);
-      regval &= ~RP2040_SPI_SSPCR0_DSS_MASK;
-      regval |= ((nbits - 1) << RP2040_SPI_SSPCR0_DSS_SHIFT);
-      spi_putreg(priv, RP2040_SPI_SSPCR0_OFFSET, regval);
+      regval = spi_getreg(priv, J721E_SPI_SSPCR0_OFFSET);
+      regval &= ~J721E_SPI_SSPCR0_DSS_MASK;
+      regval |= ((nbits - 1) << J721E_SPI_SSPCR0_DSS_SHIFT);
+      spi_putreg(priv, J721E_SPI_SSPCR0_OFFSET, regval);
 
       /* Save the selection so that re-configurations will be faster
        */
 
       priv->nbits = nbits;
-#ifdef CONFIG_RP2040_SPI_DMA
+#ifdef CONFIG_J721E_SPI_DMA
       if (priv->nbits > 8)
         {
-          priv->txconfig.size = RP2040_DMA_SIZE_HALFWORD;
-          priv->rxconfig.size = RP2040_DMA_SIZE_HALFWORD;
+          priv->txconfig.size = J721E_DMA_SIZE_HALFWORD;
+          priv->rxconfig.size = J721E_DMA_SIZE_HALFWORD;
         }
       else
         {
-          priv->txconfig.size = RP2040_DMA_SIZE_BYTE;
-          priv->rxconfig.size = RP2040_DMA_SIZE_BYTE;
+          priv->txconfig.size = J721E_DMA_SIZE_BYTE;
+          priv->rxconfig.size = J721E_DMA_SIZE_BYTE;
         }
 #endif
     }
@@ -528,26 +528,26 @@ static void spi_setbits(struct spi_dev_s *dev, int nbits)
 
 static uint32_t spi_send(struct spi_dev_s *dev, uint32_t wd)
 {
-  struct rp2040_spidev_s *priv = (struct rp2040_spidev_s *)dev;
+  struct j721e_spidev_s *priv = (struct j721e_spidev_s *)dev;
   register uint32_t regval;
 
   /* Wait while the TX FIFO is full */
 
-  while (!(spi_getreg(priv, RP2040_SPI_SSPSR_OFFSET) & RP2040_SPI_SSPSR_TNF))
+  while (!(spi_getreg(priv, J721E_SPI_SSPSR_OFFSET) & J721E_SPI_SSPSR_TNF))
     ;
 
   /* Write the byte to the TX FIFO */
 
-  spi_putreg(priv, RP2040_SPI_SSPDR_OFFSET, wd);
+  spi_putreg(priv, J721E_SPI_SSPDR_OFFSET, wd);
 
   /* Wait for the RX FIFO not empty */
 
-  while (!(spi_getreg(priv, RP2040_SPI_SSPSR_OFFSET) & RP2040_SPI_SSPSR_RNE))
+  while (!(spi_getreg(priv, J721E_SPI_SSPSR_OFFSET) & J721E_SPI_SSPSR_RNE))
     ;
 
   /* Get the value from the RX FIFO and return it */
 
-  regval = spi_getreg(priv, RP2040_SPI_SSPDR_OFFSET);
+  regval = spi_getreg(priv, J721E_SPI_SSPDR_OFFSET);
   spiinfo("%04" PRIx32 "->%04" PRIx32 "\n", wd, regval);
 
   return regval;
@@ -578,7 +578,7 @@ static void spi_do_exchange(struct spi_dev_s *dev,
                             const void *txbuffer, void *rxbuffer,
                             size_t nwords)
 {
-  struct rp2040_spidev_s *priv = (struct rp2040_spidev_s *)dev;
+  struct j721e_spidev_s *priv = (struct j721e_spidev_s *)dev;
 
   union
   {
@@ -611,9 +611,9 @@ static void spi_do_exchange(struct spi_dev_s *dev,
        */
 
       spiinfo("TX: rxpending: %" PRId32 " nwords: %d\n", rxpending, nwords);
-      while ((spi_getreg(priv, RP2040_SPI_SSPSR_OFFSET) &
-              RP2040_SPI_SSPSR_TNF) &&
-             (rxpending < RP2040_SPI_FIFOSZ) && nwords)
+      while ((spi_getreg(priv, J721E_SPI_SSPSR_OFFSET) &
+              J721E_SPI_SSPSR_TNF) &&
+             (rxpending < J721E_SPI_FIFOSZ) && nwords)
         {
           if (txbuffer)
             {
@@ -627,7 +627,7 @@ static void spi_do_exchange(struct spi_dev_s *dev,
                 }
             }
 
-          spi_putreg(priv, RP2040_SPI_SSPDR_OFFSET,
+          spi_putreg(priv, J721E_SPI_SSPDR_OFFSET,
                      txbuffer ? data : datadummy);
           nwords--;
           rxpending++;
@@ -638,10 +638,10 @@ static void spi_do_exchange(struct spi_dev_s *dev,
        */
 
       spiinfo("RX: rxpending: %" PRId32 "\n", rxpending);
-      while (spi_getreg(priv, RP2040_SPI_SSPSR_OFFSET) &
-             RP2040_SPI_SSPSR_RNE)
+      while (spi_getreg(priv, J721E_SPI_SSPSR_OFFSET) &
+             J721E_SPI_SSPSR_RNE)
         {
-          data = spi_getreg(priv, RP2040_SPI_SSPDR_OFFSET);
+          data = spi_getreg(priv, J721E_SPI_SSPDR_OFFSET);
           if (rxbuffer)
             {
               if (priv->nbits > 8)
@@ -683,11 +683,11 @@ static void spi_do_exchange(struct spi_dev_s *dev,
 static void spi_exchange(struct spi_dev_s *dev, const void *txbuffer,
                          void *rxbuffer, size_t nwords)
 {
-#ifdef CONFIG_RP2040_SPI_DMA
-  struct rp2040_spidev_s *priv = (struct rp2040_spidev_s *)dev;
+#ifdef CONFIG_J721E_SPI_DMA
+  struct j721e_spidev_s *priv = (struct j721e_spidev_s *)dev;
 
-#ifdef CONFIG_RP2040_SPI_DMATHRESHOLD
-  size_t dmath = CONFIG_RP2040_SPI_DMATHRESHOLD;
+#ifdef CONFIG_J721E_SPI_DMATHRESHOLD
+  size_t dmath = CONFIG_J721E_SPI_DMATHRESHOLD;
 #else
   size_t dmath = 0;
 #endif
@@ -762,7 +762,7 @@ static void spi_recvblock(struct spi_dev_s *dev, void *buffer,
  ****************************************************************************/
 
 /****************************************************************************
- * Name: rp2040_spibus_initialize
+ * Name: j721e_spibus_initialize
  *
  * Description:
  *   Initialize the selected SPI port
@@ -775,34 +775,34 @@ static void spi_recvblock(struct spi_dev_s *dev, void *buffer,
  *
  ****************************************************************************/
 
-struct spi_dev_s *rp2040_spibus_initialize(int port)
+struct spi_dev_s *j721e_spibus_initialize(int port)
 {
-  struct rp2040_spidev_s *priv;
+  struct j721e_spidev_s *priv;
   uint32_t regval;
   int i;
-#ifdef CONFIG_RP2040_SPI_DMA
+#ifdef CONFIG_J721E_SPI_DMA
   dma_config_t txconf;
   dma_config_t rxconf;
 #endif
 
   switch (port)
     {
-#ifdef CONFIG_RP2040_SPI0
+#ifdef CONFIG_J721E_SPI0
       case 0:
         priv = &g_spi0dev;
-#ifdef CONFIG_RP2040_SPI_DMA
-        txconf.dreq = RP2040_DMA_DREQ_SPI0_TX;
-        rxconf.dreq = RP2040_DMA_DREQ_SPI0_RX;
+#ifdef CONFIG_J721E_SPI_DMA
+        txconf.dreq = J721E_DMA_DREQ_SPI0_TX;
+        rxconf.dreq = J721E_DMA_DREQ_SPI0_RX;
 #endif
         break;
 #endif
 
-#ifdef CONFIG_RP2040_SPI1
+#ifdef CONFIG_J721E_SPI1
       case 1:
         priv = &g_spi1dev;
-#ifdef CONFIG_RP2040_SPI_DMA
-        txconf.dreq = RP2040_DMA_DREQ_SPI1_TX;
-        rxconf.dreq = RP2040_DMA_DREQ_SPI1_RX;
+#ifdef CONFIG_J721E_SPI_DMA
+        txconf.dreq = J721E_DMA_DREQ_SPI1_TX;
+        rxconf.dreq = J721E_DMA_DREQ_SPI1_RX;
 #endif
         break;
 #endif
@@ -824,14 +824,14 @@ struct spi_dev_s *rp2040_spibus_initialize(int port)
 
   /* DMA settings */
 
-#ifdef CONFIG_RP2040_SPI_DMA
-  priv->txdmach = rp2040_dmachannel();
-  txconf.size = RP2040_DMA_SIZE_BYTE;
+#ifdef CONFIG_J721E_SPI_DMA
+  priv->txdmach = j721e_dmachannel();
+  txconf.size = J721E_DMA_SIZE_BYTE;
   txconf.noincr = false;
   priv->txconfig = txconf;
 
-  priv->rxdmach = rp2040_dmachannel();
-  rxconf.size = RP2040_DMA_SIZE_BYTE;
+  priv->rxdmach = j721e_dmachannel();
+  rxconf.size = J721E_DMA_SIZE_BYTE;
   rxconf.noincr = false;
   priv->rxconfig = rxconf;
 
@@ -840,18 +840,18 @@ struct spi_dev_s *rp2040_spibus_initialize(int port)
 
   /* Configure 8-bit SPI mode */
 
-  spi_putreg(priv, RP2040_SPI_SSPCR0_OFFSET,
-             ((8 - 1) << RP2040_SPI_SSPCR0_DSS_SHIFT) |
-             (0 << RP2040_SPI_SSPCR0_FRF_SHIFT));
+  spi_putreg(priv, J721E_SPI_SSPCR0_OFFSET,
+             ((8 - 1) << J721E_SPI_SSPCR0_DSS_SHIFT) |
+             (0 << J721E_SPI_SSPCR0_FRF_SHIFT));
 
   /* Disable SPI and all interrupts (we'll poll for all data) */
 
-  spi_putreg(priv, RP2040_SPI_SSPCR1_OFFSET, 0);
-  spi_putreg(priv, RP2040_SPI_SSPIMSC_OFFSET, 0);
+  spi_putreg(priv, J721E_SPI_SSPCR1_OFFSET, 0);
+  spi_putreg(priv, J721E_SPI_SSPIMSC_OFFSET, 0);
 
   /* Clear interrupts */
 
-  spi_putreg(priv, RP2040_SPI_SSPICR_OFFSET, 0x3);
+  spi_putreg(priv, J721E_SPI_SSPICR_OFFSET, 0x3);
 
   /* Set the initial SPI configuration */
 
@@ -863,12 +863,12 @@ struct spi_dev_s *rp2040_spibus_initialize(int port)
 
   spi_setfrequency((struct spi_dev_s *)priv, 400000);
 
-  regval = spi_getreg(priv, RP2040_SPI_SSPCR1_OFFSET);
-  spi_putreg(priv, RP2040_SPI_SSPCR1_OFFSET, regval | RP2040_SPI_SSPCR1_SSE);
+  regval = spi_getreg(priv, J721E_SPI_SSPCR1_OFFSET);
+  spi_putreg(priv, J721E_SPI_SSPCR1_OFFSET, regval | J721E_SPI_SSPCR1_SSE);
 
-  for (i = 0; i < RP2040_SPI_FIFOSZ; i++)
+  for (i = 0; i < J721E_SPI_FIFOSZ; i++)
     {
-      spi_getreg(priv, RP2040_SPI_SSPDR_OFFSET);
+      spi_getreg(priv, J721E_SPI_SSPDR_OFFSET);
     }
 
   /* Set a initialized flag */
@@ -894,33 +894,33 @@ struct spi_dev_s *rp2040_spibus_initialize(int port)
 
 void spi_flush(struct spi_dev_s *dev)
 {
-  struct rp2040_spidev_s *priv = (struct rp2040_spidev_s *)dev;
+  struct j721e_spidev_s *priv = (struct j721e_spidev_s *)dev;
 
   /* Wait for the TX FIFO not full indication */
 
-  while (!(spi_getreg(priv, RP2040_SPI_SSPSR_OFFSET) & RP2040_SPI_SSPSR_TNF))
+  while (!(spi_getreg(priv, J721E_SPI_SSPSR_OFFSET) & J721E_SPI_SSPSR_TNF))
     ;
-  spi_putreg(priv, RP2040_SPI_SSPDR_OFFSET, 0xff);
+  spi_putreg(priv, J721E_SPI_SSPDR_OFFSET, 0xff);
 
   /* Wait until TX FIFO and TX shift buffer are empty */
 
-  while (spi_getreg(priv, RP2040_SPI_SSPSR_OFFSET) & RP2040_SPI_SSPSR_BSY);
+  while (spi_getreg(priv, J721E_SPI_SSPSR_OFFSET) & J721E_SPI_SSPSR_BSY);
 
   /* Wait until RX FIFO is not empty */
 
-  while (!(spi_getreg(priv, RP2040_SPI_SSPSR_OFFSET) & RP2040_SPI_SSPSR_RNE))
+  while (!(spi_getreg(priv, J721E_SPI_SSPSR_OFFSET) & J721E_SPI_SSPSR_RNE))
     ;
 
   /* Then read and discard bytes until the RX FIFO is empty */
 
   do
     {
-      spi_getreg(priv, RP2040_SPI_SSPDR_OFFSET);
+      spi_getreg(priv, J721E_SPI_SSPDR_OFFSET);
     }
-  while (spi_getreg(priv, RP2040_SPI_SSPSR_OFFSET) & RP2040_SPI_SSPSR_RNE);
+  while (spi_getreg(priv, J721E_SPI_SSPSR_OFFSET) & J721E_SPI_SSPSR_RNE);
 }
 
-#ifdef CONFIG_RP2040_SPI_DMA
+#ifdef CONFIG_J721E_SPI_DMA
 
 /****************************************************************************
  * Name: spi_dmaexchange
@@ -934,7 +934,7 @@ static void spi_dmaexchange(struct spi_dev_s *dev,
                             const void *txbuffer,
                             void *rxbuffer, size_t nwords)
 {
-  struct rp2040_spidev_s *priv = (struct rp2040_spidev_s *)dev;
+  struct j721e_spidev_s *priv = (struct j721e_spidev_s *)dev;
 
   DEBUGASSERT(priv && priv->spibase);
 
@@ -945,8 +945,8 @@ static void spi_dmaexchange(struct spi_dev_s *dev,
 
   /* Start the DMAs */
 
-  rp2040_dmastart(priv->rxdmach, spi_dmarxcallback, priv);
-  rp2040_dmastart(priv->txdmach, spi_dmatxcallback, priv);
+  j721e_dmastart(priv->rxdmach, spi_dmarxcallback, priv);
+  j721e_dmastart(priv->txdmach, spi_dmatxcallback, priv);
 
   /* Then wait for each to complete */
 
@@ -994,7 +994,7 @@ static void spi_dmarecvblock(struct spi_dev_s *dev,
 
 static void spi_dmatxcallback(DMA_HANDLE handle, uint8_t status, void *data)
 {
-  struct rp2040_spidev_s *priv = (struct rp2040_spidev_s *)data;
+  struct j721e_spidev_s *priv = (struct j721e_spidev_s *)data;
 
   /* Wake-up the SPI driver */
 
@@ -1016,7 +1016,7 @@ static void spi_dmatxcallback(DMA_HANDLE handle, uint8_t status, void *data)
 
 static void spi_dmarxcallback(DMA_HANDLE handle, uint8_t status, void *data)
 {
-  struct rp2040_spidev_s *priv = (struct rp2040_spidev_s *)data;
+  struct j721e_spidev_s *priv = (struct j721e_spidev_s *)data;
 
   /* Wake-up the SPI driver */
 
@@ -1036,17 +1036,17 @@ static void spi_dmarxcallback(DMA_HANDLE handle, uint8_t status, void *data)
  *
  ****************************************************************************/
 
-static void spi_dmatxsetup(struct rp2040_spidev_s *priv,
+static void spi_dmatxsetup(struct j721e_spidev_s *priv,
                            const void *txbuffer, size_t nwords)
 {
   uint32_t dst;
   uint32_t val;
 
-  val = spi_getreg(priv, RP2040_SPI_SSPDMACR_OFFSET);
-  val |= RP2040_SPI_SSPDMACR_TXDMAE;
-  spi_putreg(priv, RP2040_SPI_SSPDMACR_OFFSET, val);
+  val = spi_getreg(priv, J721E_SPI_SSPDMACR_OFFSET);
+  val |= J721E_SPI_SSPDMACR_TXDMAE;
+  spi_putreg(priv, J721E_SPI_SSPDMACR_OFFSET, val);
 
-  dst = priv->spibase + RP2040_SPI_SSPDR_OFFSET;
+  dst = priv->spibase + J721E_SPI_SSPDR_OFFSET;
 
   if (txbuffer == NULL)
     {
@@ -1064,7 +1064,7 @@ static void spi_dmatxsetup(struct rp2040_spidev_s *priv,
       priv->txconfig.noincr = false;
     }
 
-  rp2040_txdmasetup(priv->txdmach, (uintptr_t)dst, (uintptr_t)txbuffer,
+  j721e_txdmasetup(priv->txdmach, (uintptr_t)dst, (uintptr_t)txbuffer,
                    nwords << priv->txconfig.size, priv->txconfig);
 }
 
@@ -1076,17 +1076,17 @@ static void spi_dmatxsetup(struct rp2040_spidev_s *priv,
  *
  ****************************************************************************/
 
-static void spi_dmarxsetup(struct rp2040_spidev_s *priv,
+static void spi_dmarxsetup(struct j721e_spidev_s *priv,
                            const void *rxbuffer, size_t nwords)
 {
   uint32_t src;
   uint32_t val;
 
-  val = spi_getreg(priv, RP2040_SPI_SSPDMACR_OFFSET);
-  val |= RP2040_SPI_SSPDMACR_RXDMAE;
-  spi_putreg(priv, RP2040_SPI_SSPDMACR_OFFSET, val);
+  val = spi_getreg(priv, J721E_SPI_SSPDMACR_OFFSET);
+  val |= J721E_SPI_SSPDMACR_RXDMAE;
+  spi_putreg(priv, J721E_SPI_SSPDMACR_OFFSET, val);
 
-  src = priv->spibase + RP2040_SPI_SSPDR_OFFSET;
+  src = priv->spibase + J721E_SPI_SSPDR_OFFSET;
 
   if (rxbuffer == NULL)
     {
@@ -1104,7 +1104,7 @@ static void spi_dmarxsetup(struct rp2040_spidev_s *priv,
       priv->rxconfig.noincr = false;
     }
 
-  rp2040_rxdmasetup(priv->rxdmach, (uintptr_t)src, (uintptr_t)rxbuffer,
+  j721e_rxdmasetup(priv->rxdmach, (uintptr_t)src, (uintptr_t)rxbuffer,
                    nwords << priv->rxconfig.size, priv->rxconfig);
 }
 
@@ -1116,7 +1116,7 @@ static void spi_dmarxsetup(struct rp2040_spidev_s *priv,
  *
  ****************************************************************************/
 
-static void spi_dmatrxwait(struct rp2040_spidev_s *priv)
+static void spi_dmatrxwait(struct j721e_spidev_s *priv)
 {
   uint32_t val;
 
@@ -1130,12 +1130,12 @@ static void spi_dmatrxwait(struct rp2040_spidev_s *priv)
       spierr("dma error\n");
     }
 
-  rp2040_dmastop(priv->txdmach);
-  rp2040_dmastop(priv->rxdmach);
+  j721e_dmastop(priv->txdmach);
+  j721e_dmastop(priv->rxdmach);
 
-  val = spi_getreg(priv, RP2040_SPI_SSPDMACR_OFFSET);
-  val &= ~(RP2040_SPI_SSPDMACR_RXDMAE | RP2040_SPI_SSPDMACR_TXDMAE);
-  spi_putreg(priv, RP2040_SPI_SSPDMACR_OFFSET, val);
+  val = spi_getreg(priv, J721E_SPI_SSPDMACR_OFFSET);
+  val &= ~(J721E_SPI_SSPDMACR_RXDMAE | J721E_SPI_SSPDMACR_TXDMAE);
+  spi_putreg(priv, J721E_SPI_SSPDMACR_OFFSET, val);
 }
 
 #endif
