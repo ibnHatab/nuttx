@@ -112,7 +112,7 @@ void up_timer_initialize(void)
 
   /* Attach the timer interrupt vector */
 
-  irq_attach(J721E_IRQ_SYSTICK, (xcpt_t)j721e_timerisr, NULL);
+  irq_attach(RP2040_IRQ_SYSTICK, (xcpt_t)j721e_timerisr, NULL);
 
   /* Enable SysTick interrupts. */
 
@@ -120,5 +120,5 @@ void up_timer_initialize(void)
 
   /* And enable the timer interrupt */
 
-  up_enable_irq(J721E_IRQ_SYSTICK);
+  up_enable_irq(RP2040_IRQ_SYSTICK);
 }

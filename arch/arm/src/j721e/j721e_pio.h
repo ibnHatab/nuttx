@@ -1977,7 +1977,7 @@ static inline void j721e_pio_set_input_sync_bypass(uint32_t pio,
                                                     uint32_t pin,
                                                     bool bypass)
 {
-  DEBUGASSERT(pin < J721E_GPIO_NUM);
+  DEBUGASSERT(pin < RP2040_GPIO_NUM);
 
   modbits_reg32(bypass ? (1 << pin) : 0,
                 (1 << pin),

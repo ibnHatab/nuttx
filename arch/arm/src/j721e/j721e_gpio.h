@@ -39,7 +39,7 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define J721E_GPIO_NUM    30       /* Number of GPIO pins */
+#define RP2040_GPIO_NUM    30       /* Number of GPIO pins */
 
 /* GPIO function types ******************************************************/
 
@@ -96,7 +96,7 @@ static inline void j721e_gpio_put(uint32_t gpio, int set)
 {
   uint32_t value = 1 << gpio;
 
-  DEBUGASSERT(gpio < J721E_GPIO_NUM);
+  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
 
   if (set)
     {
@@ -112,7 +112,7 @@ static inline bool j721e_gpio_get(uint32_t gpio)
 {
   uint32_t value = 1 << gpio;
 
-  DEBUGASSERT(gpio < J721E_GPIO_NUM);
+  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
 
   return (getreg32(J721E_SIO_GPIO_IN) & value) != 0;
 }
@@ -121,7 +121,7 @@ static inline void j721e_gpio_setdir(uint32_t gpio, int out)
 {
   uint32_t value = 1 << gpio;
 
-  DEBUGASSERT(gpio < J721E_GPIO_NUM);
+  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
 
   if (out)
     {
@@ -144,7 +144,7 @@ static inline void j721e_gpio_setdir(uint32_t gpio, int out)
 static inline void j721e_gpio_set_input_hysteresis_enabled(uint32_t gpio,
                                                             bool enabled)
 {
-  DEBUGASSERT(gpio < J721E_GPIO_NUM);
+  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
 
   modbits_reg32(enabled ? J721E_PADS_BANK0_GPIO_SCHMITT : 0,
                 J721E_PADS_BANK0_GPIO_SCHMITT,
@@ -162,7 +162,7 @@ static inline void j721e_gpio_set_input_hysteresis_enabled(uint32_t gpio,
 static inline void j721e_gpio_set_slew_fast(uint32_t gpio,
                                              bool enabled)
 {
-  DEBUGASSERT(gpio < J721E_GPIO_NUM);
+  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
 
   modbits_reg32(enabled ? J721E_PADS_BANK0_GPIO_SLEWFAST : 0,
                 J721E_PADS_BANK0_GPIO_SLEWFAST,
@@ -180,7 +180,7 @@ static inline void j721e_gpio_set_slew_fast(uint32_t gpio,
 static inline void j721e_gpio_set_drive_strength(uint32_t gpio,
                                                   uint32_t drive_strength)
 {
-  DEBUGASSERT(gpio < J721E_GPIO_NUM);
+  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
 
   modbits_reg32(drive_strength,
                 J721E_PADS_BANK0_GPIO_DRIVE_MASK,

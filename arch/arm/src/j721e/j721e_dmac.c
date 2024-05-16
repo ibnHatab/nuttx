@@ -176,8 +176,8 @@ void weak_function arm_dma_initialize(void)
 
   /* Attach DMA completion interrupt handler */
 
-  irq_attach(J721E_DMA_IRQ_0, j721e_dmac_interrupt, NULL);
-  up_enable_irq(J721E_DMA_IRQ_0);
+  irq_attach(RP2040_DMA_IRQ_0, j721e_dmac_interrupt, NULL);
+  up_enable_irq(RP2040_DMA_IRQ_0);
 }
 
 /****************************************************************************

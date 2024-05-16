@@ -46,13 +46,13 @@ static bool g_gpio_irq_init = false;
 
 /* GPIO interrupt handlers information */
 
-static xcpt_t g_gpio_irq_handlers[J721E_GPIO_NUM];
-static void *g_gpio_irq_args[J721E_GPIO_NUM];
-static int g_gpio_irq_modes[J721E_GPIO_NUM];
+static xcpt_t g_gpio_irq_handlers[RP2040_GPIO_NUM];
+static void *g_gpio_irq_args[RP2040_GPIO_NUM];
+static int g_gpio_irq_modes[RP2040_GPIO_NUM];
 
 /* GPIO pins function assignment */
 
-static int g_gpio_function[J721E_GPIO_NUM];
+static int g_gpio_function[RP2040_GPIO_NUM];
 
 /* GPIO pins function mapping table */
 
@@ -231,7 +231,7 @@ int j721e_gpio_get_function_pin(uint32_t func, uint32_t port)
 
 void j721e_gpio_set_function(uint32_t gpio, uint32_t func)
 {
-  DEBUGASSERT(gpio < J721E_GPIO_NUM);
+  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
 
   modbits_reg32(J721E_PADS_BANK0_GPIO_IE,
                 J721E_PADS_BANK0_GPIO_IE | J721E_PADS_BANK0_GPIO_OD,
@@ -253,7 +253,7 @@ void j721e_gpio_set_function(uint32_t gpio, uint32_t func)
 
 void j721e_gpio_set_pulls(uint32_t gpio, int up, int down)
 {
-  DEBUGASSERT(gpio < J721E_GPIO_NUM);
+  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
 
   modbits_reg32((up   ? J721E_PADS_BANK0_GPIO_PUE : 0) |
                 (down ? J721E_PADS_BANK0_GPIO_PDE : 0),
@@ -271,7 +271,7 @@ void j721e_gpio_set_pulls(uint32_t gpio, int up, int down)
 
 void j721e_gpio_init(uint32_t gpio)
 {
-  DEBUGASSERT(gpio < J721E_GPIO_NUM);
+  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
 
   j721e_gpio_setdir(gpio, false);
   j721e_gpio_put(gpio, false);
@@ -294,11 +294,11 @@ int j721e_gpio_irq_attach(uint32_t gpio, uint32_t intrmode,
       /* Initialize - register GPIO interrupt handler */
 
       g_gpio_irq_init = true;
-      irq_attach(J721E_IO_IRQ_BANK0, j721e_gpio_interrupt, NULL);
-      up_enable_irq(J721E_IO_IRQ_BANK0);
+      irq_attach(RP2040_IO_IRQ_BANK0, j721e_gpio_interrupt, NULL);
+      up_enable_irq(RP2040_IO_IRQ_BANK0);
     }
 
-  DEBUGASSERT(gpio < J721E_GPIO_NUM);
+  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
   DEBUGASSERT(intrmode <= J721E_GPIO_INTR_EDGE_HIGH);
 
   /* Save handler information */
@@ -326,7 +326,7 @@ void j721e_gpio_enable_irq(uint32_t gpio)
 {
   uint32_t reg;
 
-  DEBUGASSERT(gpio < J721E_GPIO_NUM);
+  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
 
   if (g_gpio_irq_handlers[gpio] != NULL)
     {
@@ -350,7 +350,7 @@ void j721e_gpio_disable_irq(uint32_t gpio)
 {
   uint32_t reg;
 
-  DEBUGASSERT(gpio < J721E_GPIO_NUM);
+  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
 
   if (g_gpio_irq_handlers[gpio] != NULL)
     {
@@ -376,7 +376,7 @@ void j721e_gpio_clear_interrupt(uint32_t gpio,
   uint32_t reg;
   uint32_t bits = 0;
 
-  DEBUGASSERT(gpio < J721E_GPIO_NUM);
+  DEBUGASSERT(gpio < RP2040_GPIO_NUM);
 
   reg = J721E_IO_BANK0_INTR(gpio);
 
@@ -398,7 +398,7 @@ void j721e_gpio_initialize(void)
 {
   int i;
 
-  for (i = 0; i < J721E_GPIO_NUM; i++)
+  for (i = 0; i < RP2040_GPIO_NUM; i++)
     {
       g_gpio_function[i] = J721E_GPIO_FUNC_NULL;
     }
