@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/arm/src/rp2040/boot2/pico/config.h
+ * arch/arm/src/j721e/boot2/pico/config.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
